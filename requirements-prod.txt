@@ -1,0 +1,35 @@
+# AegisNet - Production Dependencies Only
+# Use this for production deployments (excludes dev tools)
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Data Validation & Models
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# AI & LLM
+langchain>=0.1.0
+langgraph>=0.0.20
+ollama>=0.1.0
+
+# Data Processing
+pandas>=2.1.0
+numpy>=1.24.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# Vector Storage (Optional)
+pgvector>=0.2.0
+
+# HTTP Client
+httpx>=0.25.0
+
+# Async File I/O
+aiofiles>=23.2.0
+
+# Utilities
+python-dotenv>=1.0.0

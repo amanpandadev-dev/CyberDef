@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Settings as SettingsIcon, Trash2, AlertTriangle, CheckCircle2, Loader2, Database, FileText, FolderOpen, Shield } from 'lucide-react';
+import { Settings as SettingsIcon, Trash2, AlertTriangle, CheckCircle2, Loader2, Database, FileText, FolderOpen, Shield, Moon, Sun, Monitor } from 'lucide-react';
+import { useTheme, type ThemePreference } from '../context/ThemeContext';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
 export default function SettingsPage() {
+    const { preference, resolvedTheme, setPreference } = useTheme();
     const [clearing, setClearing] = useState(false);
     const [clearResult, setClearResult] = useState<{ status: string; cleared: string[] } | null>(null);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -35,6 +37,46 @@ export default function SettingsPage() {
                     Settings
                 </h1>
                 <p className="text-gray-400 mt-2">System configuration and data management</p>
+            </div>
+
+            {/* Theme Preferences */}
+            <div className="bg-surface-dark rounded-xl border border-white/10 p-6">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <Monitor className="w-5 h-5 text-primary-400" />
+                    Theme
+                </h2>
+                <p className="text-sm text-gray-400 mb-4">
+                    Default is Dark. System uses your OS preference.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {[
+                        { value: 'dark' as ThemePreference, label: 'Dark', icon: Moon, help: 'Dark mode is default for reduced eye strain' },
+                        { value: 'light' as ThemePreference, label: 'Light', icon: Sun, help: 'Light mode for high ambient lighting environments' },
+                        { value: 'system' as ThemePreference, label: 'System', icon: Monitor, help: 'Follow your operating system theme setting' },
+                    ].map((themeOption) => (
+                        <button
+                            key={themeOption.value}
+                            onClick={() => setPreference(themeOption.value)}
+                            className={`help-hover rounded-lg border p-4 text-left transition-all duration-200 ${
+                                preference === themeOption.value
+                                    ? 'border-primary-500 bg-primary-500/20'
+                                    : 'border-white/10 bg-surface hover:bg-white/5'
+                            }`}
+                            data-help={themeOption.help}
+                        >
+                            <div className="flex items-center gap-2 mb-1">
+                                <themeOption.icon className="w-4 h-4 text-primary-300" />
+                                <span className="font-medium text-white">{themeOption.label}</span>
+                            </div>
+                            <p className="text-xs text-gray-400">
+                                {preference === themeOption.value ? 'Selected' : 'Click to apply'}
+                            </p>
+                        </button>
+                    ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-4">
+                    Active theme: {resolvedTheme}
+                </p>
             </div>
 
             {/* System Info Card */}

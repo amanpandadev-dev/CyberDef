@@ -381,6 +381,12 @@ async def analyze_file(file_id: str) -> dict[str, Any]:
         incidents=all_incidents,
     )
     logger.info(f"Report saved | path={report_path}")
+    incidents_json_path = report_writer.generate_incident_json_report(
+        file_id=file_id,
+        filename=file_metadata.original_filename,
+        incidents=all_incidents,
+    )
+    logger.info(f"Incident JSON report saved | path={incidents_json_path}")
 
     # Update file metadata
     await file_service.update_analysis_stats(
@@ -418,6 +424,9 @@ async def analyze_file(file_id: str) -> dict[str, Any]:
         "total_incidents": len(all_incidents),
         "incident_ids": [str(i.incident_id) for i in all_incidents],
         "report_path": str(report_path),
+        "report_url": f"/api/v1/files/{file_id}/report",
+        "incident_json_path": str(incidents_json_path),
+        "incident_json_url": f"/api/v1/files/{file_id}/incidents-json",
         "day_summary": state_store.get_day_summary(),
     }
 

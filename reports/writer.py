@@ -11,6 +11,7 @@ Generates human-readable Markdown threat analysis reports with:
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -47,7 +48,8 @@ class ReportWriter:
         """Generate and save a complete analysis report. Returns the file path."""
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         safe_name = Path(filename).stem.replace(" ", "_")
-        report_name = f"{ts}_{safe_name}_report.md"
+        # Include file_id in the report filename so it can be fetched reliably later.
+        report_name = f"{ts}_{file_id}_{safe_name}_report.md"
         report_path = self.reports_dir / report_name
 
         lines: list[str] = []
@@ -292,6 +294,71 @@ class ReportWriter:
         report_path.write_text("\n".join(lines), encoding="utf-8")
         logger.info(f"Threat report generated | path={report_path}, lines={len(lines)}")
         return report_path
+
+    def generate_incident_json_report(
+        self,
+        *,
+        file_id: str,
+        filename: str,
+        incidents: list[Any],
+    ) -> Path:
+        """Generate a machine-readable incident JSON report for a file."""
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        safe_name = Path(filename).stem.replace(" ", "_")
+        report_name = f"{ts}_{file_id}_{safe_name}_incidents.json"
+        report_path = self.reports_dir / report_name
+
+        incident_rows = [self._incident_to_json(incident) for incident in incidents]
+        payload = {
+            "file_id": file_id,
+            "filename": filename,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "incident_count": len(incident_rows),
+            "incidents": incident_rows,
+        }
+
+        report_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        logger.info(f"Incident JSON report generated | path={report_path}, incidents={len(incident_rows)}")
+        return report_path
+
+    def _incident_to_json(self, incident: Any) -> dict[str, Any]:
+        """Convert an incident model into the required report JSON shape."""
+        data: dict[str, Any]
+        if hasattr(incident, "model_dump"):
+            data = incident.model_dump(mode="json")
+        elif isinstance(incident, dict):
+            data = incident
+        else:
+            data = {}
+
+        confidence = float(data.get("overall_confidence", 0.0) or 0.0)
+        confidence_score = data.get("confidence_score")
+        if confidence_score is None:
+            confidence_score = max(1, min(10, int(round(confidence * 10))))
+
+        mitre_techniques = data.get("mitre_techniques") or []
+        top_mitre = mitre_techniques[0] if mitre_techniques else {}
+
+        return {
+            "incident_id": data.get("incident_id"),
+            "title": data.get("title"),
+            "status": data.get("status"),
+            "priority": data.get("priority"),
+            "file_ids": data.get("file_ids", []),
+            "first_seen": data.get("first_seen"),
+            "last_seen": data.get("last_seen"),
+            "raw_log": data.get("raw_log"),
+            "source_ip": data.get("source_ip") or data.get("primary_actor_ip"),
+            "destination_ip": data.get("destination_ip"),
+            "suspicious": data.get("suspicious", True),
+            "suspicious_indicator": data.get("suspicious_indicator"),
+            "attack_name": data.get("attack_name") or data.get("detection_rule") or data.get("title"),
+            "brief_description": data.get("brief_description") or data.get("executive_summary") or data.get("description"),
+            "recommended_action": data.get("recommended_action") or (data.get("recommended_actions") or [""])[0],
+            "confidence_score": confidence_score,
+            "mitre_tactic": data.get("mitre_tactic") or data.get("primary_tactic") or top_mitre.get("tactic"),
+            "mitre_technique": data.get("mitre_technique") or top_mitre.get("technique_id"),
+        }
 
     def _get_recommendation(self, category: str, severity: str) -> str:
         """Get specific recommendation based on threat category."""

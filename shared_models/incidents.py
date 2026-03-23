@@ -99,6 +99,19 @@ class Incident(BaseModel):
     executive_summary: str = ""
     technical_summary: str = ""
     recommended_actions: list[str] = Field(default_factory=list)
+
+    # Analyst-mapped fields for UI/JSON export
+    raw_log: str | None = None
+    source_ip: str | None = None
+    destination_ip: str | None = None
+    suspicious: bool = True
+    suspicious_indicator: str | None = None
+    attack_name: str | None = None
+    brief_description: str | None = None
+    recommended_action: str | None = None
+    confidence_score: int = Field(default=1, ge=1, le=10)
+    mitre_tactic: str | None = None
+    mitre_technique: str | None = None
     
     # Timeline
     timeline: list[IncidentTimeline] = Field(default_factory=list)
@@ -155,6 +168,17 @@ class IncidentSummary(BaseModel):
     confidence: float
     primary_tactic: str | None = None
     file_ids: list[UUID] = Field(default_factory=list)
+    raw_log: str | None = None
+    source_ip: str | None = None
+    destination_ip: str | None = None
+    suspicious: bool = True
+    suspicious_indicator: str | None = None
+    attack_name: str | None = None
+    brief_description: str | None = None
+    recommended_action: str | None = None
+    confidence_score: int = 1
+    mitre_tactic: str | None = None
+    mitre_technique: str | None = None
 
 
 

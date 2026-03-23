@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+export const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -35,6 +35,56 @@ export const getFile = async (fileId: string) => {
 // Analysis endpoints
 export const analyzeFile = async (fileId: string) => {
     const response = await axios.post(`http://localhost:8000/api/v1/analyze?file_id=${fileId}`);
+    return response.data;
+};
+
+export const getFileReportUrl = (fileId: string, download = true) => {
+    const flag = download ? 'true' : 'false';
+    return `${API_BASE_URL}/files/${fileId}/report?download=${flag}`;
+};
+
+export const getFileIncidentsJsonUrl = (fileId: string, download = true) => {
+    const flag = download ? 'true' : 'false';
+    return `${API_BASE_URL}/files/${fileId}/incidents-json?download=${flag}`;
+};
+
+export interface GeneratedReport {
+    report_name: string;
+    report_path: string;
+    file_id: string | null;
+    created_at: string;
+    size_bytes: number;
+}
+
+export interface GeneratedReportContent extends GeneratedReport {
+    content: string;
+}
+
+export const listGeneratedReports = async (fileId?: string): Promise<GeneratedReport[]> => {
+    const params = new URLSearchParams();
+    if (fileId) params.append('file_id', fileId);
+    const query = params.toString();
+    const route = `/files/reports${query ? `?${query}` : ''}`;
+    try {
+        const response = await api.get(route);
+        return response.data;
+    } catch (error: any) {
+        if (error?.response?.status === 404) {
+            const fallbackRoute = `/files/reports/${query ? `?${query}` : ''}`;
+            const response = await api.get(fallbackRoute);
+            return response.data;
+        }
+        throw error;
+    }
+};
+
+export const getFileReportContent = async (fileId: string): Promise<GeneratedReportContent> => {
+    const response = await api.get(`/files/${fileId}/report-content`);
+    return response.data;
+};
+
+export const getFileIncidentsJsonContent = async (fileId: string): Promise<any> => {
+    const response = await api.get(`/files/${fileId}/incidents-json?download=false`);
     return response.data;
 };
 

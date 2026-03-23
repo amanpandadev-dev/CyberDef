@@ -155,6 +155,40 @@ class IncidentService:
         ]
         
         # Create incident
+        triage = output.triage
+        raw_log = triage.raw_log if triage and triage.raw_log else self._extract_raw_log_from_chunk(chunk)
+        source_ip = triage.source_ip if triage and triage.source_ip else chunk.actor.src_ip
+        destination_ip = triage.destination_ip if triage and triage.destination_ip else self._extract_destination_ip_from_chunk(chunk)
+        attack_name = (
+            triage.attack_name
+            if triage and triage.attack_name
+            else output.intent.suspected_intent
+            if output.intent and output.intent.suspected_intent
+            else (
+                output.mitre.technique_name
+                if output.mitre
+                else title
+            )
+        )
+        brief_description = (
+            triage.brief_description
+            if triage and triage.brief_description
+            else triage.technical_summary
+            if triage and triage.technical_summary
+            else (
+                output.behavioral.interpretation
+                if output.behavioral and output.behavioral.interpretation
+                else description
+            )
+        )
+        recommended_action = (
+            triage.recommended_action_short
+            if triage and triage.recommended_action_short
+            else triage.recommended_action
+            if triage
+            else "Investigate and validate findings."
+        )
+
         incident = Incident(
             title=title,
             description=description,
@@ -175,6 +209,27 @@ class IncidentService:
             executive_summary=output.triage.executive_summary if output.triage else "",
             technical_summary=output.triage.technical_summary if output.triage else "",
             recommended_actions=[output.triage.recommended_action] if output.triage else [],
+            raw_log=raw_log,
+            source_ip=source_ip,
+            destination_ip=destination_ip,
+            suspicious=triage.suspicious if triage else (bool(output.behavioral.is_suspicious) if output.behavioral else priority != IncidentPriority.INFORMATIONAL),
+            suspicious_indicator=(triage.suspicious_indicator if triage and triage.suspicious_indicator else self._derive_indicator_from_corpus(
+                " ".join(
+                    [
+                        title,
+                        description,
+                        output.intent.suspected_intent if output.intent else "",
+                        output.mitre.technique_name if output.mitre else "",
+                        raw_log or "",
+                    ]
+                )
+            )),
+            attack_name=attack_name,
+            brief_description=brief_description[:260] if brief_description else None,
+            recommended_action=recommended_action,
+            confidence_score=triage.confidence_score if triage else self._confidence_to_score(output.overall_confidence),
+            mitre_tactic=(triage.mitre_tactic if triage and triage.mitre_tactic else (output.mitre.tactic if output.mitre else primary_tactic)),
+            mitre_technique=(triage.mitre_technique if triage and triage.mitre_technique else (output.mitre.technique_id if output.mitre else None)),
             timeline=timeline,
         )
         
@@ -233,6 +288,17 @@ class IncidentService:
             detection_rule=threat.rule_name,
             executive_summary=f"{threat.description} ({threat.match_count} occurrences)",
             recommended_actions=[f"Investigate {threat.category} from {actor}"],
+            raw_log=threat.sample_evidence[0][:300] if threat.sample_evidence else None,
+            source_ip=threat.src_ip,
+            destination_ip=self._extract_destination_ip_from_text(evidence_str),
+            suspicious=priority != IncidentPriority.INFORMATIONAL,
+            suspicious_indicator=self._derive_indicator_from_corpus(" ".join([threat.category, threat.rule_name, evidence_str])),
+            attack_name=threat.rule_name,
+            brief_description=threat.description[:260],
+            recommended_action=f"Investigate {threat.category} from {actor}",
+            confidence_score=self._confidence_to_score(threat.confidence),
+            mitre_tactic=None,
+            mitre_technique=None,
             timeline=[
                 IncidentTimeline(
                     timestamp=threat.first_seen or datetime.utcnow(),
@@ -286,6 +352,19 @@ class IncidentService:
             detection_rule=finding.correlation_rule,
             executive_summary=finding.description,
             recommended_actions=[f"Investigate correlated activity from {finding.src_ip}"],
+            raw_log=str(getattr(finding, "evidence", ""))[:300],
+            source_ip=finding.src_ip,
+            destination_ip=self._extract_destination_ip_from_text(str(getattr(finding, "evidence", ""))),
+            suspicious=priority != IncidentPriority.INFORMATIONAL,
+            suspicious_indicator=self._derive_indicator_from_corpus(
+                " ".join([finding.description or "", finding.correlation_rule or "", str(getattr(finding, "evidence", ""))])
+            ),
+            attack_name=finding.correlation_rule,
+            brief_description=finding.description[:260] if finding.description else None,
+            recommended_action=f"Investigate correlated activity from {finding.src_ip}",
+            confidence_score=self._confidence_to_score(finding.confidence),
+            mitre_tactic=None,
+            mitre_technique=None,
             timeline=[
                 IncidentTimeline(
                     timestamp=datetime.utcnow(),
@@ -400,6 +479,17 @@ class IncidentService:
             mitre_techniques=mitre_refs,
             primary_tactic=list(tactics)[0] if len(tactics) == 1 else None,
             overall_confidence=avg_confidence,
+            raw_log=self._extract_raw_log_from_chunk(first_chunk),
+            source_ip=first_chunk.actor.src_ip,
+            destination_ip=self._extract_destination_ip_from_chunk(first_chunk),
+            suspicious=highest_priority != IncidentPriority.INFORMATIONAL,
+            suspicious_indicator=self._derive_indicator_from_corpus(" ".join([title, first_output.behavioral.interpretation if first_output.behavioral else ""])),
+            attack_name=first_output.intent.suspected_intent if first_output.intent else title,
+            brief_description=first_output.behavioral.interpretation[:260] if first_output.behavioral else title,
+            recommended_action=first_output.triage.recommended_action if first_output.triage else "Investigate correlated sequence.",
+            confidence_score=self._confidence_to_score(avg_confidence),
+            mitre_tactic=first_output.mitre.tactic if first_output.mitre else (list(tactics)[0] if len(tactics) == 1 else None),
+            mitre_technique=first_output.mitre.technique_id if first_output.mitre else None,
             timeline=timeline,
         )
         
@@ -456,6 +546,14 @@ class IncidentService:
         # Convert to summaries
         summaries = []
         for incident in incidents[:limit]:
+            raw_log = incident.raw_log or self._extract_raw_log(incident)
+            suspicious_indicator = incident.suspicious_indicator or self._derive_suspicious_indicator(incident)
+            confidence_score = incident.confidence_score or self._confidence_to_score(incident.overall_confidence)
+            mitre_technique = incident.mitre_technique or (
+                incident.mitre_techniques[0].technique_id
+                if incident.mitre_techniques
+                else None
+            )
             summaries.append(IncidentSummary(
                 incident_id=incident.incident_id,
                 title=incident.title,
@@ -467,6 +565,17 @@ class IncidentService:
                 confidence=incident.overall_confidence,
                 primary_tactic=incident.primary_tactic,
                 file_ids=incident.file_ids,
+                raw_log=raw_log,
+                source_ip=incident.source_ip or incident.primary_actor_ip,
+                destination_ip=incident.destination_ip or (incident.affected_hosts[0] if incident.affected_hosts else None),
+                suspicious=incident.suspicious if incident.suspicious is not None else incident.priority != IncidentPriority.INFORMATIONAL,
+                suspicious_indicator=suspicious_indicator,
+                attack_name=incident.attack_name or incident.detection_rule or incident.title,
+                brief_description=incident.brief_description or incident.executive_summary or incident.description[:220],
+                recommended_action=incident.recommended_action or (incident.recommended_actions[0] if incident.recommended_actions else "Investigate context and validate indicators."),
+                confidence_score=confidence_score,
+                mitre_tactic=incident.mitre_tactic or incident.primary_tactic,
+                mitre_technique=mitre_technique,
             ))
         
         return summaries
@@ -512,6 +621,16 @@ class IncidentService:
         return IncidentReport(
             incident=incident,
         )
+
+    def list_incidents_for_file(self, file_id: str) -> list[Incident]:
+        """Return incidents linked to a specific file_id."""
+        self._reload_if_needed()
+        matches: list[Incident] = []
+        for incident in self._incidents.values():
+            file_ids = [str(fid) for fid in (incident.file_ids or [])]
+            if file_id in file_ids:
+                matches.append(incident)
+        return matches
     
     def _generate_title(self, output: AgentOutput, chunk: BehavioralChunk) -> str:
         """Generate incident title."""
@@ -579,6 +698,92 @@ class IncidentService:
             IncidentPriority.INFORMATIONAL: 1,
         }
         return values.get(priority, 0)
+
+    def _confidence_to_score(self, confidence: float) -> int:
+        """Convert 0-1 confidence to 1-10 score."""
+        return max(1, min(10, int(round((confidence or 0.0) * 10))))
+
+    def _extract_raw_log_from_chunk(self, chunk: BehavioralChunk) -> str | None:
+        """Extract a raw-log sample from chunk events."""
+        events = getattr(chunk, "events", []) or []
+        if not events:
+            return None
+        event = events[0]
+        if isinstance(event, dict):
+            for key in ("raw_log", "logevent", "message", "raw_message", "request", "uri"):
+                value = event.get(key)
+                if value:
+                    return str(value)[:300]
+            raw_data = event.get("raw_data")
+            if isinstance(raw_data, dict):
+                for key in ("logevent", "message", "request", "uri"):
+                    value = raw_data.get(key)
+                    if value:
+                        return str(value)[:300]
+            if raw_data:
+                return str(raw_data)[:300]
+        return str(event)[:300]
+
+    def _extract_destination_ip_from_chunk(self, chunk: BehavioralChunk) -> str | None:
+        """Extract destination ip or host from chunk."""
+        targets = getattr(chunk, "targets", None)
+        if targets:
+            dst_ips = getattr(targets, "dst_ips", None) or []
+            if dst_ips:
+                return str(dst_ips[0])
+            dst_hosts = getattr(targets, "dst_hosts", None) or []
+            if dst_hosts:
+                return str(dst_hosts[0])
+        return None
+
+    def _extract_destination_ip_from_text(self, value: str) -> str | None:
+        """Best-effort destination IP extraction from free text."""
+        import re
+
+        if not value:
+            return None
+        ip_matches = re.findall(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", value)
+        if len(ip_matches) >= 2:
+            return ip_matches[1]
+        return None
+
+    def _derive_indicator_from_corpus(self, corpus: str) -> str:
+        """Derive suspicious indicator keyword from a text corpus."""
+        text = (corpus or "").lower()
+        if "url" in text or "uri" in text or "path" in text:
+            return "url"
+        if "referer" in text or "referrer" in text:
+            return "referer"
+        if "user agent" in text or "user_agent" in text:
+            return "user_agent"
+        if "payload" in text or "injection" in text or "command" in text:
+            return "payload"
+        if "ip" in text or "scanner" in text or "recon" in text:
+            return "source ip"
+        return "null"
+
+    def _extract_raw_log(self, incident: Incident) -> str | None:
+        """Extract a compact raw-log sample for incident list view."""
+        description = incident.description or ""
+        marker = "Evidence:"
+        if marker in description:
+            sample = description.split(marker, 1)[1].strip()
+            return sample[:220] if sample else None
+        if incident.timeline:
+            return incident.timeline[0].description[:220]
+        return description[:220] if description else None
+
+    def _derive_suspicious_indicator(self, incident: Incident) -> str | None:
+        """Derive suspicious indicator keyword for UI display."""
+        corpus = " ".join(
+            [
+                incident.title or "",
+                incident.description or "",
+                incident.detection_rule or "",
+                incident.primary_tactic or "",
+            ]
+        )
+        return self._derive_indicator_from_corpus(corpus)
     
     def get_stats(self) -> dict[str, Any]:
         """Get incident statistics."""

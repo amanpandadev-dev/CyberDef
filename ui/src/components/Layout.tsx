@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     Shield,
@@ -6,16 +6,17 @@ import {
     AlertTriangle,
     BarChart3,
     Settings,
-    Menu,
-    X,
     Activity,
     Split,
     Target,
     CheckCircle2,
     Loader2,
-    TrendingUp
+    Plus,
+    Download,
+    List,
 } from 'lucide-react';
 import { useAnalysis } from '../context/AnalysisContext';
+import HoverHint from './HoverHint';
 
 interface LayoutProps {
     children: ReactNode;
@@ -23,117 +24,136 @@ interface LayoutProps {
 
 const navItems = [
     { path: '/', label: 'Dashboard', icon: BarChart3 },
+    { path: '/log-events', label: 'Log Events', icon: List },
     { path: '/upload', label: 'File Upload', icon: Upload },
     { path: '/analysis', label: 'Analysis', icon: Activity },
     { path: '/pipeline', label: 'Pipeline', icon: Split },
-    { path: '/rollups', label: 'Rollups', icon: TrendingUp },
     { path: '/incidents', label: 'Incidents', icon: AlertTriangle },
-    { path: '/mitre', label: 'MITRE Mapping', icon: Target },
+    { path: '/mitre', label: 'MITRE', icon: Target },
     { path: '/validation', label: 'Validation', icon: CheckCircle2 },
 ];
 
 export default function Layout({ children }: LayoutProps) {
     const location = useLocation();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
     const { state: analysisState, isAnalyzing } = useAnalysis();
 
+    const activeItem = useMemo(
+        () => navItems.find((item) => location.pathname === item.path),
+        [location.pathname],
+    );
+
     return (
-        <div className="min-h-screen flex">
-            {/* Sidebar */}
-            <aside
-                className={`${sidebarOpen ? 'w-64' : 'w-20'
-                    } bg-surface-dark border-r border-white/10 transition-all duration-300 flex flex-col`}
-            >
-                {/* Logo */}
-                <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-lg flex items-center justify-center">
-                            <Shield className="w-6 h-6 text-white" />
+        <div className="min-h-screen">
+            <HoverHint />
+            <header className="sticky top-0 z-40 h-[60px] border-b border-slate-200 bg-white/90 backdrop-blur-md">
+                <div className="mx-auto flex h-full max-w-[1400px] items-center justify-between gap-3 px-4 sm:px-6">
+                    <Link
+                        to="/"
+                        className="help-hover flex items-center gap-2 rounded-xl px-2 py-1.5 transition-all"
+                        data-help="Go to your planning dashboard overview"
+                    >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-white shadow-md shadow-primary-600/25">
+                            <Shield className="h-4 w-4" />
                         </div>
-                        {sidebarOpen && (
-                            <div>
-                                <h1 className="font-bold text-lg gradient-text">Cyberdef 1.0</h1>
-                                <p className="text-xs text-gray-500">AI Threat Intelligence</p>
-                            </div>
-                        )}
+                        <div className="hidden sm:block">
+                            <p className="text-sm font-bold text-slate-900">Cyberdef 1.0</p>
+                            <p className="text-[11px] text-slate-500">AI Planning Workspace</p>
+                        </div>
+                    </Link>
+
+                    <div className="flex-1" />
+
+                    <div className="flex items-center gap-2">
+                        <Link
+                            to="/upload"
+                            className="help-hover btn btn-secondary px-3 py-2 text-xs"
+                            data-help="Upload a CSV logevent file to begin analysis"
+                        >
+                            <Plus className="h-4 w-4" />
+                            New
+                        </Link>
+                        <Link
+                            to="/analysis"
+                            className="help-hover btn btn-primary px-3 py-2 text-xs"
+                            data-help="Open analysis results and generated markdown reports"
+                        >
+                            <Download className="h-4 w-4" />
+                            Export
+                        </Link>
+                        <Link
+                            to="/settings"
+                            className="help-hover rounded-lg p-2 text-slate-500 transition-all hover:bg-slate-100"
+                            data-help="Open system configuration"
+                        >
+                            <Settings className="h-4 w-4" />
+                        </Link>
                     </div>
-                    <button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    >
-                        {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                    </button>
                 </div>
+            </header>
 
-                {/* Analysis Indicator - Shows when analysis is running */}
-                {isAnalyzing && (
-                    <Link
-                        to="/analysis"
-                        className="mx-4 mt-4 p-3 bg-primary-600/20 border border-primary-500/30 rounded-lg hover:bg-primary-600/30 transition-colors"
-                    >
-                        <div className="flex items-center gap-3">
-                            <Loader2 className="w-5 h-5 text-primary-400 animate-spin" />
-                            {sidebarOpen && (
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-primary-300 truncate">
-                                        Analyzing...
-                                    </p>
-                                    <p className="text-xs text-gray-400 truncate">
-                                        {analysisState.fileName || 'File'}
-                                    </p>
-                                    <div className="mt-1 h-1 bg-surface-dark rounded-full overflow-hidden">
-                                        <div
-                                            className="h-full bg-primary-500 transition-all duration-300"
-                                            style={{ width: `${analysisState.progress.percent}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
+            {isAnalyzing && (
+                <div className="border-b border-indigo-100 bg-indigo-50/80">
+                    <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-2 text-sm sm:px-6">
+                        <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
+                        <span className="font-semibold text-primary-700">Analyzing:</span>
+                        <span className="truncate text-primary-700">{analysisState.fileName || 'Selected file'}</span>
+                        <div className="ml-auto h-1.5 w-40 overflow-hidden rounded-full bg-indigo-100">
+                            <div
+                                className="h-full rounded-full bg-primary-600 transition-all duration-300"
+                                style={{ width: `${analysisState.progress.percent}%` }}
+                            />
                         </div>
-                    </Link>
-                )}
-
-                {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-2">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = location.pathname === item.path;
-
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/25'
-                                    : 'text-gray-400 hover:text-white hover:bg-white/10'
-                                    }`}
-                            >
-                                <Icon className="w-5 h-5 flex-shrink-0" />
-                                {sidebarOpen && <span className="font-medium">{item.label}</span>}
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                {/* Footer */}
-                <div className="p-4 border-t border-white/10">
-                    <Link
-                        to="/settings"
-                        className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-all duration-200"
-                    >
-                        <Settings className="w-5 h-5" />
-                        {sidebarOpen && <span className="font-medium">Settings</span>}
-                    </Link>
+                    </div>
                 </div>
-            </aside>
+            )}
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto">
-                <div className="p-8">
-                    {children}
+            <main className="px-4 py-5 sm:px-6">
+                <div className="mx-auto flex w-full max-w-[1700px] gap-6">
+                    <aside className="hidden lg:block w-[300px] flex-shrink-0">
+                        <div
+                            className="sticky top-[72px] h-[calc(100vh-88px)] overflow-hidden rounded-2xl border p-3"
+                            style={{
+                                background: 'var(--bg-panel)',
+                                borderColor: 'var(--border-soft)',
+                                boxShadow: 'var(--shadow-soft)',
+                            }}
+                        >
+                            <p className="px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-slate-500">
+                                Navigation
+                            </p>
+                            <nav className="mt-1 h-[calc(100%-42px)] space-y-1 overflow-y-auto pr-1">
+                                {navItems.map((item) => {
+                                    const Icon = item.icon;
+                                    const isActive = location.pathname === item.path;
+                                    return (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            className={`help-hover flex items-center gap-2 rounded-lg px-3 py-2.5 text-base font-semibold transition-all duration-200 ${
+                                                isActive
+                                                    ? 'bg-primary-600 text-white shadow-md shadow-primary-600/20'
+                                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                            }`}
+                                            data-help={`Navigate to ${item.label}`}
+                                        >
+                                            <Icon className="h-4 w-4" />
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+                    </aside>
+
+                    <div className="min-w-0 flex-1">
+                        <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+                            <span className="font-semibold text-slate-700">Current:</span>
+                            <span>{activeItem?.label ?? 'Workspace'}</span>
+                        </div>
+                        <div className="space-y-6">{children}</div>
+                    </div>
                 </div>
             </main>
         </div>
     );
 }
-

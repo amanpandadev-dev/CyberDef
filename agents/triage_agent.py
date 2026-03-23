@@ -63,7 +63,18 @@ Respond with ONLY this JSON format:
     "confidence": <0.0 to 1.0>,
     "executive_summary": "<one sentence for executives - no technical jargon>",
     "technical_summary": "<2-3 sentences for SOC analysts with specifics>",
-    "enrichment_suggestions": ["<data source 1>", "<data source 2>"]
+    "enrichment_suggestions": ["<data source 1>", "<data source 2>"],
+    "raw_log": "<representative raw event or null>",
+    "source_ip": "<source IP or null>",
+    "destination_ip": "<destination IP/host or null>",
+    "suspicious": <true or false>,
+    "suspicious_indicator": "<url|referer|user_agent|payload|source ip|null>",
+    "attack_name": "<attack/pattern label>",
+    "brief_description": "<one-line analyst summary>",
+    "recommended_action_short": "<short action phrase>",
+    "confidence_score": <1 to 10>,
+    "mitre_tactic": "<MITRE tactic or null>",
+    "mitre_technique": "<MITRE technique ID or null>"
 }}
 
 Guidelines:
@@ -71,7 +82,9 @@ Guidelines:
 - Recommended action should be specific and actionable
 - Executive summary should focus on business impact
 - Technical summary should include relevant technical details
-- Suggest data sources that would help confirm/deny the threat"""
+- Suggest data sources that would help confirm/deny the threat
+- If an extracted field is not available, use null or "null"
+- confidence_score must align with confidence (0.0-1.0 mapped to 1-10)"""
         
         return prompt
     
@@ -84,5 +97,16 @@ Guidelines:
     "confidence": "float - 0.0 to 1.0",
     "executive_summary": "string - non-technical summary",
     "technical_summary": "string - SOC analyst summary",
-    "enrichment_suggestions": ["array of data source suggestions"]
+    "enrichment_suggestions": ["array of data source suggestions"],
+    "raw_log": "string|null - representative log line",
+    "source_ip": "string|null",
+    "destination_ip": "string|null",
+    "suspicious": "boolean",
+    "suspicious_indicator": "string - url|referer|user_agent|payload|source ip|null",
+    "attack_name": "string|null",
+    "brief_description": "string|null",
+    "recommended_action_short": "string|null",
+    "confidence_score": "integer 1-10",
+    "mitre_tactic": "string|null",
+    "mitre_technique": "string|null"
 }"""

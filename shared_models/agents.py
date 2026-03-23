@@ -206,6 +206,19 @@ class TriageResult(BaseAgentOutput):
         description="Suggested data sources for further investigation"
     )
 
+    # Structured incident mapping fields requested by UI
+    raw_log: str | None = Field(default=None, description="Representative raw log line")
+    source_ip: str | None = Field(default=None, description="Source IP")
+    destination_ip: str | None = Field(default=None, description="Destination IP/host")
+    suspicious: bool = Field(default=True, description="Whether behavior is suspicious")
+    suspicious_indicator: str = Field(default="null", description="url|referer|user_agent|payload|source ip|null")
+    attack_name: str | None = Field(default=None, description="Attack or pattern name")
+    brief_description: str | None = Field(default=None, description="Short analyst-readable description")
+    recommended_action_short: str | None = Field(default=None, description="Primary response action")
+    confidence_score: int = Field(default=1, ge=1, le=10, description="Confidence score from 1 to 10")
+    mitre_tactic: str | None = Field(default=None, description="MITRE ATT&CK tactic")
+    mitre_technique: str | None = Field(default=None, description="MITRE technique ID")
+
 
 class AgentOutput(BaseModel):
     """

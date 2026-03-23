@@ -14,6 +14,7 @@ import {
     Database
 } from 'lucide-react';
 import { getIncident, updateIncident, getFiles } from '../api';
+import { formatISTDateTime } from '../utils/datetime';
 
 interface Incident {
     incident_id: string;
@@ -39,11 +40,23 @@ interface Incident {
     executive_summary: string;
     technical_summary: string;
     recommended_actions: string[];
+    detection_rule?: string | null;
     timeline: Array<{
         timestamp: string;
         event_type: string;
         description: string;
     }>;
+    raw_log?: string | null;
+    source_ip?: string | null;
+    destination_ip?: string | null;
+    suspicious?: boolean;
+    suspicious_indicator?: string | null;
+    attack_name?: string | null;
+    brief_description?: string | null;
+    recommended_action?: string | null;
+    confidence_score?: number;
+    mitre_tactic?: string | null;
+    mitre_technique?: string | null;
 }
 
 interface FileInfo {
@@ -106,7 +119,7 @@ export default function IncidentDetail() {
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleString();
+        return formatISTDateTime(dateStr);
     };
 
     if (loading) {
@@ -126,6 +139,18 @@ export default function IncidentDetail() {
         );
     }
 
+    const confidenceScore = incident.confidence_score ?? Math.max(1, Math.min(10, Math.round((incident.overall_confidence || 0) * 10)));
+    const attackName = incident.attack_name || incident.detection_rule || incident.title;
+    const briefDescription = incident.brief_description || incident.executive_summary || incident.description;
+    const recommendedAction = incident.recommended_action || incident.recommended_actions?.[0] || 'Investigate context and validate indicators.';
+    const mitreTactic = incident.mitre_tactic || incident.primary_tactic || 'N/A';
+    const mitreTechnique = incident.mitre_technique || incident.mitre_techniques?.[0]?.technique_id || 'N/A';
+    const suspiciousIndicator = incident.suspicious_indicator || 'null';
+    const isSuspicious = incident.suspicious ?? incident.priority !== 'informational';
+    const sourceIp = incident.source_ip || incident.primary_actor_ip || 'N/A';
+    const destinationIp = incident.destination_ip || incident.affected_hosts?.[0] || 'N/A';
+    const rawLog = incident.raw_log || incident.description || 'N/A';
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -133,7 +158,7 @@ export default function IncidentDetail() {
                 <div>
                     <Link
                         to="/incidents"
-                        className="flex items-center gap-2 text-gray-400 hover:text-white mb-4 transition-colors"
+                        className="flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4 transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Back to Incidents
@@ -183,6 +208,33 @@ export default function IncidentDetail() {
                         className={`h-full ${priorityColors[incident.priority]} transition-all duration-500`}
                         style={{ width: `${incident.overall_confidence * 100}%` }}
                     />
+                </div>
+            </div>
+
+            <div className="card">
+                <div className="card-header">
+                    <h3 className="font-semibold flex items-center gap-2">
+                        <Shield className="w-5 h-5 text-primary-400" />
+                        Incident Field Mapping
+                    </h3>
+                </div>
+                <div className="card-body">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Source_IP: </span><span className="font-medium text-slate-800">{sourceIp}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Destination_IP: </span><span className="font-medium text-slate-800">{destinationIp}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Suspicious: </span><span className={`font-semibold ${isSuspicious ? 'text-red-600' : 'text-emerald-600'}`}>{isSuspicious ? 'Yes' : 'No'}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Suspicious Indicator: </span><span className="font-medium text-slate-800">{suspiciousIndicator}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Attack Name: </span><span className="font-medium text-slate-800">{attackName}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Confidence (1-10): </span><span className="font-semibold text-indigo-600">{confidenceScore}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Mitre Tactic: </span><span className="font-medium text-slate-800">{mitreTactic}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3"><span className="text-slate-500">Mitre Technique: </span><span className="font-medium text-slate-800">{mitreTechnique}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 md:col-span-2"><span className="text-slate-500">Brief Description: </span><span className="font-medium text-slate-800">{briefDescription}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 md:col-span-2"><span className="text-slate-500">Recommended Action: </span><span className="font-medium text-slate-800">{recommendedAction}</span></div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 md:col-span-2">
+                            <p className="mb-1 text-slate-500">Raw Log</p>
+                            <pre className="whitespace-pre-wrap break-words text-xs text-slate-700">{rawLog}</pre>
+                        </div>
+                    </div>
                 </div>
             </div>
 

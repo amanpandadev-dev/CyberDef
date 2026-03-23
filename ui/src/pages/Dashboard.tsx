@@ -1,526 +1,485 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    AlertTriangle,
-    Shield,
-    FileText,
-    Activity,
-    TrendingUp,
-    Clock,
-    Target,
-    Upload,
-    AlertCircle,
-    Info,
-    Zap
-} from 'lucide-react';
-import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    Line,
+    LineChart,
+    Pie,
+    PieChart,
+    ResponsiveContainer,
+    Tooltip,
     XAxis,
     YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    LineChart,
-    Line,
-    BarChart,
-    Bar
 } from 'recharts';
-import { healthCheck, getIncidentStats, getFiles, getIncidents } from '../api';
+import { getFiles, getIncidents, healthCheck, listGeneratedReports, type GeneratedReport } from '../api';
+import { formatISTDate, formatISTDateTime, toISTDateKey } from '../utils/datetime';
 
-interface Stats {
-    total_incidents: number;
-    by_status: Record<string, number>;
-    by_priority: Record<string, number>;
+interface FileData {
+    file_id: string;
+    original_filename: string;
+    filename?: string;
+    status?: string;
+    uploaded_at: string;
+    row_count?: number | null;
 }
 
-const PRIORITY_COLORS = {
+interface IncidentData {
+    incident_id: string;
+    title: string;
+    status: string;
+    priority: string;
+    first_seen: string;
+    confidence: number;
+    primary_tactic?: string | null;
+    mitre_tactic?: string | null;
+    mitre_technique?: string | null;
+    attack_name?: string | null;
+    file_ids?: string[];
+}
+
+const PRIORITY_COLORS: Record<string, string> = {
     critical: '#dc2626',
     high: '#ea580c',
     medium: '#f59e0b',
-    low: '#22c55e',
+    low: '#0ca678',
     informational: '#3b82f6',
 };
 
-const SEVERITY_COLORS = {
-    critical: '#dc2626',
-    high: '#ea580c',
-    medium: '#f59e0b',
-    low: '#22c55e',
-    info: '#3b82f6',
-};
+const normalizeValue = (value?: string | null) => (value || '').trim().toLowerCase();
+
+const toStem = (name?: string) =>
+    normalizeValue(name)
+        .replace(/\.[^./\\]+$/, '')
+        .replace(/\s+/g, '_');
 
 export default function Dashboard() {
     const [health, setHealth] = useState<any>(null);
-    const [stats, setStats] = useState<Stats | null>(null);
-    const [files, setFiles] = useState<any[]>([]);
-    const [incidents, setIncidents] = useState<any[]>([]);
+    const [files, setFiles] = useState<FileData[]>([]);
+    const [incidents, setIncidents] = useState<IncidentData[]>([]);
+    const [reports, setReports] = useState<GeneratedReport[]>([]);
+    const [activeTab, setActiveTab] = useState('all');
+    const [openTabs, setOpenTabs] = useState<string[]>([]);
+    const [fileSelectorValue, setFileSelectorValue] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                const [healthData, statsData, filesData, incidentsData] = await Promise.all([
-                    healthCheck().catch(() => null),
-                    getIncidentStats().catch(() => ({ total_incidents: 0, by_status: {}, by_priority: {} })),
-                    getFiles().catch(() => []),
-                    getIncidents().catch(() => [])
-                ]);
-                setHealth(healthData);
-                setStats(statsData);
-                setFiles(filesData);
-                setIncidents(incidentsData);
-            } catch (error) {
-                console.error('Failed to fetch dashboard data:', error);
-            }
+            const [healthData, fileData, incidentData, reportData] = await Promise.all([
+                healthCheck().catch(() => null),
+                getFiles().catch(() => []),
+                getIncidents().catch(() => []),
+                listGeneratedReports().catch(() => []),
+            ]);
+            setHealth(healthData);
+            setFiles(fileData || []);
+            setIncidents(incidentData || []);
+            setReports(reportData || []);
         };
 
         fetchData();
-        // Auto-refresh every 30 seconds
         const interval = setInterval(fetchData, 30000);
         return () => clearInterval(interval);
     }, []);
 
-    // Process data for charts
-    const priorityData = stats?.by_priority
-        ? Object.entries(stats.by_priority).map(([name, value]) => ({
-            name: name.charAt(0).toUpperCase() + name.slice(1),
-            value,
-            color: PRIORITY_COLORS[name as keyof typeof PRIORITY_COLORS] || '#6b7280',
-        }))
-        : [];
+    useEffect(() => {
+        if (activeTab === 'all') return;
+        if (!files.some((file) => file.file_id === activeTab)) setActiveTab('all');
+    }, [activeTab, files]);
 
-    // Compute severity distribution from incidents
-    const severityData = (() => {
-        const counts: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-        incidents.forEach((inc) => {
-            const severity = (inc.severity || 'medium').toLowerCase();
-            if (counts[severity] !== undefined) {
-                counts[severity] += 1;
-            } else {
-                counts.medium += 1;
-            }
-        });
-        return Object.entries(counts)
-            .filter(([_, value]) => value > 0)
-            .map(([name, value]) => ({
-                name: name.charAt(0).toUpperCase() + name.slice(1),
+    const filteredIncidents = useMemo(() => {
+        if (activeTab === 'all') return incidents;
+        return incidents.filter((incident) => (incident.file_ids || []).map(String).includes(activeTab));
+    }, [activeTab, incidents]);
+
+    const stats = useMemo(() => {
+        return filteredIncidents.reduce(
+            (acc, incident) => {
+                acc.total += 1;
+                if (incident.priority in acc) acc[incident.priority as keyof typeof acc] += 1;
+                return acc;
+            },
+            { total: 0, critical: 0, high: 0, medium: 0, low: 0, informational: 0 },
+        );
+    }, [filteredIncidents]);
+
+    const priorityData = useMemo(() => {
+        return Object.entries(stats)
+            .filter(([key, value]) => key !== 'total' && value > 0)
+            .map(([key, value]) => ({
+                name: key.charAt(0).toUpperCase() + key.slice(1),
                 value,
-                color: SEVERITY_COLORS[name as keyof typeof SEVERITY_COLORS] || '#6b7280',
+                color: PRIORITY_COLORS[key] || '#94a3b8',
             }));
-    })();
+    }, [stats]);
 
-    // Compute Timeline Data (incidents by date)
-    const timelineData = incidents.reduce((acc: any[], incident) => {
-        const date = new Date(incident.first_seen).toLocaleDateString();
-        const existing = acc.find(item => item.date === date);
-        if (existing) {
-            existing.incidents += 1;
-        } else {
-            acc.push({ date, incidents: 1 });
-        }
-        return acc;
-    }, []).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    // Compute unique tactics count
-    const uniqueTactics = new Set(incidents.map(i => i.primary_tactic).filter(Boolean)).size;
-
-    // MITRE tactics distribution
-    const mitreData = (() => {
-        const counts: Record<string, number> = {};
-        incidents.forEach((inc) => {
-            if (inc.primary_tactic) {
-                counts[inc.primary_tactic] = (counts[inc.primary_tactic] || 0) + 1;
+    const timelineData = useMemo(() => {
+        const grouped: Record<string, { count: number; sortTs: number }> = {};
+        filteredIncidents.forEach((incident) => {
+            const date = new Date(incident.first_seen);
+            const key = toISTDateKey(date);
+            if (!grouped[key]) {
+                grouped[key] = { count: 0, sortTs: date.getTime() };
             }
+            grouped[key].count += 1;
         });
-        return Object.entries(counts)
+        return Object.entries(grouped)
+            .map(([date, bucket]) => ({ date, incidents: bucket.count, sortTs: bucket.sortTs }))
+            .sort((a, b) => a.sortTs - b.sortTs);
+    }, [filteredIncidents]);
+
+    const tacticData = useMemo(() => {
+        const grouped: Record<string, number> = {};
+        filteredIncidents.forEach((incident) => {
+            const tactic = incident.mitre_tactic || incident.primary_tactic;
+            if (!tactic) return;
+            grouped[tactic] = (grouped[tactic] || 0) + 1;
+        });
+        return Object.entries(grouped)
             .map(([name, value]) => ({ name, value }))
             .sort((a, b) => b.value - a.value)
-            .slice(0, 8); // Top 8 tactics
-    })();
+            .slice(0, 8);
+    }, [filteredIncidents]);
+
+    const mitreIncidentRows = useMemo(
+        () =>
+            filteredIncidents
+                .filter((incident) => incident.mitre_tactic || incident.primary_tactic || incident.mitre_technique)
+                .slice(0, 8),
+        [filteredIncidents],
+    );
+
+    const sortedFiles = useMemo(
+        () =>
+            [...files].sort(
+                (a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime(),
+            ),
+        [files],
+    );
+
+    const fileTimelineData = useMemo(() => {
+        const grouped: Record<string, { count: number; sortTs: number }> = {};
+        sortedFiles.forEach((file) => {
+            const date = new Date(file.uploaded_at);
+            const key = formatISTDate(date);
+            if (!grouped[key]) {
+                grouped[key] = { count: 0, sortTs: date.getTime() };
+            }
+            grouped[key].count += 1;
+        });
+
+        return Object.entries(grouped)
+            .map(([date, bucket]) => ({ date, files: bucket.count, sortTs: bucket.sortTs }))
+            .sort((a, b) => a.sortTs - b.sortTs);
+    }, [sortedFiles]);
+
+    const fileReportStatus = useMemo(() => {
+        const reportIndex = reports.map((report) => ({
+            fileId: normalizeValue(report.file_id),
+            reportName: normalizeValue(report.report_name),
+            reportPath: normalizeValue(report.report_path),
+        }));
+
+        const statusMap: Record<string, boolean> = {};
+        files.forEach((file) => {
+            const normalizedFileId = normalizeValue(file.file_id);
+            const fileStem = toStem(file.filename || file.original_filename);
+            const isProcessed = normalizeValue(file.status) === 'processed';
+
+            statusMap[file.file_id] = isProcessed || reportIndex.some((report) => {
+                if (report.fileId && report.fileId === normalizedFileId) return true;
+                if (normalizedFileId && (report.reportName.includes(normalizedFileId) || report.reportPath.includes(normalizedFileId))) {
+                    return true;
+                }
+                if (fileStem && report.reportName.includes(fileStem)) return true;
+                return false;
+            });
+        });
+
+        return statusMap;
+    }, [files, reports]);
+
+    const readyReportCount = useMemo(
+        () => files.filter((file) => fileReportStatus[file.file_id]).length,
+        [fileReportStatus, files],
+    );
+
+    const openTabFiles = useMemo(
+        () => openTabs.map((fileId) => sortedFiles.find((file) => file.file_id === fileId)).filter(Boolean) as FileData[],
+        [openTabs, sortedFiles],
+    );
+
+    const openLogeventTab = (fileId: string) => {
+        if (!fileId) return;
+        setOpenTabs((prev) => (prev.includes(fileId) ? prev : [...prev, fileId]));
+        setActiveTab(fileId);
+        setFileSelectorValue('');
+    };
+
+    const closeLogeventTab = (fileId: string) => {
+        setOpenTabs((prev) => {
+            const next = prev.filter((id) => id !== fileId);
+            if (activeTab === fileId) {
+                setActiveTab(next.length ? next[next.length - 1] : 'all');
+            }
+            return next;
+        });
+    };
+
+    useEffect(() => {
+        setOpenTabs((prev) => prev.filter((tabId) => files.some((file) => file.file_id === tabId)));
+    }, [files]);
 
     return (
-        <div className="space-y-8">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold">Security Dashboard</h1>
-                    <p className="text-gray-400 mt-1">AI-powered threat intelligence at a glance</p>
+        <div className="space-y-6 pb-10">
+            <div className="card glass-panel">
+                <div className="card-body flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-extrabold">AI Planning Dashboard</h1>
+                        <p className="mt-1 text-sm text-slate-600">
+                            Linear style dashboard with per-logevent tabs and report integration.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Link to="/analysis" className="btn btn-primary pulse-save help-hover" data-help="Open analysis and markdown reports">
+                            Open Analysis
+                        </Link>
+                    </div>
                 </div>
-                <div className="flex items-center gap-4">
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${health?.status === 'healthy'
-                        ? 'bg-green-500/20 text-green-400'
-                        : 'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                        <div className={`w-2 h-2 rounded-full ${health?.status === 'healthy' ? 'bg-green-400' : 'bg-yellow-400'
-                            } animate-pulse`} />
-                        <span className="text-sm font-medium">
-                            {health?.status === 'healthy' ? 'System Healthy' : 'Degraded'}
+            </div>
+
+            <div className="card">
+                <div className="card-body space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Logevent Tabs</p>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${health?.status === 'healthy' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {health?.status === 'healthy' ? 'System Healthy' : 'System Degraded'}
                         </span>
                     </div>
-                </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                <Link to="/incidents" className="stat-card hover:border-primary-500/50 transition-colors cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">Total Incidents</p>
-                            <p className="text-3xl font-bold mt-1">{stats?.total_incidents || 0}</p>
+                    <div className="flex flex-col gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                onClick={() => setActiveTab('all')}
+                                className={`help-hover min-w-max rounded-lg border px-4 py-2 text-sm font-semibold transition-all duration-200 ${activeTab === 'all' ? 'border-primary-600 bg-primary-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+                                data-help="View dashboard stats for all logevents"
+                            >
+                                All Logevents
+                            </button>
+                            <select
+                                value={fileSelectorValue}
+                                onChange={(event) => {
+                                    const fileId = event.target.value;
+                                    setFileSelectorValue(fileId);
+                                    if (fileId) openLogeventTab(fileId);
+                                }}
+                                className="help-hover rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-all duration-200"
+                                data-help="Open a logevent as a closable tab"
+                            >
+                                <option value="">Open Log File Tab...</option>
+                                {sortedFiles.map((file) => (
+                                    <option key={file.file_id} value={file.file_id}>
+                                        {(file.filename || file.original_filename) + ' | ' + formatISTDateTime(file.uploaded_at)}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                        <div className="w-12 h-12 bg-primary-500/20 rounded-xl flex items-center justify-center">
-                            <AlertTriangle className="w-6 h-6 text-primary-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <TrendingUp className="w-4 h-4 text-green-400" />
-                        <span className="text-gray-400">Click to view all →</span>
-                    </div>
-                </Link>
-
-                <Link to="/incidents?priority=critical" className="stat-card border-red-500/30 hover:border-red-500/70 transition-colors cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">Critical</p>
-                            <p className="text-3xl font-bold mt-1 text-red-400">
-                                {stats?.by_priority?.critical || 0}
-                            </p>
-                        </div>
-                        <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-                            <AlertCircle className="w-6 h-6 text-red-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-400">Immediate action →</span>
-                    </div>
-                </Link>
-
-                <Link to="/incidents?priority=high" className="stat-card border-orange-500/30 hover:border-orange-500/70 transition-colors cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">High</p>
-                            <p className="text-3xl font-bold mt-1 text-orange-400">
-                                {stats?.by_priority?.high || 0}
-                            </p>
-                        </div>
-                        <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
-                            <Zap className="w-6 h-6 text-orange-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <span className="text-gray-400">Needs attention →</span>
-                    </div>
-                </Link>
-
-                <Link to="/incidents?priority=medium" className="stat-card border-yellow-500/30 hover:border-yellow-500/70 transition-colors cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">Medium</p>
-                            <p className="text-3xl font-bold mt-1 text-yellow-400">
-                                {stats?.by_priority?.medium || 0}
-                            </p>
-                        </div>
-                        <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-                            <Shield className="w-6 h-6 text-yellow-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <span className="text-gray-400">Monitor closely →</span>
-                    </div>
-                </Link>
-
-                <Link to="/incidents?priority=low" className="stat-card border-green-500/30 hover:border-green-500/70 transition-colors cursor-pointer">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">Low/Info</p>
-                            <p className="text-3xl font-bold mt-1 text-green-400">
-                                {(stats?.by_priority?.low || 0) + (stats?.by_priority?.informational || 0)}
-                            </p>
-                        </div>
-                        <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-                            <Info className="w-6 h-6 text-green-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <span className="text-gray-400">For awareness →</span>
-                    </div>
-                </Link>
-            </div>
-
-            {/* Secondary Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="stat-card">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">Files Analyzed</p>
-                            <p className="text-3xl font-bold mt-1">{files.length}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                            <FileText className="w-6 h-6 text-blue-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <Activity className="w-4 h-4 text-blue-400" />
-                        <span className="text-gray-400">Total logs processed</span>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">MITRE Tactics</p>
-                            <p className="text-3xl font-bold mt-1">{uniqueTactics}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-                            <Target className="w-6 h-6 text-purple-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <span className="text-gray-400">Unique tactics detected</span>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-400 text-sm">Processed Files</p>
-                            <p className="text-3xl font-bold mt-1">{files.filter(f => f.status === 'processed').length}</p>
-                        </div>
-                        <div className="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center">
-                            <Activity className="w-6 h-6 text-teal-400" />
-                        </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2 text-sm">
-                        <span className="text-gray-400">Ready for review</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Charts Grid - Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Incident Timeline */}
-                <div className="card">
-                    <div className="card-header">
-                        <h3 className="font-semibold">Incident Timeline</h3>
-                    </div>
-                    <div className="card-body">
-                        {timelineData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart data={timelineData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                    <XAxis dataKey="date" stroke="#64748b" />
-                                    <YAxis stroke="#64748b" allowDecimals={false} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#1e293b',
-                                            border: '1px solid rgba(255,255,255,0.1)',
-                                            borderRadius: '8px'
-                                        }}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="incidents"
-                                        stroke="#ef4444"
-                                        strokeWidth={2}
-                                        dot={{ fill: '#ef4444' }}
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-[300px] flex items-center justify-center text-gray-500">
-                                No incident data available
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Priority Distribution - Pie Chart */}
-                <div className="card">
-                    <div className="card-header">
-                        <h3 className="font-semibold">Incidents by Priority</h3>
-                    </div>
-                    <div className="card-body">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={priorityData.length ? priorityData : [{ name: 'No Data', value: 1, color: '#6b7280' }]}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    paddingAngle={5}
-                                    dataKey="value"
+                        <div className="flex flex-wrap gap-2">
+                            {openTabFiles.map((file) => (
+                                <div
+                                    key={file.file_id}
+                                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${
+                                        activeTab === file.file_id
+                                            ? 'border-primary-600 bg-primary-50 text-primary-700'
+                                            : 'border-slate-200 bg-white text-slate-700'
+                                    }`}
                                 >
-                                    {(priorityData.length ? priorityData : [{ color: '#6b7280' }]).map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: '#1e293b',
-                                        border: '1px solid rgba(255,255,255,0.1)',
-                                        borderRadius: '8px'
-                                    }}
-                                />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="flex justify-center gap-6 mt-4 flex-wrap">
-                            {priorityData.map((item) => (
-                                <div key={item.name} className="flex items-center gap-2">
-                                    <div
-                                        className="w-3 h-3 rounded-full"
-                                        style={{ backgroundColor: item.color }}
-                                    />
-                                    <span className="text-sm text-gray-400">{item.name}: {item.value}</span>
+                                    <button
+                                        onClick={() => setActiveTab(file.file_id)}
+                                        className="help-hover"
+                                        data-help={`Switch to ${(file.filename || file.original_filename)}`}
+                                    >
+                                        {file.filename || file.original_filename}
+                                    </button>
+                                    <button
+                                        onClick={() => closeLogeventTab(file.file_id)}
+                                        className="help-hover rounded-full px-1 text-red-600 transition-colors hover:bg-red-50"
+                                        data-help="Close this logevent tab"
+                                        aria-label="Close logevent tab"
+                                    >
+                                        x
+                                    </button>
                                 </div>
                             ))}
+                            {openTabFiles.length === 0 && (
+                                <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                                    No specific tabs open. Use the dropdown to open a log file tab.
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Charts Grid - Row 2: Severity & MITRE */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Severity Breakdown - Bar Chart */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+                <div className="stat-card"><p className="text-xs text-slate-500">Incidents</p><p className="text-3xl font-extrabold text-slate-900">{stats.total}</p></div>
+                <div className="stat-card"><p className="text-xs text-slate-500">Critical</p><p className="text-3xl font-extrabold text-red-600">{stats.critical}</p></div>
+                <div className="stat-card"><p className="text-xs text-slate-500">High</p><p className="text-3xl font-extrabold text-orange-600">{stats.high}</p></div>
+                <div className="stat-card"><p className="text-xs text-slate-500">Reports Ready</p><p className="text-3xl font-extrabold text-indigo-600">{readyReportCount}</p></div>
+                <div className="stat-card"><p className="text-xs text-slate-500">Files</p><p className="text-3xl font-extrabold text-slate-900">{files.length}</p></div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <div className="card">
-                    <div className="card-header">
-                        <h3 className="font-semibold">Severity Breakdown</h3>
-                    </div>
+                    <div className="card-header">Incident Timeline (IST)</div>
                     <div className="card-body">
-                        {severityData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={severityData} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                                    <XAxis type="number" stroke="#64748b" />
-                                    <YAxis type="category" dataKey="name" stroke="#64748b" width={80} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#1e293b',
-                                            border: '1px solid rgba(255,255,255,0.1)',
-                                            borderRadius: '8px'
-                                        }}
-                                    />
-                                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                                        {severityData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-[300px] flex items-center justify-center text-gray-500">
-                                No severity data available
-                            </div>
-                        )}
+                        <ResponsiveContainer width="100%" height={260}>
+                            <LineChart data={timelineData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#d8dbe8" />
+                                <XAxis dataKey="date" stroke="#64748b" />
+                                <YAxis allowDecimals={false} stroke="#64748b" />
+                                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #d8dbe8', borderRadius: '10px' }} />
+                                <Line type="monotone" dataKey="incidents" stroke="#4f46e5" strokeWidth={2.4} dot={{ fill: '#4f46e5' }} />
+                            </LineChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* MITRE Tactics Distribution */}
                 <div className="card">
-                    <div className="card-header flex justify-between items-center">
-                        <h3 className="font-semibold">MITRE ATT&CK Tactics</h3>
-                        <Link to="/mitre" className="text-sm text-primary-400 hover:text-primary-300">
-                            View Details →
-                        </Link>
-                    </div>
+                    <div className="card-header">Priority Distribution</div>
                     <div className="card-body">
-                        {mitreData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={mitreData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                    <XAxis
-                                        dataKey="name"
-                                        stroke="#64748b"
-                                        tick={{ fontSize: 10 }}
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={80}
-                                    />
-                                    <YAxis stroke="#64748b" allowDecimals={false} />
-                                    <Tooltip
-                                        contentStyle={{
-                                            backgroundColor: '#1e293b',
-                                            border: '1px solid rgba(255,255,255,0.1)',
-                                            borderRadius: '8px'
-                                        }}
-                                    />
-                                    <Bar dataKey="value" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : (
-                            <div className="h-[300px] flex flex-col items-center justify-center text-gray-500">
-                                <Target className="w-12 h-12 mb-4 opacity-20" />
-                                <p>No MITRE tactics detected yet</p>
-                                <p className="text-sm mt-1">Run analysis to detect threat tactics</p>
-                            </div>
-                        )}
+                        <ResponsiveContainer width="100%" height={260}>
+                            <PieChart>
+                                <Pie data={priorityData.length ? priorityData : [{ name: 'No Data', value: 1, color: '#cbd5e1' }]} cx="50%" cy="50%" innerRadius={58} outerRadius={92} dataKey="value">
+                                    {(priorityData.length ? priorityData : [{ name: 'No Data', value: 1, color: '#cbd5e1' }]).map((entry, idx) => (
+                                        <Cell key={`${entry.name}-${idx}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #d8dbe8', borderRadius: '10px' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="card">
-                <div className="card-header">
-                    <h3 className="font-semibold">Quick Actions</h3>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="card">
+                    <div className="card-header">MITRE Tactic Coverage</div>
+                    <div className="card-body space-y-4">
+                        <ResponsiveContainer width="100%" height={280}>
+                            <BarChart data={tacticData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#d8dbe8" />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-40} textAnchor="end" height={80} stroke="#64748b" />
+                                <YAxis allowDecimals={false} stroke="#64748b" />
+                                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #d8dbe8', borderRadius: '10px' }} />
+                                <Bar dataKey="value" fill="#0ca678" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                            <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Per-Incident MITRE Mapping</p>
+                            <div className="space-y-2">
+                                {mitreIncidentRows.length === 0 && (
+                                    <p className="text-xs text-slate-500">No mapped MITRE techniques available for this tab yet.</p>
+                                )}
+                                {mitreIncidentRows.map((incident) => (
+                                    <div key={incident.incident_id} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs">
+                                        <p className="font-semibold text-slate-800">{incident.attack_name || incident.title}</p>
+                                        <p className="mt-1 text-slate-600">
+                                            Tactic: {incident.mitre_tactic || incident.primary_tactic || 'N/A'} | Technique: {incident.mitre_technique || 'N/A'}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="card-body">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <Link
-                            to="/upload"
-                            className="flex items-center gap-4 p-4 bg-surface-dark rounded-lg border border-white/10 hover:border-primary-500/50 transition-all duration-200 group"
-                        >
-                            <div className="w-12 h-12 bg-primary-500/20 rounded-xl flex items-center justify-center group-hover:bg-primary-500/30 transition-colors">
-                                <Upload className="w-6 h-6 text-primary-400" />
-                            </div>
-                            <div>
-                                <p className="font-medium">Upload Log File</p>
-                                <p className="text-sm text-gray-400">Analyze new CSV logs</p>
-                            </div>
-                        </Link>
 
-                        <Link
-                            to="/analysis"
-                            className="flex items-center gap-4 p-4 bg-surface-dark rounded-lg border border-white/10 hover:border-blue-500/50 transition-all duration-200 group"
-                        >
-                            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-                                <Activity className="w-6 h-6 text-blue-400" />
-                            </div>
-                            <div>
-                                <p className="font-medium">Run Analysis</p>
-                                <p className="text-sm text-gray-400">AI threat detection</p>
-                            </div>
-                        </Link>
+                <div className="card">
+                    <div className="card-header">Log File Timestamp Timeline (IST)</div>
+                    <div className="card-body">
+                        <ResponsiveContainer width="100%" height={280}>
+                            <LineChart data={fileTimelineData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#d8dbe8" />
+                                <XAxis dataKey="date" stroke="#64748b" />
+                                <YAxis allowDecimals={false} stroke="#64748b" />
+                                <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #d8dbe8', borderRadius: '10px' }} />
+                                <Line type="monotone" dataKey="files" stroke="#0ca678" strokeWidth={2.4} dot={{ fill: '#0ca678' }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            </div>
 
-                        <Link
-                            to="/incidents"
-                            className="flex items-center gap-4 p-4 bg-surface-dark rounded-lg border border-white/10 hover:border-orange-500/50 transition-all duration-200 group"
-                        >
-                            <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center group-hover:bg-orange-500/30 transition-colors">
-                                <AlertTriangle className="w-6 h-6 text-orange-400" />
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div className="card">
+                    <div className="card-header">Logevent List</div>
+                    <div className="card-body space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                            Latest log files (dd/mm/yyyy, IST)
+                        </p>
+                        {sortedFiles.slice(0, 8).map((file) => {
+                            const hasReport = fileReportStatus[file.file_id];
+                            const normalizedStatus = hasReport ? 'processed' : normalizeValue(file.status) || 'pending';
+                            const statusColor =
+                                normalizedStatus === 'processed'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : normalizedStatus === 'failed'
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-amber-100 text-amber-700';
+                            return (
+                                <button
+                                    key={file.file_id}
+                                    onClick={() => setActiveTab(file.file_id)}
+                                    className="help-hover w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left transition-all duration-200 hover:bg-slate-50"
+                                    data-help="Click to open this logevent as a full dashboard tab"
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div>
+                                            <p className="font-semibold text-slate-900">{file.filename || file.original_filename}</p>
+                                            <p className="text-xs text-slate-500">{formatISTDateTime(file.uploaded_at)}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs">
+                                            <span className={`rounded-full px-3 py-1 font-semibold ${statusColor}`}>{normalizedStatus.toUpperCase()}</span>
+                                            <span className={`rounded-full px-3 py-1 font-semibold ${hasReport ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                {hasReport ? 'REPORT READY' : 'REPORT PENDING'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                        {sortedFiles.length > 8 && (
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+                                Showing 8 of {sortedFiles.length} files. Use the "Open Log File Tab" dropdown above to access all files.
                             </div>
-                            <div>
-                                <p className="font-medium">View Incidents</p>
-                                <p className="text-sm text-gray-400">Review threat detections</p>
+                        )}
+                        {files.length === 0 && (
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                                No logevents found. Upload a CSV file to start.
                             </div>
-                        </Link>
+                        )}
+                    </div>
+                </div>
 
-                        <Link
-                            to="/mitre"
-                            className="flex items-center gap-4 p-4 bg-surface-dark rounded-lg border border-white/10 hover:border-purple-500/50 transition-all duration-200 group"
-                        >
-                            <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
-                                <Target className="w-6 h-6 text-purple-400" />
-                            </div>
-                            <div>
-                                <p className="font-medium">MITRE Mapping</p>
-                                <p className="text-sm text-gray-400">ATT&CK framework view</p>
-                            </div>
-                        </Link>
+                <div className="card">
+                    <div className="card-header">Current Tab Feed</div>
+                    <div className="card-body space-y-3">
+                        {filteredIncidents.length === 0 && <div className="text-sm text-slate-500">No incidents in the selected tab yet.</div>}
+                        {filteredIncidents.slice(0, 8).map((incident) => (
+                            <Link
+                                key={incident.incident_id}
+                                to={`/incidents/${incident.incident_id}`}
+                                className="help-hover block rounded-xl border border-slate-200 bg-white px-4 py-3 transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                                data-help="Open full incident detail and recommendations"
+                            >
+                                <p className="font-semibold text-slate-900">{incident.title}</p>
+                                <p className="mt-1 text-xs text-slate-500">{formatISTDateTime(incident.first_seen)}</p>
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </div>
         </div>
     );
 }
+

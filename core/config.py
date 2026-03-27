@@ -71,6 +71,18 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
     log_format: str = "json"
+
+    # Authentication
+    auth_username_prefix: str = "soc."
+    auth_emp_ids: str = "133745,2123486,2171569,473496,2858682,2832493,2795270"
+    # Comma-separated map of emp_id:name pairs, e.g. "133745:Alice,2123486:Bob"
+    auth_emp_name_map: str = "133745:Shyam Kanan,2123486: ArunKumar Rajendran,2171569: Praveen,473496: Prasad N,2858682: Aman Panda,2832493: Aniketh,2795270: Anish Tejwani"
+    auth_common_password: str = "admin123"
+    # Legacy single-user credentials (used only if AUTH_EMP_IDS is empty)
+    auth_username: str = "admin"
+    auth_password: str = "admin123"
+    auth_secret_key: str = "replace-this-secret-for-production"
+    auth_token_ttl_minutes: int = 480
     
     def ensure_dirs(self) -> None:
         """Ensure all required directories exist."""

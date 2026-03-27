@@ -15,6 +15,7 @@ import {
     YAxis,
 } from 'recharts';
 import { getFiles, getIncidents, healthCheck, listGeneratedReports, type GeneratedReport } from '../api';
+import { useAuth } from '../context/AuthContext';
 import { formatISTDate, formatISTDateTime, toISTDateKey } from '../utils/datetime';
 
 interface FileData {
@@ -56,6 +57,7 @@ const toStem = (name?: string) =>
         .replace(/\s+/g, '_');
 
 export default function Dashboard() {
+    const { displayName, username } = useAuth();
     const [health, setHealth] = useState<any>(null);
     const [files, setFiles] = useState<FileData[]>([]);
     const [incidents, setIncidents] = useState<IncidentData[]>([]);
@@ -236,6 +238,9 @@ export default function Dashboard() {
             <div className="card glass-panel">
                 <div className="card-body flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
+                        <p className="text-sm font-semibold text-primary-700">
+                            Hi {displayName || username || 'Analyst'}
+                        </p>
                         <h1 className="text-3xl font-extrabold">AI Planning Dashboard</h1>
                         <p className="mt-1 text-sm text-slate-600">
                             Linear style dashboard with per-logevent tabs and report integration.

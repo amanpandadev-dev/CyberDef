@@ -10,10 +10,12 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from core.auth import require_auth
+from core.auth_routes import router as auth_router
 from core.config import get_settings
 from core.logging import setup_logging, get_logger
 from file_intake.routes import router as file_router
@@ -75,8 +77,9 @@ app.add_middleware(
 
 
 # Include routers
-app.include_router(file_router, prefix="/api/v1")
-app.include_router(case_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(file_router, prefix="/api/v1", dependencies=[Depends(require_auth)])
+app.include_router(case_router, prefix="/api/v1", dependencies=[Depends(require_auth)])
 
 
 # Health check endpoint
@@ -123,7 +126,10 @@ async def root() -> dict[str, str]:
 
 # Analysis endpoint â€” Three-Tier Pipeline
 @app.post("/api/v1/analyze", tags=["Analysis"])
-async def analyze_file(file_id: str) -> dict[str, Any]:
+async def analyze_file(
+    file_id: str,
+    _current_user: str = Depends(require_auth),
+) -> dict[str, Any]:
     """
     Three-tier analysis pipeline:
     1. Parse & Normalize events
@@ -433,7 +439,9 @@ async def analyze_file(file_id: str) -> dict[str, Any]:
 
 # Day-level Threat Summary endpoint
 @app.get("/api/v1/threat-summary/today", tags=["Analysis"])
-async def get_today_threat_summary() -> dict[str, Any]:
+async def get_today_threat_summary(
+    _current_user: str = Depends(require_auth),
+) -> dict[str, Any]:
     """
     Get accumulated threat intelligence for today.
     Returns day-level view across all 15-minute batches.
@@ -447,7 +455,10 @@ async def get_today_threat_summary() -> dict[str, Any]:
 
 # Agent outputs endpoint - get actual AI analysis results for Pipeline view
 @app.get("/api/v1/agent-outputs/{file_id}", tags=["Analysis"])
-async def get_agent_outputs(file_id: str) -> dict[str, Any]:
+async def get_agent_outputs(
+    file_id: str,
+    _current_user: str = Depends(require_auth),
+) -> dict[str, Any]:
     """
     Get actual agent analysis outputs for a file.
     
@@ -467,7 +478,9 @@ async def get_agent_outputs(file_id: str) -> dict[str, Any]:
 
 # Rollup Analysis endpoint - long-horizon cross-file correlation
 @app.get("/api/v1/rollups", tags=["Analysis"])
-async def get_rollup_analysis() -> dict[str, Any]:
+async def get_rollup_analysis(
+    _current_user: str = Depends(require_auth),
+) -> dict[str, Any]:
     """
     Get long-horizon rollup analysis across all analyzed files.
     
@@ -532,7 +545,9 @@ async def get_rollup_analysis() -> dict[str, Any]:
 
 # Validation endpoint - shows reproducibility metrics
 @app.get("/api/v1/validation", tags=["Validation"])
-async def get_validation_stats() -> dict[str, Any]:
+async def get_validation_stats(
+    _current_user: str = Depends(require_auth),
+) -> dict[str, Any]:
     """
     Get reproducibility validation metrics.
     
@@ -628,7 +643,9 @@ async def get_validation_stats() -> dict[str, Any]:
 
 # â”€â”€ Clear All Data endpoint (for fresh testing) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.delete("/api/v1/system/clear-all", tags=["System"])
-async def clear_all_data() -> dict[str, Any]:
+async def clear_all_data(
+    _current_user: str = Depends(require_auth),
+) -> dict[str, Any]:
     """
     Clear ALL analysis data for fresh testing.
     Wipes: DB tables, raw files, processed files, reports, caches, threat state.

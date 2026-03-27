@@ -88,7 +88,8 @@ export default function MitreMapping() {
 
     const incidentsByTactic = useMemo(() => {
         return incidents.reduce((acc: Record<string, IncidentMitre[]>, incident) => {
-            const tactic = incident.mitre_tactic || incident.primary_tactic || 'Unknown';
+            const tactic = incident.mitre_tactic || incident.primary_tactic;
+            if (!tactic) return acc;
             if (!acc[tactic]) acc[tactic] = [];
             acc[tactic].push(incident);
             return acc;
@@ -120,6 +121,11 @@ export default function MitreMapping() {
     );
 
     const selectedIncidents = selectedTactic ? incidentsByTactic[selectedTactic] || [] : [];
+    const mappedIncidentsCount = useMemo(
+        () => Object.values(incidentsByTactic).reduce((total, items) => total + items.length, 0),
+        [incidentsByTactic],
+    );
+    const unmappedIncidentsCount = Math.max(0, incidents.length - mappedIncidentsCount);
 
     return (
         <div className="space-y-8">
@@ -132,6 +138,11 @@ export default function MitreMapping() {
                     <p className="mt-1 text-slate-600">
                         Per-incident MITRE tactics and techniques mapped from analysis results
                     </p>
+                    {unmappedIncidentsCount > 0 && (
+                        <p className="mt-1 text-xs text-slate-500">
+                            {unmappedIncidentsCount} incidents are currently missing MITRE mapping metadata.
+                        </p>
+                    )}
                 </div>
                 <a
                     href="https://attack.mitre.org/"
@@ -182,7 +193,7 @@ export default function MitreMapping() {
                         ) : filteredTactics.length === 0 ? (
                             <div className="text-center p-8 text-slate-500">
                                 <Target className="w-12 h-12 mx-auto mb-3 opacity-25" />
-                                <p>No tactics found</p>
+                                <p>No mapped tactics found</p>
                             </div>
                         ) : (
                             <div className="space-y-2">

@@ -214,15 +214,15 @@ export default function PipelineView() {
                 </div>
             </div>
 
-            {/* Pipeline Visualization */}
+            {/* Log Flow Visualization */}
             <div className="flex-1 overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="bg-surface-light rounded-xl p-5 mb-4 border border-white/10">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold">Analysis Pipeline</h1>
+                            <h1 className="text-2xl font-bold">Log Flow</h1>
                             <p className="text-gray-400 text-sm mt-1">
-                                {selectedFile ? `Processing: ${getFilename(selectedFile)}` : 'Select a file to view pipeline'}
+                                {selectedFile ? `Processing: ${getFilename(selectedFile)}` : 'Select a file to view log flow'}
                             </p>
                         </div>
                         {selectedFile && (
@@ -693,7 +693,7 @@ export default function PipelineView() {
                     ) : (
                         <div className="h-full flex flex-col items-center justify-center text-gray-500">
                             <Split className="w-16 h-16 mb-4 opacity-20" />
-                            <p className="text-lg">Select a file to view pipeline details</p>
+                            <p className="text-lg">Select a file to view log flow details</p>
                         </div>
                     )}
                 </div>

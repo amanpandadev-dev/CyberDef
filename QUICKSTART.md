@@ -76,11 +76,12 @@ The frontend will start on `http://localhost:5173`
 ## First Analysis
 
 1. Open `http://localhost:5173` in your browser
-2. Navigate to **File Upload**
-3. Upload a CSV file (or use samples from `tests/fixtures/`)
-4. Go to **Analysis** page
-5. Click **Run Analysis** on your uploaded file
-6. View results in **Incidents** page
+2. Sign in with your configured credentials (default examples: `soc.1001`, `soc.1002`, `soc.1003` / common password `admin123`)
+3. Navigate to **File Upload**
+4. Upload a CSV file (or use samples from `tests/fixtures/`)
+5. Go to **Analysis** page
+6. Click **Run Analysis** on your uploaded file
+7. View results in **Incidents** page
 
 ## Sample Data
 

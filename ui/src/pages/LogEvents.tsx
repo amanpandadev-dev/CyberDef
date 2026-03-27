@@ -151,7 +151,7 @@ export default function LogEvents() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold">Log Events</h1>
+                <h1 className="text-3xl font-bold">Analysis</h1>
                 <p className="mt-1 text-sm text-slate-600">Uploaded files with report actions (View, Open, Download) for Markdown and JSON outputs.</p>
             </div>
 
@@ -191,12 +191,12 @@ export default function LogEvents() {
                 {loading ? (
                     <div className="p-10 text-center">
                         <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-400" />
-                        <p className="mt-3 text-slate-500">Loading log events...</p>
+                        <p className="mt-3 text-slate-500">Loading analysis data...</p>
                     </div>
                 ) : visibleFiles.length === 0 ? (
                     <div className="p-10 text-center">
                         <FileText className="w-10 h-10 mx-auto text-slate-500 mb-3" />
-                        <p className="text-slate-500">No log events match the selected filters</p>
+                        <p className="text-slate-500">No files match the selected filters</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-200">

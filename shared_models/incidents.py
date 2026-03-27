@@ -101,6 +101,7 @@ class Incident(BaseModel):
     recommended_actions: list[str] = Field(default_factory=list)
 
     # Analyst-mapped fields for UI/JSON export
+    mi_id: str = Field(default="GenAI_SOC", alias="$MI_ID")
     raw_log: str | None = None
     source_ip: str | None = None
     destination_ip: str | None = None

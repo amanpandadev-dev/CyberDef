@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     Shield,
@@ -11,11 +11,10 @@ import {
     Target,
     CheckCircle2,
     Loader2,
-    Plus,
-    Download,
-    List,
+    LogOut,
 } from 'lucide-react';
 import { useAnalysis } from '../context/AnalysisContext';
+import { useAuth } from '../context/AuthContext';
 import HoverHint from './HoverHint';
 
 interface LayoutProps {
@@ -24,10 +23,9 @@ interface LayoutProps {
 
 const navItems = [
     { path: '/', label: 'Dashboard', icon: BarChart3 },
-    { path: '/log-events', label: 'Log Events', icon: List },
     { path: '/upload', label: 'File Upload', icon: Upload },
     { path: '/analysis', label: 'Analysis', icon: Activity },
-    { path: '/pipeline', label: 'Pipeline', icon: Split },
+    { path: '/log-flow', label: 'Log Flow', icon: Split },
     { path: '/incidents', label: 'Incidents', icon: AlertTriangle },
     { path: '/mitre', label: 'MITRE', icon: Target },
     { path: '/validation', label: 'Validation', icon: CheckCircle2 },
@@ -36,11 +34,18 @@ const navItems = [
 export default function Layout({ children }: LayoutProps) {
     const location = useLocation();
     const { state: analysisState, isAnalyzing } = useAnalysis();
+    const { username, displayName, logout } = useAuth();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const activeItem = useMemo(
         () => navItems.find((item) => location.pathname === item.path),
         [location.pathname],
     );
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        await logout();
+    };
 
     return (
         <div className="min-h-screen">
@@ -65,28 +70,28 @@ export default function Layout({ children }: LayoutProps) {
 
                     <div className="flex items-center gap-2">
                         <Link
-                            to="/upload"
-                            className="help-hover btn btn-secondary px-3 py-2 text-xs"
-                            data-help="Upload a CSV logevent file to begin analysis"
-                        >
-                            <Plus className="h-4 w-4" />
-                            New
-                        </Link>
-                        <Link
-                            to="/analysis"
-                            className="help-hover btn btn-primary px-3 py-2 text-xs"
-                            data-help="Open analysis results and generated markdown reports"
-                        >
-                            <Download className="h-4 w-4" />
-                            Export
-                        </Link>
-                        <Link
                             to="/settings"
                             className="help-hover rounded-lg p-2 text-slate-500 transition-all hover:bg-slate-100"
                             data-help="Open system configuration"
                         >
                             <Settings className="h-4 w-4" />
                         </Link>
+                        <div className="hidden max-w-[220px] truncate text-xs text-slate-500 sm:block">
+                            {displayName ? `Hi ${displayName}` : username ? `Hi ${username}` : ''}
+                        </div>
+                        <button
+                            type="button"
+                            className="rounded-lg border border-slate-200 px-2.5 py-2 text-slate-600 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            onClick={() => {
+                                void handleLogout();
+                            }}
+                            disabled={isLoggingOut}
+                        >
+                            <span className="flex items-center gap-1.5 text-xs font-semibold">
+                                <LogOut className="h-3.5 w-3.5" />
+                                {isLoggingOut ? 'Signing out...' : 'Logout'}
+                            </span>
+                        </button>
                     </div>
                 </div>
             </header>

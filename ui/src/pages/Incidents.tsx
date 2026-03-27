@@ -153,15 +153,25 @@ export default function Incidents() {
                         Review and manage security incidents
                     </p>
                 </div>
-                {hasActiveFilters && (
-                    <button
-                        onClick={clearFilters}
-                        className="btn btn-secondary flex items-center gap-2"
-                    >
-                        <X className="w-4 h-4" />
-                        Clear Filters
-                    </button>
-                )}
+                <div className="flex items-center gap-3">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                        Total: {incidents.length}
+                    </span>
+                    {filteredIncidents.length !== incidents.length && (
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                            Showing: {filteredIncidents.length}
+                        </span>
+                    )}
+                    {hasActiveFilters && (
+                        <button
+                            onClick={clearFilters}
+                            className="btn btn-secondary flex items-center gap-2"
+                        >
+                            <X className="w-4 h-4" />
+                            Clear Filters
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Active Filters Display */}

@@ -1,6 +1,10 @@
-import axios from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 
 export const API_BASE_URL = 'http://localhost:8000/api/v1';
+export const AUTH_STORAGE_KEY = 'cyberdef_auth_token';
+
+let authToken: string | null =
+    typeof window !== 'undefined' ? window.localStorage.getItem(AUTH_STORAGE_KEY) : null;
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -8,6 +12,63 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+api.interceptors.request.use((config) => {
+    if (authToken) {
+        const headers = AxiosHeaders.from(config.headers);
+        headers.set('Authorization', `Bearer ${authToken}`);
+        config.headers = headers;
+    }
+    return config;
+});
+
+export function setAuthToken(token: string | null) {
+    authToken = token;
+    if (typeof window === 'undefined') return;
+    if (token) {
+        window.localStorage.setItem(AUTH_STORAGE_KEY, token);
+    } else {
+        window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+}
+
+export function getStoredAuthToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(AUTH_STORAGE_KEY);
+}
+
+export interface LoginResponse {
+    access_token: string;
+    token_type: string;
+    expires_in: number;
+    username: string;
+    emp_id?: string | null;
+    name: string;
+}
+
+export interface CurrentUserResponse {
+    username: string;
+    emp_id?: string | null;
+    name: string;
+}
+
+export const loginRequest = async (username: string, password: string): Promise<LoginResponse> => {
+    const response = await api.post('/auth/login', { username, password });
+    return response.data;
+};
+
+export const getCurrentUser = async (): Promise<CurrentUserResponse> => {
+    const response = await api.get('/auth/me');
+    return response.data;
+};
+
+export const logoutRequest = async (): Promise<void> => {
+    await api.post('/auth/logout');
+};
+
+function buildAuthQueryParam() {
+    return authToken ? `&access_token=${encodeURIComponent(authToken)}` : '';
+}
 
 // File endpoints
 export const uploadFile = async (file: File) => {
@@ -34,18 +95,18 @@ export const getFile = async (fileId: string) => {
 
 // Analysis endpoints
 export const analyzeFile = async (fileId: string) => {
-    const response = await axios.post(`http://localhost:8000/api/v1/analyze?file_id=${fileId}`);
+    const response = await api.post(`/analyze?file_id=${encodeURIComponent(fileId)}`);
     return response.data;
 };
 
 export const getFileReportUrl = (fileId: string, download = true) => {
     const flag = download ? 'true' : 'false';
-    return `${API_BASE_URL}/files/${fileId}/report?download=${flag}`;
+    return `${API_BASE_URL}/files/${fileId}/report?download=${flag}${buildAuthQueryParam()}`;
 };
 
 export const getFileIncidentsJsonUrl = (fileId: string, download = true) => {
     const flag = download ? 'true' : 'false';
-    return `${API_BASE_URL}/files/${fileId}/incidents-json?download=${flag}`;
+    return `${API_BASE_URL}/files/${fileId}/incidents-json?download=${flag}${buildAuthQueryParam()}`;
 };
 
 export interface GeneratedReport {
@@ -89,12 +150,14 @@ export const getFileIncidentsJsonContent = async (fileId: string): Promise<any> 
 };
 
 // Incident endpoints
-export const getIncidents = async (status?: string, priority?: string) => {
+export const getIncidents = async (status?: string, priority?: string, limit = 1000) => {
     const params = new URLSearchParams();
     if (status) params.append('status', status);
     if (priority) params.append('priority', priority);
+    if (limit > 0) params.append('limit', String(limit));
 
-    const response = await api.get(`/incidents/?${params.toString()}`);
+    const query = params.toString();
+    const response = await api.get(`/incidents/${query ? `?${query}` : ''}`);
     return response.data;
 };
 
@@ -115,6 +178,11 @@ export const getIncidentReport = async (incidentId: string) => {
 
 export const getIncidentStats = async () => {
     const response = await api.get('/incidents/stats');
+    return response.data;
+};
+
+export const getValidationStats = async () => {
+    const response = await api.get('/validation');
     return response.data;
 };
 

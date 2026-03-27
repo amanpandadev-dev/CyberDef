@@ -45,6 +45,74 @@ def _get_incidents_file() -> Path:
     return _INCIDENTS_FILE
 
 
+MitreGuess = tuple[str, str, str, float, str]
+
+# Deterministic fallback MITRE mappings for Tier 1/Tier 2 findings.
+# Format: rule/category/family -> (technique_id, technique_name, tactic, confidence, justification)
+_RULE_MITRE_MAP: dict[str, MitreGuess] = {
+    # Injection / exploit-like detections
+    "sql_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.82, "Rule indicates web application exploitation behavior."),
+    "blind_sql_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.82, "Rule indicates web application exploitation behavior."),
+    "os_command_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.84, "Command injection attempts map to public-facing exploit activity."),
+    "xss": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.7, "Cross-site scripting indicates abuse of exposed application functionality."),
+    "ssti": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.8, "Template injection indicates server-side application exploitation."),
+    "xxe": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.8, "XML external entity abuse indicates app-layer exploit attempts."),
+    "ldap_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.76, "LDAP injection indicates app-layer exploit attempts."),
+    "xpath_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.76, "XPath injection indicates app-layer exploit attempts."),
+    "ssrf": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.78, "Server-side request forgery indicates exploit of server-side logic."),
+    "insecure_deserialization": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.78, "Deserialization abuse indicates exploit behavior."),
+    "expression_language_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.8, "Expression language injection indicates exploit behavior."),
+    "prototype_pollution": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.7, "Prototype pollution indicates application abuse."),
+    "path_traversal": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.8, "Traversal indicators imply exploitation of input handling."),
+    "local_file_inclusion": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.8, "Local file inclusion indicates web exploit attempts."),
+    "remote_file_inclusion": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.82, "Remote file inclusion indicates web exploit attempts."),
+    "arbitrary_file_read": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.8, "Arbitrary file read indicates exploit behavior."),
+    "webshell_access": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.86, "Webshell access indicates prior compromise via exposed app."),
+    "log4shell_cve_2021_44228": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.9, "CVE exploitation of public-facing services."),
+    "spring4shell_cve_2022_22965": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.9, "CVE exploitation of public-facing services."),
+    "shellshock_cve_2014_6271": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.9, "CVE exploitation of public-facing services."),
+    "apache_struts_rce": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.9, "CVE exploitation of public-facing services."),
+    "php_specific_attack": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.84, "PHP exploit pattern against exposed applications."),
+    # Auth / credential behavior
+    "brute_force_login": ("T1110", "Brute Force", "Credential Access", 0.85, "Repeated authentication failures indicate brute-force style access attempts."),
+    "credential_stuffing": ("T1110.004", "Credential Stuffing", "Credential Access", 0.88, "Credential stuffing behavior detected."),
+    "authentication_failures": ("T1110", "Brute Force", "Credential Access", 0.75, "Authentication failure clusters indicate credential attacks."),
+    "low_slow_brute_force": ("T1110.003", "Password Spraying", "Credential Access", 0.82, "Cross-batch low-and-slow auth failures match password spraying patterns."),
+    # Recon / scanner / campaign style behavior
+    "known_scanner_ua": ("T1595", "Active Scanning", "Reconnaissance", 0.78, "Known scanner user-agent indicates reconnaissance scanning."),
+    "rapid_404_generation": ("T1595", "Active Scanning", "Reconnaissance", 0.72, "Rapid 404 patterns indicate automated probing/scanning."),
+    "technology_fingerprinting": ("T1595.002", "Vulnerability Scanning", "Reconnaissance", 0.7, "Technology fingerprinting aligns with vulnerability reconnaissance."),
+    "api_schema_discovery": ("T1595", "Active Scanning", "Reconnaissance", 0.7, "API schema probing indicates reconnaissance activity."),
+    "distributed_recon": ("T1595", "Active Scanning", "Reconnaissance", 0.8, "Distributed recon findings indicate scanning across many resources."),
+    "scanner_persistence": ("T1595", "Active Scanning", "Reconnaissance", 0.8, "Persistent scanner signatures indicate ongoing reconnaissance."),
+    "campaign_detection": ("T1595", "Active Scanning", "Reconnaissance", 0.74, "Shared signatures across multiple actors indicate coordinated recon campaign."),
+    # DoS / impact behavior
+    "http_flood": ("T1498", "Network Denial of Service", "Impact", 0.82, "HTTP flood traffic indicates network service disruption attempts."),
+    "resource_exhaustion": ("T1498", "Network Denial of Service", "Impact", 0.78, "Resource exhaustion patterns align with DoS behavior."),
+    "slowloris_indicator": ("T1498", "Network Denial of Service", "Impact", 0.78, "Slowloris-like traffic indicates service disruption attempts."),
+    "rate_acceleration": ("T1498", "Network Denial of Service", "Impact", 0.7, "Sudden request-rate acceleration indicates potential flood behavior."),
+    # Exfiltration
+    "data_exfiltration_pattern": ("T1041", "Exfiltration Over C2 Channel", "Exfiltration", 0.72, "Cross-batch transfer patterns suggest data exfiltration activity."),
+    # Composite / broad findings
+    "kill_chain_progression": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.8, "Kill-chain progression includes exploit-stage behavior."),
+    "multi_vector_attacker": ("T1595", "Active Scanning", "Reconnaissance", 0.68, "Multi-vector profile commonly begins with broad reconnaissance."),
+    "off_hours_anomaly": ("T1078", "Valid Accounts", "Initial Access", 0.55, "Off-hours suspicious activity may involve unauthorized account use."),
+    "privilege_escalation_probe": ("T1078", "Valid Accounts", "Initial Access", 0.55, "Privilege probing often follows account abuse patterns."),
+}
+
+_FAMILY_MITRE_MAP: dict[str, MitreGuess] = {
+    "injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.72, "Injection-family findings map to application exploitation."),
+    "path_file": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.72, "Path/file abuse indicates exposed application exploitation."),
+    "cve_exploit": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.85, "Known CVE exploit patterns against public-facing services."),
+    "auth_access": ("T1110", "Brute Force", "Credential Access", 0.72, "Authentication and access abuse maps to credential access tactics."),
+    "info_leakage": ("T1595.002", "Vulnerability Scanning", "Reconnaissance", 0.62, "Information leakage often follows reconnaissance probing."),
+    "bot_scanner": ("T1595", "Active Scanning", "Reconnaissance", 0.68, "Scanner/bot signatures indicate recon activity."),
+    "rate_dos": ("T1498", "Network Denial of Service", "Impact", 0.7, "Rate-abuse family maps to service disruption behavior."),
+    "cache_redirect": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.6, "Cache/redirect abuse indicates application-layer attack paths."),
+    "evasion": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.6, "Evasion indicators often accompany exploitation attempts."),
+}
+
+
 
 class IncidentService:
     """
@@ -92,7 +160,7 @@ class IncidentService:
         try:
             data = {
                 "incidents": [
-                    incident.model_dump(mode='json')
+                    incident.model_dump(mode='json', by_alias=True)
                     for incident in IncidentService._incidents.values()
                 ],
                 "saved_at": datetime.utcnow().isoformat(),
@@ -307,6 +375,7 @@ class IncidentService:
                 ),
             ],
         )
+        self._apply_mitre_fallback(incident, family_hint=threat.family.value)
         
         self._incidents[str(incident.incident_id)] = incident
         self.incidents_created += 1
@@ -373,6 +442,7 @@ class IncidentService:
                 ),
             ],
         )
+        self._apply_mitre_fallback(incident)
         
         self._incidents[str(incident.incident_id)] = incident
         self.incidents_created += 1
@@ -500,7 +570,13 @@ class IncidentService:
     
     def get_incident(self, incident_id: str) -> Incident | None:
         """Get an incident by ID."""
-        return self._incidents.get(incident_id)
+        self._reload_if_needed()
+        incident = self._incidents.get(incident_id)
+        if not incident:
+            return None
+        if self._apply_mitre_fallback(incident):
+            self._save_to_file()
+        return incident
     
     def list_incidents(
         self,
@@ -522,6 +598,12 @@ class IncidentService:
         # Reload from file to pick up new incidents (fixes visibility bug)
         self._reload_if_needed()
         incidents = list(self._incidents.values())
+        updated = False
+        for incident in incidents:
+            if self._apply_mitre_fallback(incident):
+                updated = True
+        if updated:
+            self._save_to_file()
         
         # Apply filters
         if status:
@@ -579,6 +661,104 @@ class IncidentService:
             ))
         
         return summaries
+
+    def _infer_mitre_guess(
+        self,
+        rule_name: str | None,
+        category: str | None = None,
+        family: str | None = None,
+    ) -> MitreGuess | None:
+        """Infer MITRE mapping from deterministic/correlation metadata."""
+        rule_key = (rule_name or "").strip().lower()
+        category_key = (category or "").strip().lower()
+        family_key = (family or "").strip().lower()
+
+        if rule_key and rule_key in _RULE_MITRE_MAP:
+            return _RULE_MITRE_MAP[rule_key]
+        if family_key and family_key in _FAMILY_MITRE_MAP:
+            return _FAMILY_MITRE_MAP[family_key]
+
+        combined = f"{rule_key} {category_key}"
+        if any(token in combined for token in ("brute", "credential", "auth_fail", "password_spray")):
+            return ("T1110", "Brute Force", "Credential Access", 0.7, "Keyword-based mapping for credential attack behavior.")
+        if any(token in combined for token in ("recon", "scanner", "fingerprint", "discovery", "campaign")):
+            return ("T1595", "Active Scanning", "Reconnaissance", 0.65, "Keyword-based mapping for reconnaissance activity.")
+        if any(token in combined for token in ("dos", "flood", "resource_exhaustion", "rate_limit")):
+            return ("T1498", "Network Denial of Service", "Impact", 0.65, "Keyword-based mapping for service disruption behavior.")
+        if any(token in combined for token in ("exfil", "leak", "data_theft")):
+            return ("T1041", "Exfiltration Over C2 Channel", "Exfiltration", 0.65, "Keyword-based mapping for exfiltration indicators.")
+        if any(token in combined for token in ("injection", "traversal", "inclusion", "rce", "exploit")):
+            return ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.68, "Keyword-based mapping for exploit behavior.")
+
+        return None
+
+    def _infer_incident_family_hint(self, incident: Incident) -> str | None:
+        """Derive a best-effort family hint from persisted incident fields."""
+        if incident.source == IncidentSource.DETERMINISTIC:
+            corpus = " ".join(
+                [
+                    incident.detection_rule or "",
+                    incident.title or "",
+                    incident.description or "",
+                ]
+            ).lower()
+            for family in _FAMILY_MITRE_MAP:
+                if family in corpus:
+                    return family
+        return None
+
+    def _apply_mitre_fallback(self, incident: Incident, family_hint: str | None = None) -> bool:
+        """
+        Ensure incident has MITRE tactic/technique populated.
+
+        Returns True when incident was mutated.
+        """
+        has_tactic = bool(incident.mitre_tactic or incident.primary_tactic)
+        has_technique = bool(
+            incident.mitre_technique
+            or (incident.mitre_techniques and incident.mitre_techniques[0].technique_id)
+        )
+        if has_tactic and has_technique:
+            return False
+
+        title_hint = ""
+        if incident.title and incident.title.startswith("[") and "]" in incident.title:
+            title_hint = incident.title.split("]", 1)[0].strip("[]")
+
+        inferred_family = family_hint or self._infer_incident_family_hint(incident)
+        guess = self._infer_mitre_guess(
+            incident.detection_rule,
+            category=title_hint or incident.description,
+            family=inferred_family,
+        )
+        if not guess:
+            return False
+
+        technique_id, technique_name, tactic, confidence, justification = guess
+        changed = False
+
+        if not incident.primary_tactic:
+            incident.primary_tactic = tactic
+            changed = True
+        if not incident.mitre_tactic:
+            incident.mitre_tactic = tactic
+            changed = True
+        if not incident.mitre_technique:
+            incident.mitre_technique = technique_id
+            changed = True
+        if not incident.mitre_techniques:
+            incident.mitre_techniques = [
+                MitreReference(
+                    technique_id=technique_id,
+                    technique_name=technique_name,
+                    tactic=tactic,
+                    confidence=max(0.0, min(1.0, confidence)),
+                    justification=justification,
+                )
+            ]
+            changed = True
+
+        return changed
     
     def update_status(
         self,

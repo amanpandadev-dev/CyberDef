@@ -9,6 +9,7 @@ import {
     Hash,
     AlertTriangle
 } from 'lucide-react';
+import { getValidationStats } from '../api';
 
 interface ValidationStats {
     reproducibility: {
@@ -38,8 +39,6 @@ interface ValidationStats {
     }>;
 }
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
-
 export default function Validation() {
     const [stats, setStats] = useState<ValidationStats | null>(null);
     const [loading, setLoading] = useState(true);
@@ -48,9 +47,7 @@ export default function Validation() {
     const fetchStats = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/validation`);
-            if (!response.ok) throw new Error('Failed to fetch validation stats');
-            const data = await response.json();
+            const data = await getValidationStats();
             setStats(data);
             setError(null);
         } catch (err) {

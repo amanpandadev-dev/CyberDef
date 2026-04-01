@@ -176,5 +176,25 @@
         "technical_summary": "The observed activity pattern is characterized by brief, high-intensity bursts of GET and POST requests with a failure rate of 50%. The source IP is external and has not been seen before in the network. Further investigation is required to determine the nature of this activity."
       }
     }
+  ],
+  "bad6391e-c7d0-4228-84ca-8aad932074eb": [
+    {
+      "analysis_id": "248039d7-4bb1-40a9-baf1-90185c7e0529",
+      "chunk_id": "83ef42f4-3afe-400c-8d63-d850ed135c96",
+      "overall_confidence": 0.0,
+      "requires_human_review": false,
+      "total_processing_time_ms": 207601,
+      "created_at": "2026-03-31T12:02:17.290193",
+      "behavioral": {
+        "interpretation": "A brief, high-intensity burst of activity was observed from an external actor with a mix of GET and POST requests.",
+        "is_suspicious": false,
+        "confidence": 0.6,
+        "reasoning": "The bursty temporal pattern and external actor are concerning, but the lack of specific indicators for malicious behavior keeps the confidence low.",
+        "key_indicators": [
+          "bursty temporal pattern",
+          "external actor"
+        ]
+      }
+    }
   ]
 }

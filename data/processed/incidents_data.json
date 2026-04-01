@@ -18703,7 +18703,787 @@
       "created_at": "2026-03-27T10:55:18.549002",
       "updated_at": "2026-03-27T10:55:18.549002",
       "resolved_at": null
+    },
+    {
+      "incident_id": "f47e59c4-9c68-4f2c-ad0d-188b981688f1",
+      "title": "[LOCAL_FILE_INCLUSION] Local file inclusion attempt from 0.0.0.0",
+      "description": "Deterministic detection: Local file inclusion attempt\nRule: local_file_inclusion\nMatches: 3\nEvidence: ../../../../../../../etc/passwd; attributes.id=test&attributes.file=../../administrator/mail/download.cfm&filename=../lib/password.properties&attributes.locale=it&attributes.var=it&attributes.jscript=false&attributes.type=text/html&a; .%2e/.%2e/etc/passwd",
+      "status": "new",
+      "priority": "critical",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.560881",
+      "last_seen": "2026-03-31T12:02:02.561885",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.0.0.0",
+      "actor_ips": [
+        "0.0.0.0"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.8,
+          "justification": "Local file inclusion indicates web exploit attempts."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.9,
+      "executive_summary": "Local file inclusion attempt (3 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate local_file_inclusion from 0.0.0.0"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "../../../../../../../etc/passwd",
+      "source_ip": "0.0.0.0",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "source ip",
+      "attack_name": "local_file_inclusion",
+      "brief_description": "Local file inclusion attempt",
+      "recommended_action": "Investigate local_file_inclusion from 0.0.0.0",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.560881",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: local_file_inclusion",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "local_file_inclusion",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:15.888772",
+      "updated_at": "2026-03-31T12:02:15.888772",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "e343e6e5-7d61-4e7e-a168-4bad5e6c5498",
+      "title": "[SQL_INJECTION] SQL injection attempt detected from 0.1.0.1",
+      "description": "Deterministic detection: SQL injection attempt detected\nRule: sql_injection\nMatches: 2\nEvidence: do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B'\\\"%2B(select(0)from(select(sleep(6)))v)%2B\\\"*/&result=10",
+      "status": "new",
+      "priority": "critical",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.560881",
+      "last_seen": "2026-03-31T12:02:02.560881",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.1.0.1",
+      "actor_ips": [
+        "0.1.0.1"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.82,
+          "justification": "Rule indicates web application exploitation behavior."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.9,
+      "executive_summary": "SQL injection attempt detected (2 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate sql_injection from 0.1.0.1"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B'\\\"%2B(select(0)from(select(sleep(6)))v)%2B\\\"*/&result=10",
+      "source_ip": "0.1.0.1",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "payload",
+      "attack_name": "sql_injection",
+      "brief_description": "SQL injection attempt detected",
+      "recommended_action": "Investigate sql_injection from 0.1.0.1",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.560881",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: sql_injection",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "sql_injection",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:15.972889",
+      "updated_at": "2026-03-31T12:02:15.972889",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "ae62a206-874e-44cb-8bd9-cdd77fb514dc",
+      "title": "[BLIND_SQL_INJECTION] Blind SQL injection attempt detected from 0.1.0.1",
+      "description": "Deterministic detection: Blind SQL injection attempt detected\nRule: blind_sql_injection\nMatches: 2\nEvidence: do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B'\\\"%2B(select(0)from(select(sleep(6)))v)%2B\\\"*/&result=10",
+      "status": "new",
+      "priority": "critical",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.560881",
+      "last_seen": "2026-03-31T12:02:02.560881",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.1.0.1",
+      "actor_ips": [
+        "0.1.0.1"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.82,
+          "justification": "Rule indicates web application exploitation behavior."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.92,
+      "executive_summary": "Blind SQL injection attempt detected (2 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate blind_sql_injection from 0.1.0.1"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B'\\\"%2B(select(0)from(select(sleep(6)))v)%2B\\\"*/&result=10",
+      "source_ip": "0.1.0.1",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "payload",
+      "attack_name": "blind_sql_injection",
+      "brief_description": "Blind SQL injection attempt detected",
+      "recommended_action": "Investigate blind_sql_injection from 0.1.0.1",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.560881",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: blind_sql_injection",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "blind_sql_injection",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.012413",
+      "updated_at": "2026-03-31T12:02:16.012413",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "ae45103c-93f8-428c-a169-a6e07c658a15",
+      "title": "[OS_COMMAND_INJECTION] OS command injection attempt from 0.1.0.1",
+      "description": "Deterministic detection: OS command injection attempt\nRule: os_command_injection\nMatches: 2\nEvidence: searchIn=/content/dam/tcs/investor-relations/financial-statements&selectedQuarter=q3&haiku630498=shell_exec(ifconfig)",
+      "status": "new",
+      "priority": "critical",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.560881",
+      "last_seen": "2026-03-31T12:02:02.560881",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.1.0.1",
+      "actor_ips": [
+        "0.1.0.1"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.84,
+          "justification": "Command injection attempts map to public-facing exploit activity."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.85,
+      "executive_summary": "OS command injection attempt (2 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate os_command_injection from 0.1.0.1"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "searchIn=/content/dam/tcs/investor-relations/financial-statements&selectedQuarter=q3&haiku630498=shell_exec(ifconfig)",
+      "source_ip": "0.1.0.1",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "payload",
+      "attack_name": "os_command_injection",
+      "brief_description": "OS command injection attempt",
+      "recommended_action": "Investigate os_command_injection from 0.1.0.1",
+      "confidence_score": 8,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.560881",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: os_command_injection",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "os_command_injection",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.090201",
+      "updated_at": "2026-03-31T12:02:16.090201",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "d279c6a4-116c-4027-bbae-be24319120bc",
+      "title": "[PATH_TRAVERSAL] Path traversal attempt from 0.0.0.0",
+      "description": "Deterministic detection: Path traversal attempt\nRule: path_traversal\nMatches: 4\nEvidence: ../../../../../../../etc/passwd; attributes.id=test&attributes.file=../../administrator/mail/download.cfm&filename=../lib/password.properties&attributes.locale=it&attributes.var=it&attributes.jscript=false&attributes.type=text/html&a; ..%2f..%2fetc%2fpasswd",
+      "status": "new",
+      "priority": "high",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.560881",
+      "last_seen": "2026-03-31T12:02:02.561885",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.0.0.0",
+      "actor_ips": [
+        "0.0.0.0"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.8,
+          "justification": "Traversal indicators imply exploitation of input handling."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.9,
+      "executive_summary": "Path traversal attempt (4 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate path_traversal from 0.0.0.0"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "../../../../../../../etc/passwd",
+      "source_ip": "0.0.0.0",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "url",
+      "attack_name": "path_traversal",
+      "brief_description": "Path traversal attempt",
+      "recommended_action": "Investigate path_traversal from 0.0.0.0",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.560881",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: path_traversal",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "path_traversal",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.144629",
+      "updated_at": "2026-03-31T12:02:16.144629",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "e3983189-8da7-4a0d-95a2-d3127609ad6b",
+      "title": "[PATH_TRAVERSAL] Path traversal attempt from 0.1.0.1",
+      "description": "Deterministic detection: Path traversal attempt\nRule: path_traversal\nMatches: 2\nEvidence: eqbzeyas=%3Cscript%3Ealert%28%22XSS%22%29%3B%3C%2Fscript%3E&ygocslug=UNION+SELECT+ALL+FROM+information_schema+AND+%22+or+SLEEP%285%29+or+%22&dqohnhch=..%2F..%2Fetc%2Fpasswd; kowuoxxn=%3Cscript%3Ealert%28%22XSS%22%29%3B%3C%2Fscript%3E&gfqfjree=UNION+SELECT+ALL+FROM+information_schema+AND+%22+or+SLEEP",
+      "status": "new",
+      "priority": "high",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.560881",
+      "last_seen": "2026-03-31T12:02:02.560881",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.1.0.1",
+      "actor_ips": [
+        "0.1.0.1"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.8,
+          "justification": "Traversal indicators imply exploitation of input handling."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.9,
+      "executive_summary": "Path traversal attempt (2 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate path_traversal from 0.1.0.1"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "eqbzeyas=%3Cscript%3Ealert%28%22XSS%22%29%3B%3C%2Fscript%3E&ygocslug=UNION+SELECT+ALL+FROM+information_schema+AND+%22+or+SLEEP%285%29+or+%22&dqohnhch=..%2F..%2Fetc%2Fpasswd",
+      "source_ip": "0.1.0.1",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "url",
+      "attack_name": "path_traversal",
+      "brief_description": "Path traversal attempt",
+      "recommended_action": "Investigate path_traversal from 0.1.0.1",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.560881",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: path_traversal",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "path_traversal",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.197134",
+      "updated_at": "2026-03-31T12:02:16.197134",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "946a42da-0ed4-4911-8e50-032efc312dc9",
+      "title": "[ARBITRARY_FILE_READ] Arbitrary file read via parameter manipulation from 0.0.0.0",
+      "description": "Deterministic detection: Arbitrary file read via parameter manipulation\nRule: arbitrary_file_read\nMatches: 1\nEvidence: attributes.id=test&attributes.file=../../administrator/mail/download.cfm&filename=../lib/password.properties&attributes.locale=it&attributes.var=it&attributes.jscript=false&attributes.type=text/html&a",
+      "status": "new",
+      "priority": "high",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.560881",
+      "last_seen": "2026-03-31T12:02:02.560881",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.0.0.0",
+      "actor_ips": [
+        "0.0.0.0"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.8,
+          "justification": "Arbitrary file read indicates exploit behavior."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.75,
+      "executive_summary": "Arbitrary file read via parameter manipulation (1 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate arbitrary_file_read from 0.0.0.0"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "attributes.id=test&attributes.file=../../administrator/mail/download.cfm&filename=../lib/password.properties&attributes.locale=it&attributes.var=it&attributes.jscript=false&attributes.type=text/html&a",
+      "source_ip": "0.0.0.0",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "source ip",
+      "attack_name": "arbitrary_file_read",
+      "brief_description": "Arbitrary file read via parameter manipulation",
+      "recommended_action": "Investigate arbitrary_file_read from 0.0.0.0",
+      "confidence_score": 8,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.560881",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: arbitrary_file_read",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "arbitrary_file_read",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.230981",
+      "updated_at": "2026-03-31T12:02:16.230981",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "1f393440-e070-420a-a3b3-ec9019acbf31",
+      "title": "[EVASION] Double URL encoding to bypass WAF/filters from 0.0.0.0",
+      "description": "Deterministic detection: Double URL encoding to bypass WAF/filters\nRule: double_url_encoding\nMatches: 1\nEvidence: %252e%252e%252fetc%252fpasswd",
+      "status": "new",
+      "priority": "high",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.561885",
+      "last_seen": "2026-03-31T12:02:02.561885",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.0.0.0",
+      "actor_ips": [
+        "0.0.0.0"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.6,
+          "justification": "Evasion indicators often accompany exploitation attempts."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.8,
+      "executive_summary": "Double URL encoding to bypass WAF/filters (1 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate evasion from 0.0.0.0"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "%252e%252e%252fetc%252fpasswd",
+      "source_ip": "0.0.0.0",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "url",
+      "attack_name": "double_url_encoding",
+      "brief_description": "Double URL encoding to bypass WAF/filters",
+      "recommended_action": "Investigate evasion from 0.0.0.0",
+      "confidence_score": 8,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.561885",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: double_url_encoding",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "double_url_encoding",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.304649",
+      "updated_at": "2026-03-31T12:02:16.304649",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "88d2e0b8-e6f3-4de6-ad73-f1db9b304a00",
+      "title": "[CROSS_SITE_SCRIPTING] Cross-site scripting attempt from 0.0.0.0",
+      "description": "Deterministic detection: Cross-site scripting attempt\nRule: xss\nMatches: 1\nEvidence: wpapp_shortcode=\\\"%3E%3Cscript%3Ealert(document.domain)%3C/script%3E&wpappninja_simul4=1",
+      "status": "new",
+      "priority": "high",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.561885",
+      "last_seen": "2026-03-31T12:02:02.561885",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.0.0.0",
+      "actor_ips": [
+        "0.0.0.0"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.7,
+          "justification": "Cross-site scripting indicates abuse of exposed application functionality."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.9,
+      "executive_summary": "Cross-site scripting attempt (1 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate cross_site_scripting from 0.0.0.0"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "wpapp_shortcode=\\\"%3E%3Cscript%3Ealert(document.domain)%3C/script%3E&wpappninja_simul4=1",
+      "source_ip": "0.0.0.0",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "source ip",
+      "attack_name": "xss",
+      "brief_description": "Cross-site scripting attempt",
+      "recommended_action": "Investigate cross_site_scripting from 0.0.0.0",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.561885",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: xss",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "xss",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.354698",
+      "updated_at": "2026-03-31T12:02:16.354698",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "4a53190a-7600-4007-9ff7-20fc6716cc83",
+      "title": "[INSECURE_INPUT_VALIDATION] Unicode/UTF-8 overlong sequences from 0.0.0.0",
+      "description": "Deterministic detection: Unicode/UTF-8 overlong sequences\nRule: unicode_abuse\nMatches: 1\nEvidence: ..%c0%afetc%c0%afpasswd",
+      "status": "new",
+      "priority": "medium",
+      "source": "deterministic",
+      "first_seen": "2026-03-31T12:02:02.561885",
+      "last_seen": "2026-03-31T12:02:02.561885",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.0.0.0",
+      "actor_ips": [
+        "0.0.0.0"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "Initial Access",
+          "confidence": 0.6,
+          "justification": "Evasion indicators often accompany exploitation attempts."
+        }
+      ],
+      "primary_tactic": "Initial Access",
+      "overall_confidence": 0.7,
+      "executive_summary": "Unicode/UTF-8 overlong sequences (1 occurrences)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate insecure_input_validation from 0.0.0.0"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "..%c0%afetc%c0%afpasswd",
+      "source_ip": "0.0.0.0",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "null",
+      "attack_name": "unicode_abuse",
+      "brief_description": "Unicode/UTF-8 overlong sequences",
+      "recommended_action": "Investigate insecure_input_validation from 0.0.0.0",
+      "confidence_score": 7,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:02.561885",
+          "event_type": "detection",
+          "description": "Deterministic rule matched: unicode_abuse",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "deterministic",
+      "detection_rule": "unicode_abuse",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.403590",
+      "updated_at": "2026-03-31T12:02:16.403590",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "ca83a53d-8524-4a7b-9aaf-9f8b18aa63ed",
+      "title": "[CORRELATION] Multi-vector: 4 attack types (sql_injection, blind_sql_injection, os_command_inj",
+      "description": "Day-level correlation: Multi-vector: 4 attack types (sql_injection, blind_sql_injection, os_command_injection, path_traversal)\nRule: multi_vector_attacker\nEvidence: {'categories': ['sql_injection', 'blind_sql_injection', 'os_command_injection', 'path_traversal']}",
+      "status": "new",
+      "priority": "critical",
+      "source": "correlation",
+      "first_seen": "2026-03-31T12:02:16.484232",
+      "last_seen": "2026-03-31T12:02:16.484232",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.1.0.1",
+      "actor_ips": [
+        "0.1.0.1"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1595",
+          "technique_name": "Active Scanning",
+          "tactic": "Reconnaissance",
+          "confidence": 0.68,
+          "justification": "Multi-vector profile commonly begins with broad reconnaissance."
+        }
+      ],
+      "primary_tactic": "Reconnaissance",
+      "overall_confidence": 0.9,
+      "executive_summary": "Multi-vector: 4 attack types (sql_injection, blind_sql_injection, os_command_injection, path_traversal)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate correlated activity from 0.1.0.1"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "{'categories': ['sql_injection', 'blind_sql_injection', 'os_command_injection', 'path_traversal']}",
+      "source_ip": "0.1.0.1",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "url",
+      "attack_name": "multi_vector_attacker",
+      "brief_description": "Multi-vector: 4 attack types (sql_injection, blind_sql_injection, os_command_injection, path_traversal)",
+      "recommended_action": "Investigate correlated activity from 0.1.0.1",
+      "confidence_score": 9,
+      "mitre_tactic": "Reconnaissance",
+      "mitre_technique": "T1595",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:16.485229",
+          "event_type": "correlation",
+          "description": "Day-level correlation: multi_vector_attacker",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "correlation",
+      "detection_rule": "multi_vector_attacker",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.485229",
+      "updated_at": "2026-03-31T12:02:16.485229",
+      "resolved_at": null
+    },
+    {
+      "incident_id": "93c53d93-a856-4ab4-8e5d-73b7ed9630df",
+      "title": "[CORRELATION] Multi-vector: 6 attack types (local_file_inclusion, path_traversal, arbitrary_fi",
+      "description": "Day-level correlation: Multi-vector: 6 attack types (local_file_inclusion, path_traversal, arbitrary_file_read, evasion, cross_site_scripting)\nRule: multi_vector_attacker\nEvidence: {'categories': ['local_file_inclusion', 'path_traversal', 'arbitrary_file_read', 'evasion', 'cross_site_scripting', 'insecure_input_validation']}",
+      "status": "new",
+      "priority": "critical",
+      "source": "correlation",
+      "first_seen": "2026-03-31T12:02:16.526227",
+      "last_seen": "2026-03-31T12:02:16.526227",
+      "chunk_ids": [],
+      "agent_output_ids": [],
+      "file_ids": [
+        "bad6391e-c7d0-4228-84ca-8aad932074eb"
+      ],
+      "primary_actor_ip": "0.0.0.0",
+      "actor_ips": [
+        "0.0.0.0"
+      ],
+      "affected_hosts": [],
+      "mitre_techniques": [
+        {
+          "technique_id": "T1595",
+          "technique_name": "Active Scanning",
+          "tactic": "Reconnaissance",
+          "confidence": 0.68,
+          "justification": "Multi-vector profile commonly begins with broad reconnaissance."
+        }
+      ],
+      "primary_tactic": "Reconnaissance",
+      "overall_confidence": 0.9,
+      "executive_summary": "Multi-vector: 6 attack types (local_file_inclusion, path_traversal, arbitrary_file_read, evasion, cross_site_scripting)",
+      "technical_summary": "",
+      "recommended_actions": [
+        "Investigate correlated activity from 0.0.0.0"
+      ],
+      "$MI_ID": "GenAI_SOC",
+      "raw_log": "{'categories': ['local_file_inclusion', 'path_traversal', 'arbitrary_file_read', 'evasion', 'cross_site_scripting', 'insecure_input_validation']}",
+      "source_ip": "0.0.0.0",
+      "destination_ip": null,
+      "suspicious": true,
+      "suspicious_indicator": "url",
+      "attack_name": "multi_vector_attacker",
+      "brief_description": "Multi-vector: 6 attack types (local_file_inclusion, path_traversal, arbitrary_file_read, evasion, cross_site_scripting)",
+      "recommended_action": "Investigate correlated activity from 0.0.0.0",
+      "confidence_score": 9,
+      "mitre_tactic": "Reconnaissance",
+      "mitre_technique": "T1595",
+      "timeline": [
+        {
+          "timestamp": "2026-03-31T12:02:16.526227",
+          "event_type": "correlation",
+          "description": "Day-level correlation: multi_vector_attacker",
+          "actor": null,
+          "evidence_refs": []
+        }
+      ],
+      "detection_tier": "correlation",
+      "detection_rule": "multi_vector_attacker",
+      "assigned_to": null,
+      "tags": [],
+      "notes": [],
+      "created_at": "2026-03-31T12:02:16.526227",
+      "updated_at": "2026-03-31T12:02:16.526227",
+      "resolved_at": null
     }
   ],
-  "saved_at": "2026-03-27T10:55:18.557472"
+  "saved_at": "2026-03-31T12:02:16.553110"
 }

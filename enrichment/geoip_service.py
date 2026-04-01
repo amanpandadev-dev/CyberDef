@@ -17,6 +17,9 @@ from shared_models.events import NormalizedEvent
 
 logger = get_logger(__name__)
 
+# Global singleton instance
+_geoip_instance: Optional['CSVGeoIPService'] = None
+
 
 class CSVGeoIPService:
     """
@@ -37,6 +40,7 @@ class CSVGeoIPService:
         self.csv_path = None
         self.networks: List[Tuple[ipaddress.IPv4Network, Dict[str, str]]] = []
         self.enabled = False
+        self._lookup_cache: Dict[str, Optional[Dict[str, str]]] = {}  # IP lookup cache
         
         # Find the CSV file
         for path in possible_paths:
@@ -117,19 +121,35 @@ class CSVGeoIPService:
         return True
 
     def _lookup_ip(self, ip_str: str) -> Optional[Dict[str, str]]:
-        """Look up geographic data for an IP address."""
+        """Look up geographic data for an IP address using binary search and caching."""
+        # Check cache first
+        if ip_str in self._lookup_cache:
+            return self._lookup_cache[ip_str]
+        
         try:
             ip = ipaddress.IPv4Address(ip_str)
             
             # Binary search through sorted networks
-            for network, geo_data in self.networks:
+            left, right = 0, len(self.networks) - 1
+            while left <= right:
+                mid = (left + right) // 2
+                network, geo_data = self.networks[mid]
+                
                 if ip in network:
+                    self._lookup_cache[ip_str] = geo_data
                     return geo_data
+                elif ip < network.network_address:
+                    right = mid - 1
+                else:
+                    left = mid + 1
             
+            # Cache miss
+            self._lookup_cache[ip_str] = None
             return None
             
         except Exception as e:
             logger.debug(f"IP lookup failed for {ip_str}: {e}")
+            self._lookup_cache[ip_str] = None
             return None
 
     def enrich_event(self, event: NormalizedEvent) -> NormalizedEvent:
@@ -217,10 +237,19 @@ class CSVGeoIPService:
     def close(self):
         """Clean up resources."""
         self.networks.clear()
+        self._lookup_cache.clear()
         self.enabled = False
 
     def __del__(self):
         self.close()
+
+
+def get_geoip_service() -> CSVGeoIPService:
+    """Get or create singleton GeoIP service instance (loads CSV only once)."""
+    global _geoip_instance
+    if _geoip_instance is None:
+        _geoip_instance = CSVGeoIPService()
+    return _geoip_instance
 
 
 # Alias for backward compatibility

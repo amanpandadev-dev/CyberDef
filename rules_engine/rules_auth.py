@@ -3,6 +3,8 @@ Family 2: Authentication, Session & Access Control Rules (9 rules)
 """
 
 from __future__ import annotations
+import re
+from urllib.parse import urlparse
 
 from rules_engine.base_rule import ThreatRule, RateBasedRule
 from rules_engine.models import ThreatMatch, ThreatSeverity, ThreatFamily
@@ -171,13 +173,12 @@ class PrivilegeEscalationRule(ThreatRule):
     name = "privilege_escalation_probe"
     category = "privilege_escalation"
     family = ThreatFamily.AUTH_ACCESS
-    severity = ThreatSeverity.HIGH
-    confidence = 0.7
-    description = "Privilege escalation probing"
-    check_fields = ["uri_path", "uri_query"]
+    severity = ThreatSeverity.CRITICAL
+    confidence = 0.85
+    description = "Privilege escalation attempt via shell commands, SUID bits, or known tooling"
+    check_fields = ["uri_path", "uri_query", "original_message"]
     patterns = [
-        r"[?&](?:role|is_admin|admin|isAdmin|privilege|access_level)\s*=",
-        r"/(?:su|sudo|superuser|root|superadmin)\b",
+        r"(?i)((;\s*|\|\||&&|\|)\s*sudo|su|chmod|chown|setcap)\b|(cmd=|exec=|system=).*(sudo|su|chmod|chown)\b|chmod\s+[0-7]*4[0-7]{2}|\bsu\s+-?\s*root\b|bash\s+-p|sh\s+-p|python.*pty\.spawn|/etc/(sudoers|shadow)|setcap\s+|linpeas|linenum|pspy",
     ]
 
 
@@ -199,9 +200,6 @@ class CSRFIndicatorRule(ThreatRule):
         referrer = event.referrer or ""
         if not referrer or not referrer.startswith("http"):
             return None
-
-        from urllib.parse import urlparse
-        import re
         
         ref_host = urlparse(referrer).hostname
         if not ref_host:

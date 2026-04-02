@@ -187,29 +187,49 @@ class CSRFIndicatorRule(ThreatRule):
     family = ThreatFamily.AUTH_ACCESS
     severity = ThreatSeverity.MEDIUM
     confidence = 0.5
-    description = "CSRF indicator: state-changing request with suspicious referer"
-    check_fields = []
+    description = "CSRF indicator: state-changing request with suspicious referer and missing token"
+    check_fields = ["uri_query", "original_message"]
+    
+    BASE_DOMAIN = "ultimatix.net"
 
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         if event.http_method not in ("POST", "PUT", "DELETE", "PATCH"):
             return None
 
         referrer = event.referrer or ""
-        dst_host = event.dst_host or ""
-        if referrer and dst_host:
-            if dst_host not in referrer and referrer.startswith("http"):
-                return ThreatMatch(
-                    event_id=event.event_id,
-                    rule_name=self.name,
-                    category=self.category,
-                    family=self.family,
-                    severity=self.severity,
-                    confidence=self.confidence,
-                    evidence=f"{event.http_method} with external referer: {referrer[:100]}",
-                    matched_field="referrer",
-                    timestamp=event.timestamp,
-                    src_ip=event.src_ip,
-                )
+        if not referrer or not referrer.startswith("http"):
+            return None
+
+        from urllib.parse import urlparse
+        import re
+        
+        ref_host = urlparse(referrer).hostname
+        if not ref_host:
+            return None
+            
+        ref_host = ref_host.lower()
+        base_domain = self.BASE_DOMAIN.lower()
+        
+        is_same_site = ref_host == base_domain or ref_host.endswith(f".{base_domain}")
+        cross_origin = not is_same_site
+        
+        log_surface = " ".join(filter(None, [event.uri_query, event.original_message]))
+        has_token = bool(re.search(r'(token|auth|state|session)=', log_surface, re.I))
+        missing_token = not has_token
+        
+        if cross_origin and missing_token:
+            return ThreatMatch(
+                event_id=event.event_id,
+                rule_name=self.name,
+                category=self.category,
+                family=self.family,
+                severity=self.severity,
+                confidence=self.confidence,
+                evidence=f"{event.http_method} cross-origin from {referrer[:100]} with missing token",
+                matched_field="referrer",
+                timestamp=event.timestamp,
+                src_ip=event.src_ip,
+            )
         return None
 
 

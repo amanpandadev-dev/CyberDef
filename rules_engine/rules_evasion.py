@@ -116,7 +116,7 @@ class OpenRedirectRule(ThreatRule):
         r"(?:^|[?&])(?:redirect|url|next|return|goto|continue|dest|destination|redir|returnUrl|target|forward)\s*=\s*([^&\s]+)",
         re.IGNORECASE,
     )
-    _LOCAL_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+    _LOCAL_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "www.ultimatix.net"}
 
     def _is_external_redirect_target(self, raw_target: str) -> bool:
         target = unquote(raw_target).strip()

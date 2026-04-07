@@ -97,6 +97,7 @@ class CommandInjectionRule(ThreatRule):
     patterns = [
         r"(?i)((;\s*(whoami|id|uname|cat|ls|bash|sh|shell_exec))|&&|\||`|\$\(|invoke-webrequest|iex|downloadstring|wget|curl|webclient|powershell|\.exe).*powershell(?:\.exe)?",
         r"(?i)\bshell_exec\s*\(",
+        r"(?i)((;\s*|\|\||&&|\|)\s*(sudo|su|chmod|chown|setcap))\b|(cmd=|exec=|system=).*(sudo|su|chmod|chown)\b|chmod\s+[0-7]*4[0-7]{2}|\bsu\s+-?\s*root\b|bash\s+-p|sh\s+-p|python.*pty\.spawn|/etc/(sudoers|shadow)|setcap\s+|(?:\s*\./|\s*/tmp/|\s*/dev/shm/).*(linpeas|pspy|linenum)",
     ]
 
 

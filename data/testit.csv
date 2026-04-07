@@ -1,0 +1,2 @@
+"<150>Mar 24 12:00:56 CDCUXPRHLMW101 httpd[896734]: 10.52.149.178 - - - - [24/Mar/2026:12:00:56 +0530] ""GET /dana-na/../dana/html5acc/guacamole/../../../../../../etc/passwd?/dana/html5acc/guacamole/ HTTP/1.1"" 400 226 ""-"" ""-"""
+"<150>Mar 24 12:03:37 CDCUPA1150LSG01 httpd[799030]: 10.40.54.105 10.95.201.25 393241 rights.ultimatix.net - - [24/Mar/2026:12:03:37 +0530] ""GET /RightsWeb/rest/fetchPrevSpocComments?cd=1774333669650&fyaTransId=175735411 HTTP/1.1"" 200 28 26 ""https://rights.ultimatix.net/RightsWeb/"" ""Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

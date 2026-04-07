@@ -1,4 +1,4 @@
-﻿"""Families 3 & 4: Information Leakage & Recon (11) + Path & File Access (5)"""
+"""Families 3 & 4: Information Leakage & Recon (11) + Path & File Access (5)"""
 
 from __future__ import annotations
 
@@ -236,7 +236,7 @@ class LFIRule(ThreatRule):
         r"/proc/self/(?:environ|cmdline|fd|maps)",
         r"/windows/system32",
         r"/boot\.ini",
-        r"(?:file|page|include|path|doc|template)\s*=\s*(?:\.\./|/)",
+        r"(?:file|page|include|path|doc|template)\s*=\s*(?:\.\./|/(?:etc/passwd|etc/shadow|proc/self/environ|proc/version|win\.ini|boot\.ini|web\.config|wp-config\.php|application\.yml|\.env))",
     ]
 
 

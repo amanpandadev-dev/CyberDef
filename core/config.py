@@ -68,6 +68,10 @@ class Settings(BaseSettings):
     agent_timeout_seconds: int = 60
     min_confidence_threshold: float = 0.5
     
+    # Tier Control
+    enable_correlation_tier: bool = True  # Set to False to disable Tier 2 (Day-Level Correlator)
+    enable_ai_tier: bool = True  # Set to False to disable Tier 3 (AI Agent Pipeline)
+    
     # Logging
     log_level: str = "INFO"
     log_format: str = "json"

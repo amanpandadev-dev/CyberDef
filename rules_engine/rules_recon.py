@@ -222,6 +222,7 @@ class PathTraversalRule(ThreatRule):
     ]
 
 
+
 class LFIRule(ThreatRule):
     name = "local_file_inclusion"
     category = "local_file_inclusion"

@@ -5,7 +5,7 @@ from __future__ import annotations
 from rules_engine.base_rule import ThreatRule, RateBasedRule
 from rules_engine.models import ThreatMatch, ThreatSeverity, ThreatFamily
 from shared_models.events import NormalizedEvent
-
+import ipaddress
 
 # Family 7: Bot & Scanner
 
@@ -81,6 +81,15 @@ class ContentScrapingRule(RateBasedRule):
     threshold = 200
 
     def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+        # Skip private/internal IPs
+        ip = group_key
+        try:
+            ip_obj = ipaddress.ip_address(ip)
+            if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
+                return None
+        except ValueError:
+            pass
+        
         ok_evts = [ev for ev in events if ev.http_status and 200 <= ev.http_status < 300]
         uris = {ev.uri_path for ev in ok_evts if ev.uri_path}
         if len(uris) >= self.threshold:

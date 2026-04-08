@@ -139,7 +139,7 @@ class SessionFixationRule(ThreatRule):
     description = "Session fixation attempt - session IDs in URL"
     check_fields = ["uri_path", "uri_query"]
     patterns = [
-        r"(?:JSESSIONID|PHPSESSID|sessionid|sid|session_id|ASPSESSIONID)\s*=",
+        r"(([?&;])(JSESSIONID|PHPSESSID|sessionid|sessid|sid|ASPSESSIONID)=[a-z0-9\-]{8,}|;jsessionid=[a-z0-9\-]{8,})",
     ]
 
 

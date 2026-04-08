@@ -148,6 +148,7 @@ async def analyze_file(
     from datetime import date
     from uuid import UUID
     from core.auth import resolve_user_identity
+    from core.config import get_settings
 
     from file_intake.service import FileIntakeService
     from log_parser.base import ParserRegistry
@@ -159,9 +160,10 @@ async def analyze_file(
     from incidents.service import IncidentService
     from rules_engine.engine import DeterministicEngine
     from threat_state.store import get_threat_state_store
-    from threat_state.correlator import DayLevelCorrelator
+    from threat_state.correlator import DayLevelCorrelator, CorrelationResult
 
-    logger.info(f"Starting three-tier analysis pipeline | file_id={file_id}")
+    settings = get_settings()
+    logger.info(f"Starting three-tier analysis pipeline | file_id={file_id} | correlation_enabled={settings.enable_correlation_tier} | ai_enabled={settings.enable_ai_tier}")
 
     # â”€â”€ Step 0: Get & parse file â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     file_service = FileIntakeService()
@@ -249,10 +251,13 @@ async def analyze_file(
     state_store.update_from_batch(enriched_events, tier1_result)
 
     # â”€â”€ TIER 2: Day-Level Correlator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    correlator = DayLevelCorrelator(state_store)
-    tier2_result = correlator.correlate()
-
-    logger.info(f"Tier 2 complete | total_findings={len(tier2_result.findings)}, new_patterns={len(tier2_result.new_patterns)}")
+    if settings.enable_correlation_tier:
+        correlator = DayLevelCorrelator(state_store)
+        tier2_result = correlator.correlate()
+        logger.info(f"Tier 2 complete | total_findings={len(tier2_result.findings)}, new_patterns={len(tier2_result.new_patterns)}")
+    else:
+        logger.info("Tier 2 (Correlation) disabled by configuration")
+        tier2_result = CorrelationResult(findings=[], new_patterns=[])
 
     # â”€â”€ Create incidents from Tier 1 & Tier 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     incident_service = IncidentService()
@@ -267,11 +272,12 @@ async def analyze_file(
         all_incidents.append(incident)
 
     # Tier 2 incidents (new cross-batch correlations)
-    for pattern in tier2_result.new_patterns:
-        incident = incident_service.create_from_correlation(
-            pattern, file_id=parsed_uuid,
-        )
-        all_incidents.append(incident)
+    if settings.enable_correlation_tier:
+        for pattern in tier2_result.new_patterns:
+            incident = incident_service.create_from_correlation(
+                pattern, file_id=parsed_uuid,
+            )
+            all_incidents.append(incident)
 
     # â”€â”€ Chunking & TIER 3: AI Agent Pipeline (if needed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     chunking_svc = ChunkingService()

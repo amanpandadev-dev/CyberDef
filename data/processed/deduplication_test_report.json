@@ -1,0 +1,53 @@
+{
+  "results": [
+    {
+      "run": 1,
+      "file_id": "0d595564-250c-4e8c-8226-4ee13c395800",
+      "parsed_count": 1,
+      "normalized_count": 1,
+      "deduplicated_count": 1,
+      "duplicates_removed": 0,
+      "dedupe_path": "C:\\Users\\MrAmanPanda\\Documents\\sentinel-log-intelligence\\Cybeshield\\CyberDef\\data\\processed\\normalized\\0d595564-250c-4e8c-8226-4ee13c395800_normalized_dedup.jsonl",
+      "threat_state": {
+        "total_events": 1,
+        "unique_ips": 1,
+        "batches_processed": 1
+      },
+      "ip_volumes": {
+        "10.95.201.25": {
+          "total_requests": 1,
+          "batches_seen_in": 1
+        }
+      }
+    },
+    {
+      "run": 2,
+      "file_id": "0d595564-250c-4e8c-8226-4ee13c395800",
+      "parsed_count": 1,
+      "normalized_count": 1,
+      "deduplicated_count": 1,
+      "duplicates_removed": 0,
+      "dedupe_path": "C:\\Users\\MrAmanPanda\\Documents\\sentinel-log-intelligence\\Cybeshield\\CyberDef\\data\\processed\\normalized\\0d595564-250c-4e8c-8226-4ee13c395800_normalized_dedup.jsonl",
+      "threat_state": {
+        "total_events": 1,
+        "unique_ips": 1,
+        "batches_processed": 1
+      },
+      "ip_volumes": {
+        "10.95.201.25": {
+          "total_requests": 1,
+          "batches_seen_in": 1
+        }
+      }
+    }
+  ],
+  "checks": {
+    "Parsed Count Match": true,
+    "Normalized Count Match": true,
+    "Deduplicated Count Match": true,
+    "Duplicates Removed Match": true,
+    "Threat State Total Events Match": true,
+    "Threat State Unique IPs Match": true
+  },
+  "all_passed": true
+}

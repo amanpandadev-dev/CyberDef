@@ -1,0 +1,162 @@
+{
+  "date": "2026-05-18",
+  "batch_count": 3,
+  "total_events": 36,
+  "saved_at": "2026-05-18T08:39:28.425631",
+  "actors": {
+    "0.1.0.1": {
+      "ip": "0.1.0.1",
+      "first_seen": "2025-10-03T20:23:15",
+      "last_seen": "2026-01-22T00:12:56",
+      "total_requests": 15,
+      "requests_by_status": {
+        "200": 9,
+        "302": 6
+      },
+      "unique_uris_accessed": 12,
+      "auth_failures_total": 0,
+      "auth_successes_total": 9,
+      "attack_signatures_seen": [
+        "sql_injection",
+        "blind_sql_injection",
+        "os_command_injection"
+      ],
+      "attack_categories_seen": [
+        "sql_injection",
+        "blind_sql_injection",
+        "os_command_injection"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-01-23T19:31:42",
+          "category": "sql_injection",
+          "rule_name": "sql_injection",
+          "evidence": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B",
+          "batch_number": 1
+        },
+        {
+          "timestamp": "2026-01-23T19:31:42",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B",
+          "batch_number": 1
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "searchIn=/content/dam/tcs/investor-relations/financial-statements&selectedQuarter=q3&haiku630498=she",
+          "batch_number": 1
+        },
+        {
+          "timestamp": "2026-01-23T19:31:42",
+          "category": "sql_injection",
+          "rule_name": "sql_injection",
+          "evidence": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B",
+          "batch_number": 2
+        },
+        {
+          "timestamp": "2026-01-23T19:31:42",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B",
+          "batch_number": 2
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "searchIn=/content/dam/tcs/investor-relations/financial-statements&selectedQuarter=q3&haiku630498=she",
+          "batch_number": 2
+        },
+        {
+          "timestamp": "2026-01-23T19:31:42",
+          "category": "sql_injection",
+          "rule_name": "sql_injection",
+          "evidence": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B",
+          "batch_number": 3
+        },
+        {
+          "timestamp": "2026-01-23T19:31:42",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "do=inforum&listforumid=(select(0)from(select(sleep(6)))v)/*'%2B(select(0)from(select(sleep(6)))v)%2B",
+          "batch_number": 3
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "searchIn=/content/dam/tcs/investor-relations/financial-statements&selectedQuarter=q3&haiku630498=she",
+          "batch_number": 3
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.186 Electron/32.3.3 Safari/537.36"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 1,
+          "count": 5,
+          "timestamp": "2026-05-18T07:13:56.815196"
+        },
+        {
+          "batch": 2,
+          "count": 5,
+          "timestamp": "2026-05-18T07:19:37.055650"
+        },
+        {
+          "batch": 3,
+          "count": 5,
+          "timestamp": "2026-05-18T08:39:28.425631"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 3
+    },
+    "0.0.0.0": {
+      "ip": "0.0.0.0",
+      "first_seen": "2026-02-03T08:15:33",
+      "last_seen": "2026-02-03T08:15:33",
+      "total_requests": 21,
+      "requests_by_status": {
+        "403": 21
+      },
+      "unique_uris_accessed": 9,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "-"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 1,
+          "count": 7,
+          "timestamp": "2026-05-18T07:13:56.815196"
+        },
+        {
+          "batch": 2,
+          "count": 7,
+          "timestamp": "2026-05-18T07:19:37.055650"
+        },
+        {
+          "batch": 3,
+          "count": 7,
+          "timestamp": "2026-05-18T08:39:28.425631"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 3
+    }
+  }
+}

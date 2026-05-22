@@ -1,0 +1,295 @@
+"""
+Syslog Apache access log parser.
+
+Parses CSV rows that contain one raw syslog-wrapped Apache log line. The
+accepted line formats are the two regex shapes supplied for the masked logs.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from datetime import datetime, timezone
+from typing import Any
+from urllib.parse import urlsplit
+
+from core.logging import get_logger
+from log_parser.base import BaseParser, ParserRegistry
+from shared_models.events import ParsedEvent, RawEventRow
+
+logger = get_logger(__name__)
+
+
+_APACHE_STANDARD_RE = re.compile(
+    r"^<\d+>\w{3}\s+\d{1,2}\s+\d{2}\:\d{2}\:\d{2}\s+"
+    r"(?P<HostName>[\S]+)\s(?P<Daemon>[\w\-\d\[\]]+)\:\s"
+    r"(?P<DstIP>[\d\.\:]+|\-)\s(?P<SrcIP>[\d\.]+|\-)(?P<BeforeStamp>.*?)"
+    r"\[(?P<SystemTStamp>[^\]]+)\][\s\"]+"
+    r"(?P<HTTPMethod>\w+)\s(?P<URL>.*?)\s+HTTP/[0-9\.]+\"\s+"
+    r"(?P<responsecode>\d+)\s(?P<RXLen>\d+|\-)"
+    r"(?:\s+(?P<TimeTaken>\d+|-))?(?:\s+\d+)?"
+    r"(?P<Tail>.*)$",
+    re.DOTALL,
+)
+
+_APACHE_EXTENDED_RE = re.compile(
+    r"^<\d+>\w+[\s\d\:]+(?P<HostName>[\S]+)\s(?P<Daemon>[\w\-\d\[\]]+)\:?\s"
+    r"(?P<DstIP>[\d\.]+|\-)\s(?P<SrcIP>[\d\.]+|\-)(?P<BeforeStamp>.*?)"
+    r"\[(?P<SystemTStamp>[^\]]+)\][\s\"]+"
+    r"(?P<HTTPMethod>\w+)\s(?P<URL>.*?)\s+HTTP/[0-9\.]+\"\s+"
+    r"(?P<responsecode>\d+)\s(?P<RXLen>\d+|\-)"
+    r"(?:\s+(?P<TimeTaken>\d+|-))?(?:\s+\d+)?"
+    r"(?P<Tail>.*)$",
+    re.DOTALL,
+)
+
+_LOGEVENT_COLS = {"logevent", "log_event", "raw_log", "raw_event", "event", "change"}
+_TS_FORMATS = (
+    "%d/%b/%Y:%H:%M:%S %z",
+    "%d/%b/%Y:%H:%M:%S",
+)
+
+
+@ParserRegistry.register
+class SyslogApacheParser(BaseParser):
+    """Parser for a single CSV column containing syslog Apache access logs."""
+
+    name = "syslog_apache"
+    vendor = "apache_httpd"
+    description = "Parser for syslog-wrapped Apache access logs in a raw CSV column"
+
+    column_mappings: dict[str, list[str]] = {}
+
+    def can_parse(self, columns: list[str], sample_rows: list[dict[str, Any]]) -> float:
+        if not columns:
+            return 0.0
+
+        non_empty_cols = [c.strip() for c in columns if c.strip()]
+        has_raw_column = any(c.lower() in _LOGEVENT_COLS for c in non_empty_cols)
+        if len(non_empty_cols) != 1 and not has_raw_column:
+            return 0.0
+
+        checked = 0
+        matched = 0
+        for row in sample_rows[:10]:
+            raw = self._get_raw(row)
+            if not raw:
+                continue
+            checked += 1
+            if self._match(raw):
+                matched += 1
+
+        if checked == 0 or matched == 0:
+            return 0.0
+        return round(0.6 + (matched / checked * 0.35), 3)
+
+    def parse_row(self, raw_row: RawEventRow) -> ParsedEvent:
+        raw = self._get_raw(raw_row.raw_data) or ""
+        match = self._match(raw)
+        if not match:
+            logger.debug(f"Could not parse syslog/apache line | row_hash={raw_row.row_hash}")
+            return ParsedEvent(file_id=raw_row.file_id, row_hash=raw_row.row_hash, raw_message=raw[:512])
+        return self._build_event(raw_row, raw, match)
+
+    def _match(self, raw: str) -> re.Match[str] | None:
+        return _APACHE_STANDARD_RE.match(raw) or _APACHE_EXTENDED_RE.match(raw)
+
+    def _build_event(self, raw_row: RawEventRow, raw: str, match: re.Match[str]) -> ParsedEvent:
+        fields = {
+            key: (value if key == "Tail" else self._clean_capture(value))
+            for key, value in match.groupdict().items()
+        }
+        user_id, domain = self._parse_user_domain(fields.get("BeforeStamp"))
+        referer, user_agent = self._parse_quoted_tail(fields.get("Tail"))
+        fields["UserID"] = user_id
+        fields["domain"] = domain
+        fields["HTTPReferer"] = referer
+        fields["UserAgent"] = user_agent
+        status = self._parse_int(fields.get("responsecode"))
+        rx_len = self._parse_int(fields.get("RXLen"))
+        time_taken = self._parse_int(fields.get("TimeTaken"))
+        domain = fields.get("domain")
+        url = fields.get("URL")
+        uri_path, uri_query = self._split_uri(url)
+        src_ip, dst_ip = self._normalize_endpoints(fields.get("SrcIP"), fields.get("DstIP"))
+
+        parsed_data = {
+            "hostname": fields.get("HostName"),
+            "daemon": fields.get("Daemon"),
+            "dst_ip": dst_ip,
+            "src_ip": src_ip,
+            "raw_dst_ip": fields.get("DstIP"),
+            "raw_src_ip": fields.get("SrcIP"),
+            "user_id": fields.get("UserID"),
+            "domain": domain,
+            "system_timestamp": fields.get("SystemTStamp"),
+            "http_method": fields.get("HTTPMethod"),
+            "http_status": status,
+            "url": url,
+            "uri_path": uri_path,
+            "uri_query": uri_query,
+            "response_size": rx_len,
+            "time_taken": time_taken,
+            "referrer": fields.get("HTTPReferer"),
+            "user_agent": fields.get("UserAgent"),
+            "original_message": raw,
+        }
+
+        event = ParsedEvent(
+            file_id=raw_row.file_id,
+            row_hash=raw_row.row_hash,
+            timestamp=self._parse_ts(fields.get("SystemTStamp")),
+            source_address=src_ip,
+            destination_address=dst_ip,
+            destination_hostname=domain if domain not in (None, "-") else fields.get("HostName"),
+            protocol="HTTP",
+            username=fields.get("UserID"),
+            action=("ALLOW" if status and status < 400 else ("DENY" if status and status >= 400 else None)),
+            bytes_sent=rx_len,
+            duration_ms=time_taken,
+            raw_message=raw[:512],
+            parsed_data=parsed_data,
+            vendor_specific={
+                "hostname": fields.get("HostName"),
+                "daemon": fields.get("Daemon"),
+                "domain": domain,
+            },
+        )
+        self._print_debug_event(raw_row, event)
+        return event
+
+    def _print_debug_event(self, raw_row: RawEventRow, event: ParsedEvent) -> None:
+        payload = {
+            "parser": self.name,
+            "row_number": raw_row.row_number,
+            "row_hash": event.row_hash,
+            "fields": {
+                "timestamp": event.timestamp.isoformat() if event.timestamp else None,
+                "source_address": event.source_address,
+                "destination_address": event.destination_address,
+                "destination_hostname": event.destination_hostname,
+                "protocol": event.protocol,
+                "action": event.action,
+                "username": event.username,
+                "bytes_sent": event.bytes_sent,
+                "duration_ms": event.duration_ms,
+                "parsed_data": event.parsed_data,
+                "vendor_specific": event.vendor_specific,
+            },
+        }
+        # print(json.dumps(payload, default=str, ensure_ascii=False), flush=True)
+
+    def _normalize_endpoints(
+        self,
+        src_ip: str | None,
+        dst_ip: str | None,
+    ) -> tuple[str | None, str | None]:
+        src = self._clean_placeholder(src_ip)
+        dst = self._clean_placeholder(dst_ip)
+        return src, dst
+
+    def _clean_placeholder(self, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip()
+        return None if text in {"", "-"} else text
+
+    def _parse_user_domain(self, value: str | None) -> tuple[str | None, str | None]:
+        text = (value or "").replace(",", " ").strip()
+        tokens = [token for token in text.split() if token and token not in {":", "%"}]
+
+        user_id = None
+        domain = None
+        for idx, token in enumerate(tokens):
+            if token == "-" and user_id is None:
+                user_id = "-"
+            elif token.isdigit():
+                user_id = token
+                for candidate in tokens[idx + 1 :]:
+                    if candidate != "-" and not self._looks_like_ip(candidate):
+                        domain = candidate
+                        break
+                break
+
+        if domain is None:
+            for token in tokens:
+                if token != "-" and not token.isdigit() and not self._looks_like_ip(token):
+                    domain = token
+                    break
+
+        return user_id, domain
+
+    def _looks_like_ip(self, value: str) -> bool:
+        return bool(re.fullmatch(r"\d+(?:\.\d+){1,}\S*", value))
+
+    def _parse_quoted_tail(self, value: str | None) -> tuple[str | None, str | None]:
+        text = (value or "").strip()
+        if not text:
+            return None, None
+
+        quoted = re.findall(r'"((?:\\.|[^"])*)"', text)
+        if not quoted:
+            return None, None
+
+        referer = self._unescape_quotes(quoted[0])
+        user_agent = self._unescape_quotes(quoted[1]) if len(quoted) > 1 else None
+        return referer, user_agent
+
+    def _unescape_quotes(self, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.replace(r"\"", '"').strip()
+
+    def _get_raw(self, data: dict[str, Any]) -> str | None:
+        for key, value in data.items():
+            if key.strip().lower() in _LOGEVENT_COLS and value is not None:
+                raw = str(value).strip()
+                return raw or None
+
+        for value in data.values():
+            if value is not None and str(value).strip():
+                return str(value).strip()
+        return None
+
+    def _clean_capture(self, value: str | None) -> str | None:
+        if value is None:
+            return None
+        text = value.strip()
+        if len(text) >= 2 and text[0] == text[-1] == '"':
+            text = text[1:-1].strip()
+        return text if text != "" else None
+
+    def _split_uri(self, raw_uri: str | None) -> tuple[str | None, str | None]:
+        if not raw_uri or raw_uri == "-":
+            return raw_uri, None
+        parsed = urlsplit(raw_uri)
+        return parsed.path or raw_uri.split("?", 1)[0] or None, parsed.query or None
+
+    def _parse_ts(self, value: str | None) -> datetime | None:
+        if not value or value == "-":
+            return None
+
+        text = re.sub(r"\s+", " ", value.strip())
+        if re.search(r"\s\d{4}$", text):
+            text = text[:-5] + " +" + text[-4:]
+
+        for fmt in _TS_FORMATS:
+            try:
+                parsed = datetime.strptime(text, fmt)
+                if parsed.tzinfo is not None:
+                    parsed = parsed.astimezone(timezone.utc).replace(tzinfo=None)
+                return parsed
+            except ValueError:
+                continue
+        return None
+
+    def _parse_int(self, value: Any) -> int | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text or text == "-":
+            return None
+        try:
+            return int(text)
+        except (TypeError, ValueError):
+            return None

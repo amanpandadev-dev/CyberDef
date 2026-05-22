@@ -1,0 +1,84 @@
+{"timestamp": "2026-05-21 12:19:26,938", "level": "INFO", "logger": "main", "message": "AegisNet starting | version=0.1.0, debug=False"}
+{"timestamp": "2026-05-21 12:19:27,082", "level": "INFO", "logger": "database.session", "message": "Created database engine: sqlite:///./data/aegisnet.db"}
+{"timestamp": "2026-05-21 12:19:27,086", "level": "INFO", "logger": "database.session", "message": "Database schema initialized"}
+{"timestamp": "2026-05-21 12:19:27,091", "level": "ERROR", "logger": "main", "message": "PRE-FLIGHT FAIL: Ollama service unreachable at http://localhost:11434 | error=No module named 'httpx'"}
+{"timestamp": "2026-05-21 12:19:27,092", "level": "INFO", "logger": "main", "message": "--- PRE-FLIGHT READINESS REPORT ---"}
+{"timestamp": "2026-05-21 12:19:27,092", "level": "INFO", "logger": "main", "message": "Database: \u2705 OK"}
+{"timestamp": "2026-05-21 12:19:27,093", "level": "INFO", "logger": "main", "message": "Ollama API: \u274c FAIL"}
+{"timestamp": "2026-05-21 12:19:27,093", "level": "INFO", "logger": "main", "message": "LLM Model: \u274c MISSING"}
+{"timestamp": "2026-05-21 12:19:27,094", "level": "INFO", "logger": "main", "message": "Embed Model: \u274c MISSING"}
+{"timestamp": "2026-05-21 12:19:27,094", "level": "INFO", "logger": "main", "message": "-----------------------------------"}
+{"timestamp": "2026-05-21 12:19:27,109", "level": "INFO", "logger": "file_watcher", "message": "File watcher started | watch_dir=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\data, existing_files=1"}
+{"timestamp": "2026-05-21 12:19:44,137", "level": "INFO", "logger": "main", "message": "AegisNet starting | version=0.1.0, debug=False"}
+{"timestamp": "2026-05-21 12:19:44,166", "level": "INFO", "logger": "database.session", "message": "Created database engine: sqlite:///./data/aegisnet.db"}
+{"timestamp": "2026-05-21 12:19:44,181", "level": "INFO", "logger": "database.session", "message": "Database schema initialized"}
+{"timestamp": "2026-05-21 12:19:44,183", "level": "ERROR", "logger": "main", "message": "PRE-FLIGHT FAIL: Ollama service unreachable at http://localhost:11434 | error=No module named 'httpx'"}
+{"timestamp": "2026-05-21 12:19:44,183", "level": "INFO", "logger": "main", "message": "--- PRE-FLIGHT READINESS REPORT ---"}
+{"timestamp": "2026-05-21 12:19:44,183", "level": "INFO", "logger": "main", "message": "Database: \u2705 OK"}
+{"timestamp": "2026-05-21 12:19:44,185", "level": "INFO", "logger": "main", "message": "Ollama API: \u274c FAIL"}
+{"timestamp": "2026-05-21 12:19:44,185", "level": "INFO", "logger": "main", "message": "LLM Model: \u274c MISSING"}
+{"timestamp": "2026-05-21 12:19:44,186", "level": "INFO", "logger": "main", "message": "Embed Model: \u274c MISSING"}
+{"timestamp": "2026-05-21 12:19:44,186", "level": "INFO", "logger": "main", "message": "-----------------------------------"}
+{"timestamp": "2026-05-21 12:19:44,200", "level": "INFO", "logger": "file_watcher", "message": "File watcher started | watch_dir=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\data, existing_files=1"}
+{"timestamp": "2026-05-21 12:19:44,319", "level": "INFO", "logger": "core.flush_buffer", "message": "FlushBuffer worker started | limits: 10000 items / 60s"}
+{"timestamp": "2026-05-21 12:20:20,252", "level": "INFO", "logger": "incidents.service", "message": "Loaded 36 incidents from file | file=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\data\\processed\\incidents_data.json"}
+{"timestamp": "2026-05-21 12:20:20,258", "level": "INFO", "logger": "incidents.service", "message": "Loaded 36 incidents from file | file=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\data\\processed\\incidents_data.json"}
+{"timestamp": "2026-05-21 12:20:20,318", "level": "INFO", "logger": "incidents.service", "message": "Loaded 36 incidents from file | file=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\data\\processed\\incidents_data.json"}
+{"timestamp": "2026-05-21 12:20:31,535", "level": "INFO", "logger": "file_intake.service", "message": "Starting file upload | file_id=795dcc15-88d3-42d0-b26a-a5bb19e738b1, filename=all_threats.csv, size_bytes=4895"}
+{"timestamp": "2026-05-21 12:20:31,536", "level": "INFO", "logger": "file_intake.validator", "message": "File validation complete | filename=all_threats.csv, row_count=14, column_count=1, encoding=utf-8, delimiter=';', has_header=False, errors=0, warnings=0"}
+{"timestamp": "2026-05-21 12:20:31,611", "level": "INFO", "logger": "file_intake.service", "message": "File upload complete | file_id=795dcc15-88d3-42d0-b26a-a5bb19e738b1, checksum=b794811ff9f5d20c, row_count=14"}
+{"timestamp": "2026-05-21 12:20:31,651", "level": "ERROR", "logger": "main", "message": "Unhandled exception | error=No module named 'httpx'"}
+{"timestamp": "2026-05-21 12:20:42,293", "level": "INFO", "logger": "file_watcher", "message": "File watcher stopped"}
+{"timestamp": "2026-05-21 12:20:42,294", "level": "INFO", "logger": "core.flush_buffer", "message": "FlushBuffer worker stopped and remaining data drained."}
+{"timestamp": "2026-05-21 12:20:42,296", "level": "INFO", "logger": "database.session", "message": "Database connections closed"}
+{"timestamp": "2026-05-21 12:20:42,296", "level": "INFO", "logger": "main", "message": "AegisNet shutting down"}
+{"timestamp": "2026-05-21 12:20:55,010", "level": "INFO", "logger": "main", "message": "AegisNet starting | version=0.1.0, debug=False"}
+{"timestamp": "2026-05-21 12:20:55,038", "level": "INFO", "logger": "database.session", "message": "Created database engine: sqlite:///./data/aegisnet.db"}
+{"timestamp": "2026-05-21 12:20:55,056", "level": "INFO", "logger": "database.session", "message": "Database schema initialized"}
+{"timestamp": "2026-05-21 12:20:55,460", "level": "INFO", "logger": "httpx", "message": "HTTP Request: GET http://localhost:11434/api/tags \"HTTP/1.1 200 OK\""}
+{"timestamp": "2026-05-21 12:20:55,463", "level": "INFO", "logger": "main", "message": "--- PRE-FLIGHT READINESS REPORT ---"}
+{"timestamp": "2026-05-21 12:20:55,463", "level": "INFO", "logger": "main", "message": "Database: \u2705 OK"}
+{"timestamp": "2026-05-21 12:20:55,463", "level": "INFO", "logger": "main", "message": "Ollama API: \u2705 OK"}
+{"timestamp": "2026-05-21 12:20:55,463", "level": "INFO", "logger": "main", "message": "LLM Model: \u274c MISSING"}
+{"timestamp": "2026-05-21 12:20:55,465", "level": "INFO", "logger": "main", "message": "Embed Model: \u274c MISSING"}
+{"timestamp": "2026-05-21 12:20:55,465", "level": "INFO", "logger": "main", "message": "-----------------------------------"}
+{"timestamp": "2026-05-21 12:20:55,477", "level": "INFO", "logger": "file_watcher", "message": "File watcher started | watch_dir=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\data, existing_files=2"}
+{"timestamp": "2026-05-21 12:20:55,576", "level": "INFO", "logger": "core.flush_buffer", "message": "FlushBuffer worker started | limits: 10000 items / 60s"}
+{"timestamp": "2026-05-21 12:21:05,201", "level": "INFO", "logger": "file_intake.service", "message": "Starting file upload | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5, filename=all_threats.csv, size_bytes=4895"}
+{"timestamp": "2026-05-21 12:21:05,201", "level": "INFO", "logger": "file_intake.validator", "message": "File validation complete | filename=all_threats.csv, row_count=14, column_count=1, encoding=utf-8, delimiter=';', has_header=False, errors=0, warnings=0"}
+{"timestamp": "2026-05-21 12:21:05,260", "level": "INFO", "logger": "file_intake.service", "message": "File upload complete | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5, checksum=b794811ff9f5d20c, row_count=14"}
+{"timestamp": "2026-05-21 12:21:05,390", "level": "INFO", "logger": "main", "message": "Starting three-tier analysis pipeline | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5 | correlation_enabled=False | ai_enabled=False"}
+{"timestamp": "2026-05-21 12:21:05,415", "level": "INFO", "logger": "file_intake.service", "message": "Marked file as PROCESSING | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5"}
+{"timestamp": "2026-05-21 12:21:05,419", "level": "INFO", "logger": "main", "message": "Detected headerless raw log format; using single-column fallback parser path"}
+{"timestamp": "2026-05-21 12:21:05,419", "level": "INFO", "logger": "log_parser.base", "message": "Selected parser | parser=syslog_apache, confidence=0.95"}
+{"timestamp": "2026-05-21 12:21:05,424", "level": "INFO", "logger": "normalization.service", "message": "Batch normalization started | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5, total_events=15"}
+{"timestamp": "2026-05-21 12:21:05,425", "level": "INFO", "logger": "normalization.service", "message": "Batch normalization complete | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5, total=15, normalized=8, discarded_no_src_ip=7, errors=0"}
+{"timestamp": "2026-05-21 12:21:05,426", "level": "INFO", "logger": "normalization.deduplication", "message": "Deduplication complete | input=8, output=6, reduction=25.0%"}
+{"timestamp": "2026-05-21 12:21:05,426", "level": "INFO", "logger": "main", "message": "Parse, normalize & deduplicate complete | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5, events=6"}
+{"timestamp": "2026-05-21 12:21:05,427", "level": "INFO", "logger": "rules_engine.engine", "message": "Deterministic engine initialized | pattern_rules=55, rate_rules=10, total_rules=65"}
+{"timestamp": "2026-05-21 12:21:05,439", "level": "INFO", "logger": "rules_engine.engine", "message": "Deterministic scan complete | events=6, matches=6, threats=3, elapsed_ms=11, needs_ai=False"}
+{"timestamp": "2026-05-21 12:21:05,439", "level": "INFO", "logger": "main", "message": "Tier 1 complete | threats=3, matches=6, time_ms=11"}
+{"timestamp": "2026-05-21 12:21:05,442", "level": "INFO", "logger": "threat_state.store", "message": "Threat state updated | batch=1, events=6, actors_tracked=2"}
+{"timestamp": "2026-05-21 12:21:05,443", "level": "INFO", "logger": "main", "message": "Tier 2 (Correlation) disabled by configuration"}
+{"timestamp": "2026-05-21 12:21:05,447", "level": "INFO", "logger": "incidents.service", "message": "Loaded 36 incidents from file | file=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\data\\processed\\incidents_data.json"}
+{"timestamp": "2026-05-21 12:21:05,455", "level": "INFO", "logger": "incidents.service", "message": "Deterministic incident created | incident_id=8324102d-9c00-4c7e-96ac-58f9e663bbfb, rule=sql_injection, priority=critical"}
+{"timestamp": "2026-05-21 12:21:05,467", "level": "INFO", "logger": "incidents.service", "message": "Deterministic incident created | incident_id=d35c3302-903a-4699-9876-db67fad42e3d, rule=blind_sql_injection, priority=critical"}
+{"timestamp": "2026-05-21 12:21:05,478", "level": "INFO", "logger": "incidents.service", "message": "Deterministic incident created | incident_id=834ee77b-fb88-4d71-b3b4-e05d87ca9b88, rule=os_command_injection, priority=critical"}
+{"timestamp": "2026-05-21 12:21:05,483", "level": "INFO", "logger": "database.repository", "message": "Updated analysis stats and marked PROCESSED: 31f4b0c7-fc66-4d45-9c32-cc8d064c92c5"}
+{"timestamp": "2026-05-21 12:21:05,502", "level": "INFO", "logger": "file_intake.service", "message": "Updated analysis stats | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5"}
+{"timestamp": "2026-05-21 12:21:05,503", "level": "INFO", "logger": "chunking.service", "message": "Starting chunking | events=6, strategy=multi_index"}
+{"timestamp": "2026-05-21 12:21:05,503", "level": "INFO", "logger": "chunking.multi_index", "message": "Chunking started | total_events=6, axis=src_ip"}
+{"timestamp": "2026-05-21 12:21:05,504", "level": "INFO", "logger": "chunking.multi_index", "message": "Grouping complete | unique_src_ips=2"}
+{"timestamp": "2026-05-21 12:21:05,507", "level": "INFO", "logger": "chunking.multi_index", "message": "Chunking complete | total_chunks=5, unique_src_ips=2"}
+{"timestamp": "2026-05-21 12:21:05,507", "level": "INFO", "logger": "chunking.service", "message": "Chunking complete | total_events=6, total_chunks=5"}
+{"timestamp": "2026-05-21 12:21:05,507", "level": "INFO", "logger": "chunking.service", "message": "Suspicious chunk filtering | total_chunks=5, suspicious_chunks=0"}
+{"timestamp": "2026-05-21 12:21:05,508", "level": "INFO", "logger": "main", "message": "Tier 3 AI skipped \u00e2\u20ac\u201d deterministic analysis sufficient"}
+{"timestamp": "2026-05-21 12:21:05,508", "level": "INFO", "logger": "main", "message": "Three-tier analysis complete | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5, events=6, tier1_threats=3, tier2_correlations=0, ai_analyses=0, total_incidents=3"}
+{"timestamp": "2026-05-21 12:21:05,515", "level": "INFO", "logger": "reports.writer", "message": "Threat report generated | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\reports\\20260521_065105_31f4b0c7-fc66-4d45-9c32-cc8d064c92c5_all_threats_report.md, lines=244"}
+{"timestamp": "2026-05-21 12:21:05,516", "level": "INFO", "logger": "main", "message": "Report saved | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\reports\\20260521_065105_31f4b0c7-fc66-4d45-9c32-cc8d064c92c5_all_threats_report.md"}
+{"timestamp": "2026-05-21 12:21:05,519", "level": "INFO", "logger": "reports.writer", "message": "Incident JSON report generated | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\reports\\20260521_065105_31f4b0c7-fc66-4d45-9c32-cc8d064c92c5_all_threats_incidents.json, incidents=3, emp_id=2858682"}
+{"timestamp": "2026-05-21 12:21:05,519", "level": "INFO", "logger": "main", "message": "Incident JSON report saved | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\CyberDef\\reports\\20260521_065105_31f4b0c7-fc66-4d45-9c32-cc8d064c92c5_all_threats_incidents.json, emp_id=2858682"}
+{"timestamp": "2026-05-21 12:21:05,524", "level": "INFO", "logger": "database.repository", "message": "Updated analysis stats and marked PROCESSED: 31f4b0c7-fc66-4d45-9c32-cc8d064c92c5"}
+{"timestamp": "2026-05-21 12:21:05,544", "level": "INFO", "logger": "file_intake.service", "message": "Updated analysis stats | file_id=31f4b0c7-fc66-4d45-9c32-cc8d064c92c5"}
+{"timestamp": "2026-05-21 12:21:55,760", "level": "INFO", "logger": "rollups.chunk_storage", "message": "Stored 5 chunks to Parquet | partition=hour=06 file_id=batch_1779346315693"}
+{"timestamp": "2026-05-21 12:21:55,769", "level": "INFO", "logger": "core.flush_buffer", "message": "Micro-batch flush complete | items_flushed=5 batch_id=batch_1779346315693"}

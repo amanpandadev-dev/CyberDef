@@ -23,11 +23,11 @@ class SQLInjectionRule(ScoredThreatRule):
 
     description = "SQL injection attempt detected"
 
-    threshold = 7
+    threshold = 4
 
     check_fields = [
         "raw_url",
-        "raw_url",
+        "original_message",
         "referrer",
     ]
 
@@ -37,10 +37,7 @@ class SQLInjectionRule(ScoredThreatRule):
         # UNION-based SQLi
         # ----------------------------------------------------
 
-        "UNION_SELECT": (
-            r"(?i)\bunion\b.{0,20}?\bselect\b",
-            5,
-        ),
+       
 
         # ----------------------------------------------------
         # Boolean SQLi
@@ -63,6 +60,23 @@ class SQLInjectionRule(ScoredThreatRule):
         "STACKED_QUERY": (
             r"(?i);\s*(?:select|insert|update|delete|drop|truncate|alter|create|exec|execute)\b",
             5,
+        ),
+
+        "UNION_SELECT": (r"(?i)\bunion\b.{0,20}?\bselect\b", 5),
+
+        "BOOLEAN_SQLI_NUMERIC": (
+            r"(?i)(?:'|%27)\s*(?:or|and)\s+\d+\s*=\s*\d+",
+            5,
+        ),
+
+        "BOOLEAN_TAUTOLOGY": (
+            r"(?i)(?:'|%27)\s*(?:or|and)\s*(?:'?\w+'?|\d+)\s*=\s*(?:'?\w+'?|\d+)",
+            5,
+        ),
+
+        "SQLMAP_UA": (
+            r"(?i)\bsqlmap(?:/\d+(?:\.\d+)*)?\b",
+            1,
         ),
 
         # ----------------------------------------------------
@@ -204,11 +218,11 @@ class BlindSQLInjectionRule(ScoredThreatRule):
 
     description = "Blind SQL injection attempt detected"
 
-    threshold = 8
+    threshold = 4
 
     check_fields = [
         "raw_url",
-        "raw_url",
+        "original_message",
         "referrer",
     ]
 
@@ -385,6 +399,7 @@ class CommandInjectionRule(ThreatRule):
     patterns = [
         r"(?i)((;\s*(whoami|id|uname|cat|ls|bash|sh|shell_exec))|&&|\||`|\$\(|invoke-webrequest|iex|downloadstring|wget|curl|webclient|powershell|\.exe).*powershell(?:\.exe)?",
         r"(?i)\bshell_exec\s*\(",
+        r"(?i)((;\s*|\|\||&&|\||`|\$\()\s*(whoami|id|uname|cat|ls|bash|sh|nc|curl|wget)|(powershell(\.exe)?|cmd\.exe).*(invoke-webrequest|downloadstring|iex|webclient)?)",
     ]
 
 
@@ -407,7 +422,11 @@ class XPathInjectionRule(ThreatRule):
     confidence = 0.8
     description = "XPath injection attempt"
     check_fields = ["raw_url"]
-    patterns = [r"'\s*or\s+'1'\s*=\s*'1", r"string\s*\(\s*//", r"count\s*\(\s*//"]
+    patterns = [
+    r"(?i)\b(?:string|count|contains|starts-with|substring|normalize-space|name|local-name)\s*\(",
+    r"(?i)\b(?:ancestor|descendant|following-sibling|preceding-sibling|parent|child)::",
+    r"(?i)//[A-Za-z_][\w-]*(?:\[\s*.*?\s*\])?",
+    ]
 
 
 class XXERule(ThreatRule):
@@ -451,6 +470,7 @@ class InsecureDeserializationRule(ThreatRule):
         r"__reduce__",
         r"pickle\.loads",
         r"java\.lang\.Runtime",
+        r"\/deserialize|ysoserial",
     ]
 
 
@@ -478,7 +498,7 @@ class PrototypePollutionRule(ThreatRule):
     severity = ThreatSeverity.HIGH
     confidence = 0.8
     description = "Prototype pollution attempt"
-    check_fields = ["raw_url"]
+    check_fields = ["raw_url", "original_message"]
     patterns = [r"__proto__", r"constructor\.prototype"]
 
 

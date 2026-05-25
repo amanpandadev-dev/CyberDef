@@ -282,20 +282,221 @@ class DebugEndpointExposureRule(Recon2xxThreatRule):
         )
 
 
+
+
 class ErrorDetailDisclosureRule(Recon2xxThreatRule):
     name = "error_detail_disclosure"
     category = "sensitive_information_disclosure"
     family = ThreatFamily.INFO_LEAKAGE
     severity = ThreatSeverity.MEDIUM
-    confidence = 0.5
-    description = "Large 5xx response possibly containing error details"
-    check_fields = []
+    confidence = 0.50
+    description = "5xx response disclosing internal error details, stack traces, or debug output"
+
+    # Keep fields broad because different pipelines name response data differently.
+    check_fields = ["http_status",
+                    "response_size",
+                    "original_message",
+                    "raw_url",
+                    "uri_path",
+                    "uri_query"]
+
+    # ----------------------------
+    # Heuristic Patterns
+    # ----------------------------
+
+    _STACK_TRACE = re.compile(
+        r"(?is)\b("
+        r"traceback \(most recent call last\)|"
+        r"stack trace|"
+        r"exception in thread|"
+        r"unhandled exception|"
+        r"at\s+[a-zA-Z0-9_$.]+\([a-zA-Z0-9_./\\:-]+:\d+\)|"
+        r"\bjava\.lang\.[A-Za-z0-9_]+Exception\b|"
+        r"\bSystem\.[A-Za-z0-9_.]*Exception\b|"
+        r"\b[A-Za-z0-9_]+Error\b|"
+        r"\b[A-Za-z0-9_]+Exception\b"
+        r")"
+    )
+
+    _FRAMEWORK_ERROR_PAGES = re.compile(
+        r"(?is)\b("
+        r"whitelabel error page|"
+        r"yellow screen of death|"
+        r"whoops, looks like something went wrong|"
+        r"application error|"
+        r"server error in '/.*?' application|"
+        r"debug toolbar|"
+        r"framework error|"
+        r"fatal error:"
+        r")\b"
+    )
+
+    _DB_ERROR = re.compile(
+        r"(?is)\b("
+        r"sql syntax|"
+        r"mysql_fetch|"
+        r"mysqli?_error|"
+        r"postgres(?:ql)?|"
+        r"sqlite3?\.OperationalError|"
+        r"ORA-\d{5}|"
+        r"ODBC SQL Server Driver|"
+        r"database error|"
+        r"deadlock found|"
+        r"constraint failed"
+        r")\b"
+    )
+
+    _FILE_PATH_LEAK = re.compile(
+        r"(?is)(?:"
+        r"(?:[A-Z]:\\|/)(?:[^ \r\n\t<>\"']+/)*[^ \r\n\t<>\"']+\.[A-Za-z0-9]{1,6}|"
+        r"(?:/var/www/|/usr/share/|/home/|/opt/|/srv/|C:\\inetpub\\|C:\\xampp\\|C:\\wamp\\)"
+        r")"
+    )
+
+    _DEBUG_HINTS = re.compile(
+        r"(?is)\b("
+        r"debug mode|"
+        r"verbose error|"
+        r"stacktrace|"
+        r"internal server error|"
+        r"application/octet-stream|"
+        r"server at .*? is not configured|"
+        r"developer exception page|"
+        r"spring boot error|"
+        r"laravel\.error|"
+        r"django\.template\.base\.templateSyntaxError|"
+        r"express\(\) error handler"
+        r")\b"
+    )
+
+    _LEAK_KEYS = re.compile(
+        r"(?is)\b("
+        r"line \d+|"
+        r"file \S+|"
+        r"sqlstate|"
+        r"syntax error|"
+        r"unexpected token|"
+        r"null pointer|"
+        r"index out of range|"
+        r"cannot open file|"
+        r"permission denied"
+        r")\b"
+    )
+
+    _MIN_BODY_LEN = 600
+    _MAX_EVIDENCE_LEN = 240
+
+    @staticmethod
+    def _status_code(event: NormalizedEvent) -> int | None:
+        try:
+            return int(getattr(event, "http_status", None))
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _response_text(event: NormalizedEvent) -> str:
+
+        parts = []
+
+        # Apache/nginx raw log
+        if event.original_message:
+            parts.append(str(event.original_message))
+
+        # URI and query context
+        if event.raw_url:
+            parts.append(str(event.raw_url))
+
+        if event.uri_query:
+            parts.append(str(event.uri_query))
+
+        return "\n".join(parts)
+
+    @classmethod
+    def _grade(cls, score: int) -> tuple[ThreatSeverity, float, str]:
+        if score >= 10:
+            return ThreatSeverity.CRITICAL, 0.98, "SOC-L3"
+        if score >= 7:
+            return ThreatSeverity.HIGH, 0.92, "SOC-L2"
+        if score >= 4:
+            return ThreatSeverity.MEDIUM, 0.80, "SOC-L1"
+        return ThreatSeverity.LOW, 0.65, "SOC-INFO"
 
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:
-            return None
+            status_code = self._status_code(event)
+            if status_code is None or not (500 <= status_code <= 599):
+                return None
+
+            text = self._response_text(event)
+            if not text:
+                return None
+
+            score = 0
+            signals: list[str] = []
+
+            # Large error responses are more suspicious because they often include
+            # stack traces, framework banners, or verbose exception dumps.
+            response_size = getattr(event, "response_size", 0)
+
+            if response_size and response_size >= 1000:
+                score += 1
+                signals.append("large_error_response")
+
+            if self._STACK_TRACE.search(text):
+                score += 4
+                signals.append("stack_trace")
+
+            if self._FRAMEWORK_ERROR_PAGES.search(text):
+                score += 3
+                signals.append("framework_error_page")
+
+            if self._DB_ERROR.search(text):
+                score += 3
+                signals.append("database_error")
+
+            if self._FILE_PATH_LEAK.search(text):
+                score += 2
+                signals.append("file_path_leak")
+
+            if self._DEBUG_HINTS.search(text):
+                score += 2
+                signals.append("debug_hint")
+
+            if self._LEAK_KEYS.search(text):
+                score += 1
+                signals.append("error_context_keys")
+
+            # Require some real evidence; noisy generic 5xx responses should not alert.
+            if score < 3:
+                return None
+
+            severity, confidence, soc_grade = self._grade(score)
+
+            evidence_snippet = re.sub(r"\s+", " ", text[: self._MAX_EVIDENCE_LEN]).strip()
+
+            return ThreatMatch(
+                event_id=event.event_id,
+                rule_name=cls.name,
+                category=cls.category,
+                family=cls.family,
+                severity=severity,
+                confidence=confidence,
+                evidence=(
+                    f"{soc_grade} error detail disclosure detected "
+                    f"(status={status_code}, score={score}, signals={','.join(signals)}): "
+                    f"{evidence_snippet}"
+                ),
+                matched_field="response_body",
+                raw_url=getattr(event, "raw_url", None),
+                timestamp=event.timestamp,
+                src_ip=event.src_ip,
+            )
+
         except Exception as e:
-            logger.error(f"[{self.name}] match failed for event {event.event_id}: {e}", exc_info=True)
+            logger.error(
+                f"[{self.name}] match failed for event {getattr(event, 'event_id', 'unknown')}: {e}",
+                exc_info=True,
+            )
             return None
 
 
@@ -316,6 +517,7 @@ class TechFingerprintingRule(Recon2xxThreatRule):
         r"/jenkins(?:/|$)",
         r"/grafana(?:/|$)",
         r"/kibana(?:/|$)",
+        r"(?i)/server-status|/server-info|/phpinfo\.php",
     ]
 
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
@@ -426,7 +628,7 @@ class DataExfiltrationBasicRule(Recon2xxThreatRule):
 
             if not _is_2xx(event):
                 return None
-            if method == "POST" and is_sensitive_path(uri) and bytes_out > SINGLE_THRESHOLD:
+            if method == "POST" or method == "GET" and is_sensitive_path(uri) and bytes_out > SINGLE_THRESHOLD:
                 return ThreatMatch(
                     event_id=event.event_id,
                     rule_name=self.name,
@@ -554,7 +756,7 @@ class RFIRule(Recon2xxThreatRule):
     family = ThreatFamily.PATH_FILE
     severity = ThreatSeverity.CRITICAL
     confidence = 0.85
-    description = "Remote file inclusion attempt (triple/double/single raw_url-encoding)"
+    description = "Remote file inclusion attempt (raw/triple/double/single URL-encoding)"
     check_fields = []  # Stateful — handled entirely via check_batch
 
     # Triple encoding:  %25253a%25252f%25252f
@@ -569,6 +771,10 @@ class RFIRule(Recon2xxThreatRule):
     _SINGLE_ENC = re.compile(
         r"(?i)(file|page|path|include|template|raw_url)=.*(http|https|ftp)%3a%2f%2f"
     )
+
+    _RAW_PROTO = re.compile(
+    r"(?i)(file|page|path|include|template|url|raw_url)=.*(http|https|ftp)\:\/\/"
+)
     # Threshold for single-encoding hits before alerting
     _SINGLE_THRESHOLD: int = 5
 
@@ -607,6 +813,23 @@ class RFIRule(Recon2xxThreatRule):
             actor = cls._actor(ev)
             if actor is None:
                 continue  # No identifiable actor — skip
+
+            # --- RAW protocol inclusion → immediate CRITICAL alert ---
+            if cls._RAW_PROTO.search(query):
+                matches.append(ThreatMatch(
+                    event_id=ev.event_id,
+                    rule_name="rfi_raw_protocol",
+                    category=cls.category,
+                    family=cls.family,
+                    severity=ThreatSeverity.CRITICAL,
+                    confidence=0.98,
+                    evidence=f"RFI raw protocol payload detected (actor: {actor}): {query[:200]}",
+                    matched_field="raw_url",
+                    raw_url=ev.raw_url,
+                    timestamp=ev.timestamp,
+                    src_ip=ev.src_ip,
+                ))
+                continue
 
             # --- TRIPLE encoding → immediate CRITICAL alert ---
             if cls._TRIPLE_ENC.search(query):

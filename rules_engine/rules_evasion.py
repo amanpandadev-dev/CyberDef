@@ -139,9 +139,7 @@ class CachePoisoningRule(Status200ThreatRule):
     description = "Cache poisoning probe"
     check_fields = ["original_message"]
     patterns = [
-        r"X-Forwarded-Host\s*:",
-        r"X-Original-raw_url\s*:",
-        r"X-Rewrite-raw_url\s*:",
+        r"(?:X-Rewrite-URL|X-Forwarded-Host|X-Original-URL)\s*(?::|\=)",
     ]
 
 class DoubleURLEncodingRule(Status200ThreatRule):
@@ -208,7 +206,7 @@ class UnicodeAbuseRule(Status200ThreatRule):
     confidence = 0.7
     description = "Unicode/UTF-8 overlong sequences"
     check_fields = ["raw_url"]
-    patterns = [r"%c0%af", r"%c1%9c", r"%e0%80%af", r"%u00[0-9a-fA-F]{2}"]
+    patterns = [r"%c0%af", r"%c1%9c", r"%e0%80%af", r"%u00[0-9a-fA-F]{2}", r"(?i)(%u[0-9a-f]{4}|[^\x00-\x7F])"]
 
 
 class HTTPVerbTamperingRule(ThreatRule):
@@ -353,14 +351,180 @@ class PathNormalizationBypassRule(Status200ThreatRule):
         return matches
 
 
-class WAFBypassRule(Status200ThreatRule):
+class WAFBypassRule(ThreatRule):
     name = "waf_bypass"
     category = "evasion"
     family = ThreatFamily.EVASION
     severity = ThreatSeverity.HIGH
-    confidence = 0.8
-    description = "WAF bypass via comment/case tricks"
-    check_fields = ["raw_url", "original_message"]
+    confidence = 0.80
+    description = "WAF bypass via encoding, comments, mixed case, and evasive payloads"
+    check_fields = ["uri_path", "uri_query", "original_message"]
+
+    # ----------------------------
+    # Detection Patterns
+    # ----------------------------
+
+    # SQL comment obfuscation
+    _SQL_COMMENTS = re.compile(
+        r"(?i)(/\*!.*?\*/|--|#|/\*.*?\*/)"
+    )
+
+    # Mixed-case SQL keywords
+    _MIXED_CASE = re.compile(
+        r"\b(?:uNiOn|sElEcT|iNsErT|dRoP|uPdAtE|eXeC)\b"
+    )
+
+    # URL encoding abuse
+    _ENCODING = re.compile(
+        r"(?i)(%2f|%5c|%252f|%255c|%2e|%252e)"
+    )
+
+    # Double encoding
+    _DOUBLE_ENCODING = re.compile(
+        r"(?i)%25[0-9a-f]{2}"
+    )
+
+    # Unicode encoding tricks
+    _UNICODE = re.compile(
+        r"(?i)(%u[0-9a-f]{4}|\\u[0-9a-f]{4})"
+    )
+
+    # Path normalization bypass
+    _PATH_BYPASS = re.compile(
+        r"(?i)(\.\./|\.\.\\|%2e%2e%2f|%252e%252e%252f)"
+    )
+
+    # Null byte
+    _NULL_BYTE = re.compile(
+        r"(?i)(%00|\x00)"
+    )
+
+    # Known WAF bypass payload indicators
+    _BYPASS_KEYWORDS = re.compile(
+        r"(?i)(char\(|concat\(|benchmark\(|sleep\(|load_file\()"
+    )
+
+    # Real WAF-evasion techniques only
+    _EVASION_TECHNIQUES = {
+        "sql_comments",
+        "mixed_case",
+        "encoding",
+        "double_encoding",
+        "unicode",
+        "null_byte"
+    }
+
+    # ----------------------------
+    # SOC Scoring
+    # ----------------------------
+
+    _SCORES = {
+        "sql_comments": 2,
+        "mixed_case": 1,
+        "encoding": 2,
+        "double_encoding": 3,
+        "unicode": 3,
+        "path_bypass": 3,
+        "null_byte": 4,
+        "bypass_keywords": 4,
+    }
+
+    @classmethod
+    def match(cls, event: NormalizedEvent) -> ThreatMatch | None:
+        query = " ".join(filter(None, [
+            event.uri_path,
+            event.uri_query,
+            event.original_message,
+        ]))
+
+        if not query:
+            return None
+
+        score = 0
+        techniques: list[str] = []
+
+        if cls._SQL_COMMENTS.search(query):
+            score += cls._SCORES["sql_comments"]
+            techniques.append("sql_comments")
+
+        if cls._MIXED_CASE.search(query):
+            score += cls._SCORES["mixed_case"]
+            techniques.append("mixed_case")
+
+        if cls._ENCODING.search(query):
+            score += cls._SCORES["encoding"]
+            techniques.append("encoding")
+
+        if cls._DOUBLE_ENCODING.search(query):
+            score += cls._SCORES["double_encoding"]
+            techniques.append("double_encoding")
+
+        if cls._UNICODE.search(query):
+            score += cls._SCORES["unicode"]
+            techniques.append("unicode")
+
+        if cls._PATH_BYPASS.search(query):
+            techniques.append("path_bypass")
+
+        if cls._NULL_BYTE.search(query):
+            score += cls._SCORES["null_byte"]
+            techniques.append("null_byte")
+
+        if cls._BYPASS_KEYWORDS.search(query):
+            score += cls._SCORES["bypass_keywords"]
+            techniques.append("bypass_keywords")
+
+        # Count only real evasion indicators
+        evasion_count = len(
+            set(techniques) & cls._EVASION_TECHNIQUES
+        )
+
+        # No actual bypass behavior → do not alert
+        if evasion_count == 0:
+            return None
+
+        if score == 0:
+            return None
+
+        # ----------------------------
+        # SOC Grading Logic
+        # ----------------------------
+
+        if score >= 10:
+            severity = ThreatSeverity.CRITICAL
+            confidence = 0.97
+            soc_grade = "SOC-L3"
+        elif score >= 7:
+            severity = ThreatSeverity.HIGH
+            confidence = 0.92
+            soc_grade = "SOC-L2"
+        elif score >= 4:
+            severity = ThreatSeverity.MEDIUM
+            confidence = 0.82
+            soc_grade = "SOC-L1"
+        else:
+            severity = ThreatSeverity.LOW
+            confidence = 0.70
+            soc_grade = "SOC-INFO"
+
+        return ThreatMatch(
+            event_id=event.event_id,
+            rule_name=cls.name,
+            category=cls.category,
+            family=cls.family,
+            severity=severity,
+            confidence=confidence,
+            evidence=(
+                f"WAF bypass attempt detected "
+                f"[{soc_grade}] "
+                f"(score={score}, techniques={','.join(techniques)}): "
+                f"{query[:200]}"
+            ),
+            matched_field="uri_query",
+            raw_url=event.raw_url,
+            timestamp=event.timestamp,
+            src_ip=event.src_ip,
+        )
 
 CACHE_REDIRECT_RULES = [
     OpenRedirectRule,

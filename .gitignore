@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.whl
+*.pyc
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+data/logs/
+*.log
+*.log.*
+
+# Processed / auto-generated data
+data/processed/rollup_chunks/
+data/processed/normalized/
+data/processed/threat_state_*.json
+data/processed/deduplication_test_report.json
+data/processed/pipeline_test_report.json
+
+# Raw data uploads
+data/raw/
+
+# Reports (auto-generated)
+reports/__pycache__/
+
+# Parquet files
+*.parquet
+
+# CSV copies / temp files
+data/classic_sample_logs_only copy*.csv
+data/classic_sample_logs_only.csv
+
+# OS
+.DS_Store
+Thumbs.db

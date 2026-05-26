@@ -170,7 +170,7 @@ class MaliciousBotSignatureRule(ThreatRule):
     patterns = [
         r"(?:Morfeus|ZmEu|Muieblackcat|AutoPwn)",
         r"(?:DirBuster|Gobuster|Dirsearch)",
-        r"(?:WhatWeb|BlindElephant)",
+        r"(?:WhatWeb|BlindElephant|masscan)",
     ]
 
 
@@ -1418,7 +1418,7 @@ class ShellshockRule(ThreatRule):
     confidence = 0.95
     description = "Shellshock (CVE-2014-6271)"
     check_fields = ["user_agent", "referrer", "original_message"]
-    patterns = [r"\(\)\s*\{.*;\\s*\}\s*;"]
+    patterns = [r"(?i)\(\)\s*\{\s*:;\s*\};\s*(/bin/|wget|curl|bash|sh|nc|python|perl)"]
 
 
 class ApacheStrutsRCERule(ThreatRule):
@@ -1429,7 +1429,7 @@ class ApacheStrutsRCERule(ThreatRule):
     confidence = 0.9
     description = "Apache Struts OGNL injection / RCE"
     check_fields = ["raw_url", "original_message"]
-    patterns = [r"%\{.*#_memberAccess", r"ognl\.OgnlContext"]
+    patterns = [r"(?i)(\$\{[^}]+\}|%\{[^}]+\}|%24%7B[^%]+%7D|%25%7B[^%]+%7D)"]
 
 
 class PHPSpecificAttackRule(ThreatRule):

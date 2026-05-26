@@ -357,174 +357,208 @@ class WAFBypassRule(ThreatRule):
     family = ThreatFamily.EVASION
     severity = ThreatSeverity.HIGH
     confidence = 0.80
-    description = "WAF bypass via encoding, comments, mixed case, and evasive payloads"
-    check_fields = ["uri_path", "uri_query", "original_message"]
+    description = "SOC-scored WAF bypass detection"
 
-    # ----------------------------
-    # Detection Patterns
-    # ----------------------------
+    check_fields = []
 
-    # SQL comment obfuscation
-    _SQL_COMMENTS = re.compile(
-        r"(?i)(/\*!.*?\*/|--|#|/\*.*?\*/)"
-    )
+    WINDOW_MINUTES = 15
+    ALERT_THRESHOLD = 7
 
-    # Mixed-case SQL keywords
-    _MIXED_CASE = re.compile(
-        r"\b(?:uNiOn|sElEcT|iNsErT|dRoP|uPdAtE|eXeC)\b"
-    )
-
-    # URL encoding abuse
-    _ENCODING = re.compile(
-        r"(?i)(%2f|%5c|%252f|%255c|%2e|%252e)"
-    )
-
-    # Double encoding
-    _DOUBLE_ENCODING = re.compile(
-        r"(?i)%25[0-9a-f]{2}"
-    )
-
-    # Unicode encoding tricks
-    _UNICODE = re.compile(
-        r"(?i)(%u[0-9a-f]{4}|\\u[0-9a-f]{4})"
-    )
-
-    # Path normalization bypass
-    _PATH_BYPASS = re.compile(
-        r"(?i)(\.\./|\.\.\\|%2e%2e%2f|%252e%252e%252f)"
-    )
-
-    # Null byte
-    _NULL_BYTE = re.compile(
-        r"(?i)(%00|\x00)"
-    )
-
-    # Known WAF bypass payload indicators
-    _BYPASS_KEYWORDS = re.compile(
-        r"(?i)(char\(|concat\(|benchmark\(|sleep\(|load_file\()"
-    )
-
-    # Real WAF-evasion techniques only
-    _EVASION_TECHNIQUES = {
-        "sql_comments",
-        "mixed_case",
-        "encoding",
-        "double_encoding",
-        "unicode",
-        "null_byte"
+    _STATIC_EXTENSIONS = {
+        ".jpg", ".jpeg", ".png", ".gif", ".css",
+        ".js", ".svg", ".ico", ".woff", ".woff2",
+        ".ttf", ".map"
     }
 
     # ----------------------------
-    # SOC Scoring
+    # Regex groups
     # ----------------------------
 
-    _SCORES = {
-        "sql_comments": 2,
-        "mixed_case": 1,
-        "encoding": 2,
-        "double_encoding": 3,
-        "unicode": 3,
-        "path_bypass": 3,
-        "null_byte": 4,
-        "bypass_keywords": 4,
-    }
+    _HIGH_SEVERITY = [
+        re.compile(r"(?i)%25[0-9a-f]{2}"),      # double encoding
+        re.compile(r"(?i)(%u[0-9a-f]{4}|\\u[0-9a-f]{4})"),
+        re.compile(r"(?i)(char\(|concat\(|benchmark\(|sleep\(|load_file\()")
+    ]
+
+    _MEDIUM_SEVERITY = [
+        re.compile(r"(?i)(/\*!.*?\*/|--|#|/\*.*?\*/)"),
+        re.compile(r"\b(?:uNiOn|sElEcT|iNsErT|dRoP|uPdAtE|eXeC)\b"),
+        re.compile(r"(?i)(%00|\x00)")
+    ]
+
+    _LOW_SEVERITY = [
+        re.compile(r"(?i)(%2f|%5c|%252f|%255c|%2e|%252e)")
+    ]
+
+    @staticmethod
+    def _is_public_ip(ip: str | None) -> bool:
+        try:
+            return ip and ipaddress.ip_address(ip).is_global
+        except Exception:
+            return False
 
     @classmethod
-    def match(cls, event: NormalizedEvent) -> ThreatMatch | None:
-        query = " ".join(filter(None, [
-            event.uri_path,
-            event.uri_query,
-            event.original_message,
-        ]))
+    def check_batch(
+        cls,
+        events: list[NormalizedEvent]
+    ) -> list[ThreatMatch]:
 
-        if not query:
-            return None
+        matches = []
 
-        score = 0
-        techniques: list[str] = []
+        # per-IP counters
+        suspicious_count = defaultdict(int)
+        latest_event = {}
+        scores = defaultdict(int)
+        techniques = defaultdict(set)
 
-        if cls._SQL_COMMENTS.search(query):
-            score += cls._SCORES["sql_comments"]
-            techniques.append("sql_comments")
+        for ev in events:
 
-        if cls._MIXED_CASE.search(query):
-            score += cls._SCORES["mixed_case"]
-            techniques.append("mixed_case")
+            src_ip = ev.src_ip
 
-        if cls._ENCODING.search(query):
-            score += cls._SCORES["encoding"]
-            techniques.append("encoding")
+            if not cls._is_public_ip(src_ip):
+                continue
 
-        if cls._DOUBLE_ENCODING.search(query):
-            score += cls._SCORES["double_encoding"]
-            techniques.append("double_encoding")
+            status = getattr(ev, "http_status", None)
 
-        if cls._UNICODE.search(query):
-            score += cls._SCORES["unicode"]
-            techniques.append("unicode")
+            # Only successful responses
+            if status not in (200, 302):
+                continue
 
-        if cls._PATH_BYPASS.search(query):
-            techniques.append("path_bypass")
+            query = " ".join(filter(None, [
+                ev.uri_path,
+                ev.uri_query,
+                ev.original_message
+            ]))
 
-        if cls._NULL_BYTE.search(query):
-            score += cls._SCORES["null_byte"]
-            techniques.append("null_byte")
+            if not query:
+                continue
 
-        if cls._BYPASS_KEYWORDS.search(query):
-            score += cls._SCORES["bypass_keywords"]
-            techniques.append("bypass_keywords")
+            score = 0
+            matched_patterns = set()
 
-        # Count only real evasion indicators
-        evasion_count = len(
-            set(techniques) & cls._EVASION_TECHNIQUES
-        )
+            # Successful suspicious request
+            score += 2
 
-        # No actual bypass behavior → do not alert
-        if evasion_count == 0:
-            return None
+            # ----------------------------
+            # High severity
+            # ----------------------------
 
-        if score == 0:
-            return None
+            for p in cls._HIGH_SEVERITY:
+                if p.search(query):
+                    score += 5
+                    matched_patterns.add(
+                        p.pattern
+                    )
+
+            # ----------------------------
+            # Medium severity
+            # ----------------------------
+
+            for p in cls._MEDIUM_SEVERITY:
+                if p.search(query):
+                    score += 3
+                    matched_patterns.add(
+                        p.pattern
+                    )
+
+            # ----------------------------
+            # Low severity
+            # ----------------------------
+
+            for p in cls._LOW_SEVERITY:
+                if p.search(query):
+                    score += 1
+                    matched_patterns.add(
+                        p.pattern
+                    )
+
+            # ----------------------------
+            # Multiple encoded chars
+            # ----------------------------
+
+            encoded = re.findall(
+                r"%[0-9a-fA-F]{2}",
+                query
+            )
+
+            if len(encoded) > 3:
+                score += 2
+                matched_patterns.add(
+                    "multiple_encoded_chars"
+                )
+
+            # ----------------------------
+            # Multiple attack patterns
+            # ----------------------------
+
+            if len(matched_patterns) > 1:
+                score += 3
+
+            # ----------------------------
+            # Static content suppression
+            # ----------------------------
+
+            path = ev.uri_path or ""
+
+            if any(
+                path.lower().endswith(x)
+                for x in cls._STATIC_EXTENSIONS
+            ):
+                score -= 3
+
+            suspicious_count[src_ip] += 1
+            scores[src_ip] += score
+            latest_event[src_ip] = ev
+
+            techniques[src_ip].update(
+                matched_patterns
+            )
 
         # ----------------------------
-        # SOC Grading Logic
+        # Frequency logic
         # ----------------------------
 
-        if score >= 10:
-            severity = ThreatSeverity.CRITICAL
-            confidence = 0.97
-            soc_grade = "SOC-L3"
-        elif score >= 7:
-            severity = ThreatSeverity.HIGH
-            confidence = 0.92
-            soc_grade = "SOC-L2"
-        elif score >= 4:
-            severity = ThreatSeverity.MEDIUM
-            confidence = 0.82
-            soc_grade = "SOC-L1"
-        else:
-            severity = ThreatSeverity.LOW
-            confidence = 0.70
-            soc_grade = "SOC-INFO"
+        for src_ip,count in suspicious_count.items():
 
-        return ThreatMatch(
-            event_id=event.event_id,
-            rule_name=cls.name,
-            category=cls.category,
-            family=cls.family,
-            severity=severity,
-            confidence=confidence,
-            evidence=(
-                f"WAF bypass attempt detected "
-                f"[{soc_grade}] "
-                f"(score={score}, techniques={','.join(techniques)}): "
-                f"{query[:200]}"
-            ),
-            matched_field="uri_query",
-            raw_url=event.raw_url,
-            timestamp=event.timestamp,
-            src_ip=event.src_ip,
-        )
+            score = scores[src_ip]
+
+            if count > 5:
+                score += 3
+
+            if score < cls.ALERT_THRESHOLD:
+                continue
+
+            ev = latest_event[src_ip]
+
+            matches.append(
+                ThreatMatch(
+                    event_id=ev.event_id,
+                    rule_name=cls.name,
+                    category=cls.category,
+                    family=cls.family,
+                    severity=(
+                        ThreatSeverity.CRITICAL
+                        if score >= 15
+                        else ThreatSeverity.HIGH
+                    ),
+                    confidence=min(
+                        0.65 + score/20,
+                        0.99
+                    ),
+                    evidence=(
+                        f"Possible WAF bypass "
+                        f"(score={score}, "
+                        f"requests={count}, "
+                        f"patterns={list(techniques[src_ip])})"
+                    ),
+                    matched_field="uri_query",
+                    raw_url=ev.raw_url,
+                    timestamp=ev.timestamp,
+                    src_ip=src_ip
+                )
+            )
+
+        return matches
 
 CACHE_REDIRECT_RULES = [
     OpenRedirectRule,

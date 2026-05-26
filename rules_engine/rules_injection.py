@@ -444,15 +444,161 @@ class XXERule(ThreatRule):
     ]
 
 
+from urllib.parse import urlparse, parse_qs
+import ipaddress
+
+
 class HTTPParamPollutionRule(ThreatRule):
+
     name = "http_param_pollution"
     category = "http_parameter_pollution"
     family = ThreatFamily.INJECTION
+
     severity = ThreatSeverity.MEDIUM
-    confidence = 0.6
-    description = "HTTP parameter pollution"
-    check_fields = ["raw_url"]
-    patterns = [r"(?:\?|&)(\w+)=.*?&\1="]
+    confidence = 0.75
+
+    description = (
+        "HTTP parameter pollution using repeated "
+        "query parameters"
+    )
+
+    check_fields = [
+        "raw_url",
+        "http_status",
+        "src_ip"
+    ]
+
+    # Known benign repeated params
+    _EXCLUDED_PARAMS = {
+        "SMTOKEN",
+        "SAMLTRANSACTIONID",
+    }
+
+    @staticmethod
+    def _is_public_ip(
+        ip: str | None
+    ) -> bool:
+
+        try:
+            return (
+                ip
+                and ipaddress.ip_address(
+                    ip
+                ).is_global
+            )
+        except Exception:
+            return False
+
+    @classmethod
+    def match(
+        cls,
+        event: NormalizedEvent
+    ) -> ThreatMatch | None:
+
+        try:
+
+            # ======================================
+            # Ignore private/internal traffic
+            # ======================================
+
+            if not cls._is_public_ip(
+                event.src_ip
+            ):
+                return None
+
+            # ======================================
+            # Only successful responses
+            # ======================================
+
+            status=getattr(
+                event,
+                "http_status",
+                None
+            )
+
+            if status not in (
+                200,
+                302
+            ):
+                return None
+
+            url=getattr(
+                event,
+                "raw_url",
+                None
+            )
+
+            if not url:
+                return None
+
+            parsed=urlparse(url)
+
+            params=parse_qs(
+                parsed.query,
+                keep_blank_values=True
+            )
+
+            suspicious=[]
+
+            for key,values in params.items():
+
+                # Ignore known session/SAML params
+                if key.upper() in cls._EXCLUDED_PARAMS:
+                    continue
+
+                # Multiple values
+                if len(values) > 1:
+
+                    suspicious.append(
+                        f"{key}={values}"
+                    )
+
+            if not suspicious:
+                return None
+
+            confidence=min(
+                0.70 +
+                (len(suspicious)*0.05),
+                0.95
+            )
+
+            return ThreatMatch(
+                event_id=event.event_id,
+
+                rule_name=cls.name,
+
+                category=cls.category,
+                family=cls.family,
+
+                severity=ThreatSeverity.MEDIUM,
+                confidence=confidence,
+
+                evidence=(
+                    f"HTTP parameter pollution "
+                    f"detected: "
+                    f"{', '.join(suspicious)}"
+                ),
+
+                matched_field="raw_url",
+
+                raw_url=event.raw_url,
+
+                timestamp=event.timestamp,
+
+                src_ip=event.src_ip
+            )
+
+        except Exception as e:
+
+            logger.error(
+                f"[{cls.name}] "
+                f"match failed for "
+                f"{getattr(event,'event_id','unknown')}: "
+                f"{e}",
+                exc_info=True
+            )
+
+            return None
 
 
 class InsecureDeserializationRule(ThreatRule):

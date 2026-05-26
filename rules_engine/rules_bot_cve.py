@@ -179,7 +179,6 @@ class MaliciousBotSignatureRule(ThreatRule):
 class HTTPFloodRule(RateBasedRule):
 
     name = "http_flood"
-
     category = "rate_limiting"
     family = ThreatFamily.RATE_DOS
 
@@ -196,7 +195,7 @@ class HTTPFloodRule(RateBasedRule):
     # ============================================================
 
     USER_ENDPOINT_THRESHOLD = 400
-    USER_TOTAL_THRESHOLD = 500
+    USER_TOTAL_THRESHOLD = 800
 
     ANON_ENDPOINT_THRESHOLD = 500
     ANON_TOTAL_THRESHOLD = 800
@@ -216,7 +215,7 @@ class HTTPFloodRule(RateBasedRule):
     MAX_EVIDENCE_IPS = 10
 
     # ============================================================
-    # USER FILTERS
+    # FILTERS
     # ============================================================
 
     _EMPTY_USER_IDS = {
@@ -232,12 +231,27 @@ class HTTPFloodRule(RateBasedRule):
         re.IGNORECASE,
     )
 
+    _STATIC_EXTENSIONS = (
+        ".css",
+        ".js",
+        ".jpg",
+        ".png",
+        ".gif",
+        ".ico",
+        ".svg",
+        ".json",
+        ".woff2",
+    )
+
     # ============================================================
     # HELPERS
     # ============================================================
 
     @classmethod
-    def _has_real_user_id(cls, user_id: str | None) -> bool:
+    def _has_real_user_id(
+        cls,
+        user_id: str | None
+    ) -> bool:
 
         return bool(
             user_id
@@ -246,18 +260,40 @@ class HTTPFloodRule(RateBasedRule):
         )
 
     @classmethod
-    def _is_known_bot(cls, user_agent: str | None) -> bool:
+    def _is_known_bot(
+        cls,
+        user_agent: str | None
+    ) -> bool:
 
         if not user_agent:
             return False
 
         return bool(
-            cls._BOT_REGEX.search(user_agent)
+            cls._BOT_REGEX.search(
+                user_agent
+            )
+        )
+
+    @classmethod
+    def _is_static_request(
+        cls,
+        ev: NormalizedEvent
+    ) -> bool:
+
+        uri = (
+            ev.raw_url
+            or ev.uri_path
+            or ""
+        ).lower()
+
+        return any(
+            uri.endswith(ext)
+            for ext in cls._STATIC_EXTENSIONS
         )
 
     @staticmethod
     def _normalize_user_agent(
-        user_agent: str | None,
+        user_agent: str | None
     ) -> str:
 
         if not user_agent:
@@ -292,8 +328,8 @@ class HTTPFloodRule(RateBasedRule):
     def _safe_add(
         target: set[str],
         value: str | None,
-        max_size: int,
-    ) -> None:
+        max_size: int
+    ):
 
         if (
             value
@@ -304,7 +340,7 @@ class HTTPFloodRule(RateBasedRule):
     @staticmethod
     def _format_src_ips(
         src_ips: set[str],
-        limit: int = 10,
+        limit: int = 10
     ) -> str:
 
         if not src_ips:
@@ -315,7 +351,7 @@ class HTTPFloodRule(RateBasedRule):
         if len(sorted_ips) <= limit:
             return ", ".join(sorted_ips)
 
-        remaining = len(sorted_ips) - limit
+        remaining = len(sorted_ips)-limit
 
         return (
             f"{', '.join(sorted_ips[:limit])} "
@@ -323,13 +359,13 @@ class HTTPFloodRule(RateBasedRule):
         )
 
     # ============================================================
-    # MAIN GROUP CHECK
+    # MAIN LOGIC
     # ============================================================
 
     def check_group(
         self,
         events: list[NormalizedEvent],
-        group_key: str,
+        group_key: str
     ) -> ThreatMatch | None:
 
         try:
@@ -337,31 +373,31 @@ class HTTPFloodRule(RateBasedRule):
             if not events:
                 return None
 
-            # ====================================================
-            # FILTER VALID EVENTS
-            # ====================================================
+            ok_events=[]
 
-            ok_events = []
+            # ====================================================
+            # EVENT FILTERING
+            # ====================================================
 
             for ev in events:
 
-                # status filter
-                if ev.http_status is not None:
-                    if ev.http_status not in {
-                        200,
-                        201,
-                        202,
-                        204,
-                        301,
-                        302,
-                        401,
-                        403,
-                        429,
-                    }:
-                        continue
+                # Only successful requests
+                if (
+                    ev.http_status is not None
+                    and ev.http_status != 200
+                ):
+                    continue
 
-                # ignore known bots
-                if self._is_known_bot(ev.user_agent):
+                # Ignore bots
+                if self._is_known_bot(
+                    ev.user_agent
+                ):
+                    continue
+
+                # Ignore static resources
+                if self._is_static_request(
+                    ev
+                ):
                     continue
 
                 ok_events.append(ev)
@@ -369,314 +405,168 @@ class HTTPFloodRule(RateBasedRule):
             if not ok_events:
                 return None
 
-            matches: list[tuple[int, ThreatMatch]] = []
+            matches=[]
 
             # ====================================================
-            # USER-BASED EVENTS
+            # USER-BASED ACTORS
             # ====================================================
 
-            events_with_user = [
+            events_with_user=[
                 ev
                 for ev in ok_events
-                if self._has_real_user_id(ev.username)
+                if self._has_real_user_id(
+                    ev.username
+                )
             ]
 
             if events_with_user:
 
-                # ------------------------------------------------
-                # USER_ENDPOINT_FLOODING
-                # ------------------------------------------------
-
-                user_uri_counts = defaultdict(int)
-
-                user_uri_last_ev = {}
-
-                user_uri_src_ips = defaultdict(set)
+                user_uri_counts=defaultdict(int)
+                user_uri_last_ev={}
+                user_uri_src_ips=defaultdict(set)
 
                 for ev in events_with_user:
 
                     if not ev.uri_path:
                         continue
 
-                    if (
-                        len(user_uri_counts)
-                        >= self.MAX_TRACKED_USERS
-                    ):
-                        break
-
-                    key = (
+                    key=(
                         ev.username,
-                        ev.uri_path,
+                        ev.uri_path
                     )
 
-                    user_uri_counts[key] += 1
-
-                    user_uri_last_ev[key] = ev
+                    user_uri_counts[key]+=1
+                    user_uri_last_ev[key]=ev
 
                     self._safe_add(
                         user_uri_src_ips[key],
                         ev.src_ip,
-                        self.MAX_TRACKED_IPS,
+                        self.MAX_TRACKED_IPS
                     )
 
-                for key, count in user_uri_counts.items():
+                for key,count in user_uri_counts.items():
 
                     if count < self.USER_ENDPOINT_THRESHOLD:
                         continue
 
-                    user_id, uri = key
+                    user_id,uri=key
+                    ev=user_uri_last_ev[key]
 
-                    ev = user_uri_last_ev[key]
-
-                    src_ips = user_uri_src_ips[key]
-
-                    evidence = (
-                        f"User {user_id} flooded endpoint "
-                        f"{uri} with {count} requests "
-                        f"from {len(src_ips)} src_ip(s): "
-                        f"{self._format_src_ips(src_ips, self.MAX_EVIDENCE_IPS)} "
-                        f"(threshold={self.USER_ENDPOINT_THRESHOLD})"
+                    evidence=(
+                        f"User {user_id} flooded "
+                        f"{uri} "
+                        f"with {count} requests"
                     )
 
-                    match = ThreatMatch(
-                        event_id=ev.event_id,
-
-                        rule_name=(
-                            f"{self.name}:"
-                            f"USER_ENDPOINT_FLOODING"
-                        ),
-
-                        category=self.category,
-                        family=self.family,
-
-                        severity=self.severity,
-                        confidence=self.confidence,
-
-                        evidence=evidence,
-
-                        matched_field="rate",
-
-                        uri=ev.uri_path,
-
-                        timestamp=ev.timestamp,
-
-                        # backward compatibility
-                        src_ip=ev.src_ip,
-
-                        aggregation_key=(
-                            f"{self.name}:"
-                            f"USER_ENDPOINT_FLOODING:"
-                            f"user:{user_id}:"
-                            f"uri:{uri}"
-                        ),
+                    matches.append(
+                        (
+                            count,
+                            ThreatMatch(
+                                event_id=ev.event_id,
+                                rule_name=f"{self.name}:USER_ENDPOINT_FLOODING",
+                                category=self.category,
+                                family=self.family,
+                                severity=self.severity,
+                                confidence=self.confidence,
+                                evidence=evidence,
+                                matched_field="rate",
+                                uri=uri,
+                                timestamp=ev.timestamp,
+                                src_ip=ev.src_ip
+                            )
+                        )
                     )
 
-                    matches.append((count, match))
-
-                # ------------------------------------------------
-                # USER_HTTP_FLOODING
-                # ------------------------------------------------
-
-                user_counts = defaultdict(int)
-
-                user_last_ev = {}
-
-                user_src_ips = defaultdict(set)
+                user_counts=defaultdict(int)
+                user_last_ev={}
 
                 for ev in events_with_user:
 
-                    if (
-                        len(user_counts)
-                        >= self.MAX_TRACKED_USERS
-                    ):
-                        break
+                    user_counts[
+                        ev.username
+                    ]+=1
 
-                    user_id = ev.username
+                    user_last_ev[
+                        ev.username
+                    ]=ev
 
-                    user_counts[user_id] += 1
-
-                    user_last_ev[user_id] = ev
-
-                    self._safe_add(
-                        user_src_ips[user_id],
-                        ev.src_ip,
-                        self.MAX_TRACKED_IPS,
-                    )
-
-                for user_id, count in user_counts.items():
+                for user,count in user_counts.items():
 
                     if count < self.USER_TOTAL_THRESHOLD:
                         continue
 
-                    ev = user_last_ev[user_id]
+                    ev=user_last_ev[user]
 
-                    src_ips = user_src_ips[user_id]
-
-                    evidence = (
-                        f"User {user_id} made "
-                        f"{count} successful requests "
-                        f"from {len(src_ips)} src_ip(s): "
-                        f"{self._format_src_ips(src_ips, self.MAX_EVIDENCE_IPS)} "
-                        f"(threshold={self.USER_TOTAL_THRESHOLD})"
+                    evidence=(
+                        f"User {user} generated "
+                        f"{count} requests "
+                        f"(threshold="
+                        f"{self.USER_TOTAL_THRESHOLD})"
                     )
 
-                    match = ThreatMatch(
-                        event_id=ev.event_id,
-
-                        rule_name=(
-                            f"{self.name}:"
-                            f"USER_HTTP_FLOODING"
-                        ),
-
-                        category=self.category,
-                        family=self.family,
-
-                        severity=self.severity,
-                        confidence=self.confidence,
-
-                        evidence=evidence,
-
-                        matched_field="rate",
-
-                        uri=ev.uri_path,
-
-                        timestamp=ev.timestamp,
-
-                        src_ip=ev.src_ip,
-
-                        aggregation_key=(
-                            f"{self.name}:"
-                            f"USER_HTTP_FLOODING:"
-                            f"user:{user_id}"
-                        ),
+                    matches.append(
+                        (
+                            count,
+                            ThreatMatch(
+                                event_id=ev.event_id,
+                                rule_name=f"{self.name}:USER_HTTP_FLOODING",
+                                category=self.category,
+                                family=self.family,
+                                severity=self.severity,
+                                confidence=self.confidence,
+                                evidence=evidence,
+                                matched_field="rate",
+                                uri=ev.uri_path,
+                                timestamp=ev.timestamp,
+                                src_ip=ev.src_ip
+                            )
+                        )
                     )
-
-                    matches.append((count, match))
 
             # ====================================================
             # ANONYMOUS ACTORS
             # ====================================================
 
-            anon_events = [
+            anon_events=[
                 ev
                 for ev in ok_events
                 if (
-                    not self._has_real_user_id(ev.username)
+                    not self._has_real_user_id(
+                        ev.username
+                    )
                     and ev.src_ip
                 )
             ]
 
-            # ----------------------------------------------------
-            # ENDPOINT_FLOODING
-            # ----------------------------------------------------
-
-            ip_uri_counts = defaultdict(int)
-
-            ip_uri_last_ev = {}
+            actor_counts=defaultdict(int)
+            actor_uris=defaultdict(set)
+            actor_last_ev={}
 
             for ev in anon_events:
 
-                if not ev.uri_path:
-                    continue
-
-                normalized_ua = self._normalize_user_agent(
-                    ev.user_agent
+                normalized_ua=(
+                    self._normalize_user_agent(
+                        ev.user_agent
+                    )
                 )
 
-                key = (
+                key=(
                     ev.src_ip,
-                    normalized_ua,
-                    ev.uri_path,
+                    normalized_ua
                 )
 
-                ip_uri_counts[key] += 1
+                actor_counts[key]+=1
 
-                ip_uri_last_ev[key] = ev
+                if ev.uri_path:
+                    actor_uris[key].add(
+                        ev.uri_path
+                    )
 
-            for key, count in ip_uri_counts.items():
+                actor_last_ev[key]=ev
 
-                if count < self.ANON_ENDPOINT_THRESHOLD:
-                    continue
+            for key,total_requests in actor_counts.items():
 
-                src_ip, normalized_ua, uri = key
-
-                ev = ip_uri_last_ev[key]
-
-                evidence = (
-                    f"Anonymous actor "
-                    f"(src_ip={src_ip}, ua={normalized_ua}) "
-                    f"flooded endpoint {uri} "
-                    f"with {count} requests "
-                    f"(threshold={self.ANON_ENDPOINT_THRESHOLD})"
-                )
-
-                match = ThreatMatch(
-                    event_id=ev.event_id,
-
-                    rule_name=(
-                        f"{self.name}:"
-                        f"ENDPOINT_FLOODING"
-                    ),
-
-                    category=self.category,
-                    family=self.family,
-
-                    severity=self.severity,
-                    confidence=self.confidence,
-
-                    evidence=evidence,
-
-                    matched_field="rate",
-
-                    uri=ev.uri_path,
-
-                    timestamp=ev.timestamp,
-
-                    src_ip=ev.src_ip,
-
-                    aggregation_key=(
-                        f"{self.name}:"
-                        f"ENDPOINT_FLOODING:"
-                        f"ip:{src_ip}:"
-                        f"ua:{normalized_ua}:"
-                        f"uri:{uri}"
-                    ),
-                )
-
-                matches.append((count, match))
-
-            # ----------------------------------------------------
-            # HTTP_FLOODING
-            # ----------------------------------------------------
-
-            actor_counts = defaultdict(int)
-
-            actor_uris = defaultdict(set)
-
-            actor_last_ev = {}
-
-            for ev in anon_events:
-
-                normalized_ua = self._normalize_user_agent(
-                    ev.user_agent
-                )
-
-                key = (
-                    ev.src_ip,
-                    normalized_ua,
-                )
-
-                actor_counts[key] += 1
-
-                if len(actor_uris[key]) < self.MAX_TRACKED_URIS:
-                    if ev.uri_path:
-                        actor_uris[key].add(ev.uri_path)
-
-                actor_last_ev[key] = ev
-
-            for key, total_requests in actor_counts.items():
-
-                unique_uris = actor_uris[key]
+                unique_uris=actor_uris[key]
 
                 if (
                     total_requests >= self.ANON_TOTAL_THRESHOLD
@@ -684,63 +574,42 @@ class HTTPFloodRule(RateBasedRule):
                     <= self.ANON_MAX_UNIQUE_URIS
                 ):
 
-                    src_ip, normalized_ua = key
+                    src_ip,ua=key
 
-                    ev = actor_last_ev[key]
+                    ev=actor_last_ev[key]
 
-                    evidence = (
+                    evidence=(
                         f"Anonymous actor "
-                        f"(src_ip={src_ip}, ua={normalized_ua}) "
-                        f"sent {total_requests} requests "
-                        f"across {len(unique_uris)} endpoints "
-                        f"(threshold={self.ANON_TOTAL_THRESHOLD})"
+                        f"(src_ip={src_ip}, ua={ua}) "
+                        f"generated "
+                        f"{total_requests} requests"
                     )
 
-                    match = ThreatMatch(
-                        event_id=ev.event_id,
-
-                        rule_name=(
-                            f"{self.name}:"
-                            f"HTTP_FLOODING"
-                        ),
-
-                        category=self.category,
-                        family=self.family,
-
-                        severity=self.severity,
-                        confidence=self.confidence,
-
-                        evidence=evidence,
-
-                        matched_field="rate",
-
-                        uri=ev.uri_path,
-
-                        timestamp=ev.timestamp,
-
-                        src_ip=ev.src_ip,
-
-                        aggregation_key=(
-                            f"{self.name}:"
-                            f"HTTP_FLOODING:"
-                            f"ip:{src_ip}:"
-                            f"ua:{normalized_ua}"
-                        ),
+                    matches.append(
+                        (
+                            total_requests,
+                            ThreatMatch(
+                                event_id=ev.event_id,
+                                rule_name=f"{self.name}:HTTP_FLOODING",
+                                category=self.category,
+                                family=self.family,
+                                severity=self.severity,
+                                confidence=self.confidence,
+                                evidence=evidence,
+                                matched_field="rate",
+                                uri=ev.uri_path,
+                                timestamp=ev.timestamp,
+                                src_ip=ev.src_ip
+                            )
+                        )
                     )
-
-                    matches.append((total_requests, match))
-
-            # ====================================================
-            # FRAMEWORK-COMPATIBLE RETURN
-            # ====================================================
 
             if not matches:
                 return None
 
-            # deterministic strongest match
             matches.sort(
-                key=lambda x: x[0],
-                reverse=True,
+                key=lambda x:x[0],
+                reverse=True
             )
 
             return matches[0][1]
@@ -749,13 +618,11 @@ class HTTPFloodRule(RateBasedRule):
 
             logger.error(
                 f"[{self.name}] "
-                f"check_group failed for key "
-                f"'{group_key}': {e}",
-                exc_info=True,
+                f"check_group failed: {e}",
+                exc_info=True
             )
 
             return None
-
 class RateLimitBypassHeaderRule(ThreatRule):
     name = "rate_limiting_bypass_headers"
     category = "rate_limiting_bypass"

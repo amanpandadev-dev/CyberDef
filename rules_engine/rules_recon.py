@@ -284,6 +284,8 @@ class DebugEndpointExposureRule(Recon2xxThreatRule):
 
 
 
+import re
+
 class ErrorDetailDisclosureRule(Recon2xxThreatRule):
     name = "error_detail_disclosure"
     category = "sensitive_information_disclosure"
@@ -292,13 +294,15 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
     confidence = 0.50
     description = "5xx response disclosing internal error details, stack traces, or debug output"
 
-    # Keep fields broad because different pipelines name response data differently.
-    check_fields = ["http_status",
-                    "response_size",
-                    "original_message",
-                    "raw_url",
-                    "uri_path",
-                    "uri_query"]
+    # Aligned to the normalized event schema you shared
+    check_fields = [
+        "http_status",
+        "response_size",
+        "original_message",
+        "raw_url",
+        "uri_path",
+        "uri_query",
+    ]
 
     # ----------------------------
     # Heuristic Patterns
@@ -395,7 +399,6 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
 
     @staticmethod
     def _response_text(event: NormalizedEvent) -> str:
-
         parts = []
 
         # Apache/nginx raw log
@@ -411,16 +414,6 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
 
         return "\n".join(parts)
 
-    @classmethod
-    def _grade(cls, score: int) -> tuple[ThreatSeverity, float, str]:
-        if score >= 10:
-            return ThreatSeverity.CRITICAL, 0.98, "SOC-L3"
-        if score >= 7:
-            return ThreatSeverity.HIGH, 0.92, "SOC-L2"
-        if score >= 4:
-            return ThreatSeverity.MEDIUM, 0.80, "SOC-L1"
-        return ThreatSeverity.LOW, 0.65, "SOC-INFO"
-
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:
             status_code = self._status_code(event)
@@ -434,10 +427,7 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
             score = 0
             signals: list[str] = []
 
-            # Large error responses are more suspicious because they often include
-            # stack traces, framework banners, or verbose exception dumps.
             response_size = getattr(event, "response_size", 0)
-
             if response_size and response_size >= 1000:
                 score += 1
                 signals.append("large_error_response")
@@ -466,11 +456,23 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
                 score += 1
                 signals.append("error_context_keys")
 
-            # Require some real evidence; noisy generic 5xx responses should not alert.
+            # Noisy generic 5xx responses should not alert.
             if score < 3:
                 return None
 
-            severity, confidence, soc_grade = self._grade(score)
+            # Inline grading, without the separate SOC-L1/L2/L3 helper.
+            if score >= 9:
+                severity = ThreatSeverity.CRITICAL
+                confidence = 0.97
+            elif score >= 6:
+                severity = ThreatSeverity.HIGH
+                confidence = 0.92
+            elif score >= 3:
+                severity = ThreatSeverity.MEDIUM
+                confidence = 0.80
+            else:
+                severity = ThreatSeverity.LOW
+                confidence = 0.65
 
             evidence_snippet = re.sub(r"\s+", " ", text[: self._MAX_EVIDENCE_LEN]).strip()
 
@@ -482,11 +484,11 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
                 severity=severity,
                 confidence=confidence,
                 evidence=(
-                    f"{soc_grade} error detail disclosure detected "
+                    f"Error detail disclosure detected "
                     f"(status={status_code}, score={score}, signals={','.join(signals)}): "
                     f"{evidence_snippet}"
                 ),
-                matched_field="response_body",
+                matched_field="original_message",
                 raw_url=getattr(event, "raw_url", None),
                 timestamp=event.timestamp,
                 src_ip=event.src_ip,

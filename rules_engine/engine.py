@@ -11,7 +11,7 @@ import os
 import time
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from core.ip_filter import get_zscaler_source_ips
 from core.logging import get_logger
@@ -57,7 +57,7 @@ class DeterministicEngine:
             logger.error(f"Failed to initialize DeterministicEngine: {e}", exc_info=True)
             raise
 
-    def scan(self, events: list[NormalizedEvent]) -> Any:
+    def scan(self, events: List[NormalizedEvent]) -> Any:
         """
         Scan events with all rules. Returns DetectionResult.
 
@@ -68,7 +68,7 @@ class DeterministicEngine:
         from .models import DetectionResult
         try:
             start = time.perf_counter_ns()
-            all_matches: list[ThreatMatch] = []
+            all_matches: List[ThreatMatch] = []
 
             # Phase 1: Pattern-based rules (single pass over events)
             for event in events:
@@ -97,7 +97,7 @@ class DeterministicEngine:
                         )
 
             # Phase 2: Rate-based rules (group by Actor: Username if present, else src_ip)
-            actor_groups: dict[str, list[NormalizedEvent]] = defaultdict(list)
+            actor_groups: Dict[str, List[NormalizedEvent]] = defaultdict(list)
             for event in events:
                 # Use canonical identity: Username if present, else src_ip
                 actor = event.username if (event.username and event.username not in ("-", "null", "None", "unknown")) else event.src_ip
@@ -125,9 +125,9 @@ class DeterministicEngine:
             elapsed_ms = int((time.perf_counter_ns() - start) / 1_000_000)
 
             # Compute summaries
-            by_category: dict[str, int] = defaultdict(int)
-            by_severity: dict[str, int] = defaultdict(int)
-            attacker_ips: set[str] = set()
+            by_category: Dict[str, int] = defaultdict(int)
+            by_severity: Dict[str, int] = defaultdict(int)
+            attacker_ips: Set[str] = set()
             for threat in threats:
                 by_category[threat.category] += 1
                 by_severity[threat.severity.value] += 1
@@ -160,10 +160,10 @@ class DeterministicEngine:
             logger.error(f"Critical failure in DeterministicEngine.scan: {e}", exc_info=True)
             raise
 
-    def _group_matches(self, matches: list[ThreatMatch]) -> list[DeterministicThreat]:
+    def _group_matches(self, matches: List[ThreatMatch]) -> List[DeterministicThreat]:
         """Group individual matches into actionable threats by (src_ip, rule_name)."""
         try:
-            groups: dict[str, list[ThreatMatch]] = defaultdict(list)
+            groups: Dict[str, List[ThreatMatch]] = defaultdict(list)
             for m in matches:
                 # Group by rule_name only — do NOT include src_ip.
                 # Rate-based identity-aware rules (e.g. USER_ENDPOINT_FLOODING) group
@@ -188,7 +188,7 @@ class DeterministicEngine:
                     last_seen = max(timestamps) if timestamps else None
 
                     # Sample evidence (unique, up to 5)
-                    seen_evidence: set[str] = set()
+                    seen_evidence: Set[str] = set()
                     sample_evidence = []
                     for m in group_matches:
                         if m.evidence not in seen_evidence and len(sample_evidence) < 5:
@@ -230,8 +230,8 @@ class DeterministicEngine:
 
     def _filter_zscaler_excluded_matches(
         self,
-        matches: list[ThreatMatch],
-    ) -> list[ThreatMatch]:
+        matches: List[ThreatMatch],
+    ) -> List[ThreatMatch]:
         """Drop selected deterministic matches after detection when src_ip is Zscaler."""
         try:
             candidate_ips = [
@@ -278,10 +278,10 @@ class DeterministicEngine:
 
     def _determine_ai_need(
         self,
-        events: list[NormalizedEvent],
-        matches: list[ThreatMatch],
-        threats: list[DeterministicThreat],
-    ) -> tuple[bool, list[str]]:
+        events: List[NormalizedEvent],
+        matches: List[ThreatMatch],
+        threats: List[DeterministicThreat],
+    ) -> Tuple[bool, List[str]]:
         """Determine if AI escalation is needed."""
         try:
             reasons = []
@@ -310,7 +310,7 @@ class DeterministicEngine:
             logger.error(f"Failed in _determine_ai_need: {e}", exc_info=True)
             return False, []
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get engine statistics."""
         try:
             return {
@@ -325,8 +325,8 @@ class DeterministicEngine:
 
     def scan_parallel(
         self,
-        events: list[NormalizedEvent],
-        max_workers: int | None = None,
+        events: List[NormalizedEvent],
+        max_workers: Optional[int] = None,
         chunk_size: int = 5000,
     ) -> Any:
         """
@@ -352,7 +352,7 @@ class DeterministicEngine:
             )
 
             # Phase 1: Parallel pattern matching
-            all_matches: list[ThreatMatch] = []
+            all_matches: List[ThreatMatch] = []
             with ProcessPoolExecutor(max_workers=workers) as executor:
                 futures = [
                     executor.submit(_worker_pattern_scan, batch)
@@ -380,7 +380,7 @@ class DeterministicEngine:
                         )
 
             # Phase 2: Rate-based rules (need full Actor grouping — single-threaded)
-            actor_groups: dict[str, list[NormalizedEvent]] = defaultdict(list)
+            actor_groups: Dict[str, List[NormalizedEvent]] = defaultdict(list)
             for event in events:
                 actor = event.username if (event.username and event.username not in ("-", "null", "None", "unknown")) else event.src_ip
                 if actor and actor != "-":
@@ -405,9 +405,9 @@ class DeterministicEngine:
 
             elapsed_ms = int((time.perf_counter_ns() - start) / 1_000_000)
 
-            by_category: dict[str, int] = defaultdict(int)
-            by_severity: dict[str, int] = defaultdict(int)
-            attacker_ips: set[str] = set()
+            by_category: Dict[str, int] = defaultdict(int)
+            by_severity: Dict[str, int] = defaultdict(int)
+            attacker_ips: Set[str] = set()
             for threat in threats:
                 by_category[threat.category] += 1
                 by_severity[threat.severity.value] += 1
@@ -443,8 +443,8 @@ class DeterministicEngine:
 
 
 def _worker_pattern_scan(
-    events: list[NormalizedEvent],
-) -> list[ThreatMatch]:
+    events: List[NormalizedEvent],
+) -> List[ThreatMatch]:
     """
     Module-level worker for ProcessPoolExecutor.
     Each worker instantiates its own pattern rules and scans its sub-batch.

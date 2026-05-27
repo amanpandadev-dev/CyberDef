@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -58,10 +58,10 @@ class DeterministicThreat(BaseModel):
     rule_name: str
     description: str = "Threat detected by deterministic rules"
     match_count: int
-    sample_evidence: list[str] = Field(default_factory=list)
-    affected_event_ids: list[UUID] = Field(default_factory=list)
+    sample_evidence: List[str] = Field(default_factory=list)
+    affected_event_ids: List[UUID] = Field(default_factory=list)
     src_ip: Optional[str] = None
-    src_ips: list[str] = Field(default_factory=list)
+    src_ips: List[str] = Field(default_factory=list)
     first_seen: Optional[datetime] = None
     last_seen: Optional[datetime] = None
     detection_tier: str = "deterministic"
@@ -72,16 +72,16 @@ class DetectionResult(BaseModel):
     scan_id: UUID = Field(default_factory=uuid4)
     events_scanned: int
     processing_time_ms: int = 0
-    matches: list[ThreatMatch] = Field(default_factory=list)
-    threats: list[DeterministicThreat] = Field(default_factory=list)
-    threats_by_category: dict[str, int] = Field(default_factory=dict)
-    threats_by_severity: dict[str, int] = Field(default_factory=dict)
-    unique_attacker_ips: list[str] = Field(default_factory=list)
+    matches: List[ThreatMatch] = Field(default_factory=list)
+    threats: List[DeterministicThreat] = Field(default_factory=list)
+    threats_by_category: Dict[str, int] = Field(default_factory=dict)
+    threats_by_severity: Dict[str, int] = Field(default_factory=dict)
+    unique_attacker_ips: List[str] = Field(default_factory=list)
     needs_ai_review: bool = False
-    ai_review_reasons: list[str] = Field(default_factory=list)
+    ai_review_reasons: List[str] = Field(default_factory=list)
 
     @property
-    def high_confidence_threats(self) -> list[DeterministicThreat]:
+    def high_confidence_threats(self) -> List[DeterministicThreat]:
         try:
             return [t for t in self.threats if t.confidence >= 0.7]
         except Exception:

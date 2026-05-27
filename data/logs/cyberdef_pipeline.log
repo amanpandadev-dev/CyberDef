@@ -96,7 +96,3 @@
 {"timestamp": "2026-05-27 15:37:51,811", "level": "INFO", "logger": "file_watcher.handler", "message": "Auto-analysis complete | file=Masked_log1_100.csv, incidents=2, report=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\reports\\20260527_100751_a83e5641-094b-4f96-8c47-ecae396c21f1_Masked_log1_100_report.md"}
 {"timestamp": "2026-05-27 15:37:53,796", "level": "INFO", "logger": "rollups.chunk_storage", "message": "Stored 3 chunks to Parquet | partition=hour=10 file_id=batch_1779876473770"}
 {"timestamp": "2026-05-27 15:37:53,805", "level": "INFO", "logger": "core.flush_buffer", "message": "Micro-batch flush complete | items_flushed=3 batch_id=batch_1779876473770"}
-{"timestamp": "2026-05-27 15:49:55,677", "level": "INFO", "logger": "file_watcher", "message": "File watcher stopped"}
-{"timestamp": "2026-05-27 15:49:55,678", "level": "INFO", "logger": "core.flush_buffer", "message": "FlushBuffer worker stopped and remaining data drained."}
-{"timestamp": "2026-05-27 15:49:55,679", "level": "INFO", "logger": "database.session", "message": "Database connections closed"}
-{"timestamp": "2026-05-27 15:49:55,679", "level": "INFO", "logger": "main", "message": "AegisNet shutting down"}

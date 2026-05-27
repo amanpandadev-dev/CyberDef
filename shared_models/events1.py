@@ -11,7 +11,7 @@ import hashlib
 import json
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
@@ -46,7 +46,7 @@ class RawEventRow(BaseModel):
     """
     file_id: UUID
     row_number: int
-    raw_data: dict[str, Any]
+    raw_data: Dict[str, Any]
 
     @computed_field
     @property
@@ -77,9 +77,9 @@ class ParsedEvent(BaseModel):
     bytes_received: Optional[int] = None
     duration_ms: Optional[int] = None
     raw_message: Optional[str] = None
-    vendor_specific: dict[str, Any] = Field(default_factory=dict)
-    parsed_data: Optional[dict[str, Any]] = None  # Extended fields for normalization
-    parse_errors: list[str] = Field(default_factory=list)
+    vendor_specific: Dict[str, Any] = Field(default_factory=dict)
+    parsed_data: Optional[Dict[str, Any]] = None  # Extended fields for normalization
+    parse_errors: List[str] = Field(default_factory=list)
 
 
 class NormalizedEvent(BaseModel):
@@ -136,7 +136,7 @@ class NormalizedEvent(BaseModel):
 
     # Original log fields for forensics
     original_message: Optional[str] = None
-    vendor_specific: Optional[dict[str, Any]] = None
+    vendor_specific: Optional[Dict[str, Any]] = None
 
     # Enrichment flags
     enriched: bool = False
@@ -149,7 +149,7 @@ class EventBatch(BaseModel):
     """Batch of normalized events for processing."""
     batch_id: UUID = Field(default_factory=uuid4)
     file_id: UUID
-    events: list[NormalizedEvent]
+    events: List[NormalizedEvent]
     total_rows_processed: int
     parse_error_count: int
     created_at: datetime = Field(default_factory=datetime.utcnow)

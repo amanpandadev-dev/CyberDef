@@ -10,7 +10,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/files", tags=["File Intake"])
 
 # Service instance (in production, use dependency injection)
-_service: FileIntakeService | None = None
+_service: Optional[FileIntakeService] = None
 
 
 def get_service() -> FileIntakeService:
@@ -50,7 +50,7 @@ def _find_report_path(file_id: str) -> Path | None:
         return None
 
     # Preferred: filename includes file_id (newer reports)
-    candidates: list[Path] = []
+    candidates: List[Path] = []
     for pattern in (f"*_{file_id}_*_report.md", f"*{file_id}*_report.md", f"*{file_id}*.md"):
         candidates.extend([path for path in reports_dir.glob(pattern) if path.is_file()])
     if candidates:
@@ -109,7 +109,7 @@ def _find_incident_json_path(file_id: str) -> Path | None:
     return None
 
 
-def _report_metadata(report_path: Path, file_id: str | None = None) -> dict:
+def _report_metadata(report_path: Path, file_id: Optional[str] = None) -> dict:
     """Build serializable report metadata."""
     stat = report_path.stat()
     resolved_file_id = (
@@ -165,7 +165,7 @@ def _extract_file_id_from_report_content(report_path: Path) -> str | None:
 )
 async def upload_file(
     file: Annotated[UploadFile, File(description="CSV file to upload")],
-    description: Annotated[str | None, Form()] = None,
+    description: Annotated[Optional[str], Form()] = None,
 ) -> FileUploadResponse:
     """Upload a CSV file for analysis."""
     service = get_service()
@@ -219,14 +219,14 @@ async def scan_directory(
 
 @router.get(
     "/",
-    response_model=list[FileMetadata],
+    response_model=List[FileMetadata],
     summary="List uploaded files",
     description="List all uploaded files with optional status filter.",
 )
 async def list_files(
-    status: FileStatus | None = None,
+    status: Optional[FileStatus] = None,
     limit: int = 100,
-) -> list[FileMetadata]:
+) -> List[FileMetadata]:
     """List uploaded files."""
     service = get_service()
     return await service.list_files(status=status, limit=limit)
@@ -237,13 +237,13 @@ async def list_files(
     summary="List generated markdown reports",
     description="List markdown reports from the reports directory, optionally filtered by file_id.",
 )
-async def list_reports(file_id: str | None = None) -> list[dict]:
+async def list_reports(file_id: Optional[str] = None) -> List[dict]:
     """List generated markdown reports from the reports directory."""
     reports_dir = Path(get_settings().base_dir) / "reports"
     if not reports_dir.exists():
         return []
 
-    report_candidates: dict[str, Path] = {}
+    report_candidates: Dict[str, Path] = {}
 
     if file_id:
         for pattern in (f"*_{file_id}_*_report.md", f"*{file_id}*.md"):
@@ -273,7 +273,7 @@ async def list_reports(file_id: str | None = None) -> list[dict]:
     summary="List generated markdown reports (slash alias)",
     description="Alias for /files/reports.",
 )
-async def list_reports_slash_alias(file_id: str | None = None) -> list[dict]:
+async def list_reports_slash_alias(file_id: Optional[str] = None) -> List[dict]:
     """Alias endpoint to avoid route mismatches for trailing slash."""
     return await list_reports(file_id=file_id)
 

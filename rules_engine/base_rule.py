@@ -33,10 +33,10 @@ class ThreatRule(ABC):
     enforce_success_status_filter: bool = True
 
     # Fields to check. Subclasses list which NormalizedEvent fields to scan.
-    check_fields: list[str] = ["raw_url"]
+    check_fields: List[str] = ["raw_url"]
 
     # Compiled regex patterns, set in subclass __init_subclass__.
-    _compiled_patterns: list[re.Pattern] = []
+    _compiled_patterns: List[re.Pattern] = []
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -44,7 +44,7 @@ class ThreatRule(ABC):
             cls._compiled_patterns = [re.compile(p, cls.regex_flags) for p in cls.patterns]
 
     # Override patterns in subclasses.
-    patterns: list[str] = []
+    patterns: List[str] = []
 
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         """
@@ -99,7 +99,7 @@ class RateBasedRule(ThreatRule):
 
     @abstractmethod
     def check_group(
-        self, events: list[NormalizedEvent], group_key: str
+        self, events: List[NormalizedEvent], group_key: str
     ) -> ThreatMatch | None:
         """Check a group of events for rate-based threats."""
         pass
@@ -113,7 +113,7 @@ class ScoredThreatRule(ThreatRule, ABC):
     the accumulated score reaches the rule threshold.
     """
 
-    patterns: dict[str, tuple[str, int]] = {}
+    patterns: Dict[str, Tuple[str, int]] = {}
     threshold: int = 5
     max_payload_length = 4000
     static_extensions = (
@@ -131,7 +131,7 @@ class ScoredThreatRule(ThreatRule, ABC):
         ".map",
     )
 
-    _compiled_patterns: dict[str, tuple[re.Pattern, int]] = {}
+    _compiled_patterns: Dict[str, Tuple[re.Pattern, int]] = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -168,9 +168,9 @@ class ScoredThreatRule(ThreatRule, ABC):
             return None
 
         score = 0
-        matched_names: list[str] = []
-        matched_fields: list[str] = []
-        evidence_values: list[str] = []
+        matched_names: List[str] = []
+        matched_fields: List[str] = []
+        evidence_values: List[str] = []
 
         for field_name in self.check_fields:
             value = getattr(event, field_name, None)

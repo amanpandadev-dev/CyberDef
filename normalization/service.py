@@ -13,7 +13,7 @@ import re
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 from functools import lru_cache
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlsplit
 from uuid import UUID, uuid4
 
@@ -213,7 +213,7 @@ class NormalizationService:
             self.normalization_errors += 1
             return None
 
-    def normalize_batch(self, parsed_events: list[ParsedEvent]) -> EventBatch:
+    def normalize_batch(self, parsed_events: List[ParsedEvent]) -> EventBatch:
         """
         Normalize a batch of parsed events.
 
@@ -268,8 +268,8 @@ class NormalizationService:
     def _extract_uri_parts(
         self,
         raw_uri: Any,
-        explicit_query: Any | None = None,
-    ) -> tuple[str | None, str | None]:
+        explicit_query: Optional[Any] = None,
+    ) -> Tuple[str | None, str | None]:
         """Normalize URI into path + query parts."""
         query = str(explicit_query).strip() if explicit_query else None
         if not raw_uri:
@@ -298,7 +298,7 @@ class NormalizationService:
         return path, query
 
     @lru_cache(maxsize=10000)
-    def _normalize_ip(self, ip_str: str | None) -> str | None:
+    def _normalize_ip(self, ip_str: Optional[str]) -> str | None:
         """Normalize and validate IP address. Treats '-' as missing value."""
         if not ip_str:
             return None
@@ -330,7 +330,7 @@ class NormalizationService:
         return None
 
     @staticmethod
-    def _strip_tz(dt: datetime | None) -> datetime | None:
+    def _strip_tz(dt: Optional[datetime]) -> datetime | None:
         """
         Convert any datetime to a naive UTC datetime.
 
@@ -345,7 +345,7 @@ class NormalizationService:
             return dt  # already naive
         return dt.astimezone(timezone.utc).replace(tzinfo=None)
 
-    def _normalize_action(self, action: str | None) -> EventAction:
+    def _normalize_action(self, action: Optional[str]) -> EventAction:
         """Normalize action to standard enum."""
         if not action:
             return EventAction.UNKNOWN
@@ -355,8 +355,8 @@ class NormalizationService:
 
     def _normalize_protocol(
         self,
-        protocol: str | None,
-        dst_port: int | None = None,
+        protocol: Optional[str],
+        dst_port: Optional[int] = None,
     ) -> NetworkProtocol:
         """Normalize protocol, inferring from port if needed."""
         if protocol:
@@ -399,7 +399,7 @@ class NormalizationService:
         except ValueError:
             return False
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get normalization statistics."""
         total = self.events_normalized + self.normalization_errors
         return {
@@ -410,8 +410,8 @@ class NormalizationService:
 
     def normalize_batch_parallel(
         self,
-        parsed_events: list[ParsedEvent],
-        max_workers: int | None = None,
+        parsed_events: List[ParsedEvent],
+        max_workers: Optional[int] = None,
         chunk_size: int = 5000,
     ) -> EventBatch:
         """
@@ -486,8 +486,8 @@ class NormalizationService:
 
 
 def _worker_normalize_batch(
-    parsed_events: list[ParsedEvent],
-) -> tuple[list[NormalizedEvent], int]:
+    parsed_events: List[ParsedEvent],
+) -> Tuple[List[NormalizedEvent], int]:
     """
     Module-level worker function for ProcessPoolExecutor.
     Each worker creates its own NormalizationService instance

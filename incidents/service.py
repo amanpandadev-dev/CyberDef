@@ -11,7 +11,7 @@ import json
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -32,7 +32,7 @@ from shared_models.incidents import (
 logger = get_logger(__name__)
 
 # Persistence file path
-_INCIDENTS_FILE: Path | None = None
+_INCIDENTS_FILE: Optional[Path] = None
 
 def _get_incidents_file() -> Path:
     """Get the incidents JSON file path."""
@@ -44,11 +44,11 @@ def _get_incidents_file() -> Path:
     return _INCIDENTS_FILE
 
 
-MitreGuess = tuple[str, str, str, float, str]
+MitreGuess = Tuple[str, str, str, float, str]
 
 # Deterministic fallback MITRE mappings for Tier 1/Tier 2 findings.
 # Format: rule/category/family -> (technique_id, technique_name, tactic, confidence, justification)
-_RULE_MITRE_MAP: dict[str, MitreGuess] = {
+_RULE_MITRE_MAP: Dict[str, MitreGuess] = {
     # Injection / exploit-like detections
     "sql_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.82, "Rule indicates web application exploitation behavior."),
     "blind_sql_injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.82, "Rule indicates web application exploitation behavior."),
@@ -99,7 +99,7 @@ _RULE_MITRE_MAP: dict[str, MitreGuess] = {
     "privilege_escalation_probe": ("T1078", "Valid Accounts", "Initial Access", 0.55, "Privilege probing often follows account abuse patterns."),
 }
 
-_FAMILY_MITRE_MAP: dict[str, MitreGuess] = {
+_FAMILY_MITRE_MAP: Dict[str, MitreGuess] = {
     "injection": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.72, "Injection-family findings map to application exploitation."),
     "path_file": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.72, "Path/file abuse indicates exposed application exploitation."),
     "cve_exploit": ("T1190", "Exploit Public-Facing Application", "Initial Access", 0.85, "Known CVE exploit patterns against public-facing services."),
@@ -121,8 +121,29 @@ class IncidentService:
     Uses JSON file persistence to survive backend restarts.
     """
 
-    _incidents: dict[str, Incident] = {}
+    _incidents: Dict[str, Incident] = {}
     _loaded: bool = False
+
+    # Static content extensions to exclude
+    _STATIC_EXTENSIONS = {
+        '.css', '.js', '.jpg', '.jpeg', '.png', '.gif',
+        '.ico', '.svg', '.json', '.woff', '.woff2',
+        '.ttf', '.eot', '.map', '.webp', '.avif',
+        '.bmp', '.tiff', '.webm', '.mp4', '.mp3',
+        '.pdf', '.zip', '.tar', '.gz'
+    }
+
+    # Legitimate bot patterns
+    _LEGITIMATE_BOT_PATTERNS = [
+        r'Googlebot/\d+\.\d+',
+        r'Googlebot-Image/\d+\.\d+',
+        r'Googlebot-Video/\d+\.\d+',
+        r'Googlebot-News',
+        r'bingbot/\d+\.\d+',
+        r'YandexBot/\d+\.\d+',
+        r'Baiduspider/\d+\.\d+',
+        r'Baiduspider-render/\d+\.\d+',
+    ]
 
     def __init__(self):
         self.incidents_created = 0
@@ -130,6 +151,57 @@ class IncidentService:
         if not IncidentService._loaded:
             self._load_from_file()
             IncidentService._loaded = True
+
+    @staticmethod
+    def _is_static_content(url: Optional[str]) -> bool:
+        """Check if URL is static content that should be excluded."""
+        if not url:
+            return False
+        url_lower = url.lower()
+        return any(url_lower.endswith(ext) for ext in IncidentService._STATIC_EXTENSIONS)
+
+    @staticmethod
+    def _is_legitimate_bot(user_agent: Optional[str]) -> bool:
+        """Check if user agent is a legitimate search bot."""
+        if not user_agent:
+            return False
+        import re
+        for pattern in IncidentService._LEGITIMATE_BOT_PATTERNS:
+            if re.search(pattern, user_agent, re.IGNORECASE):
+                return True
+        return False
+
+    def _should_exclude_threat(self, threat: DeterministicThreat) -> bool:
+        """
+        Check if a threat should be excluded from incident creation.
+        
+        Excludes threats that are:
+        - Brute force/auth failures on static content only
+        - From legitimate search bots
+        """
+        # Only filter brute force and authentication-related threats
+        auth_related_rules = {
+            'brute_force_login',
+            'authentication_failures',
+            'credential_stuffing'
+        }
+        
+        if threat.rule_name not in auth_related_rules:
+            return False
+        
+        # Check if all evidence is from static content
+        if threat.sample_evidence:
+            all_static = all(
+                self._is_static_content(evidence) 
+                for evidence in threat.sample_evidence
+            )
+            if all_static:
+                logger.info(
+                    f"Excluding threat {threat.rule_name} - all evidence is static content"
+                )
+                return True
+        
+        return False
 
     def _reload_if_needed(self) -> None:
         """Reload from file to pick up incidents created by other instances."""
@@ -316,9 +388,13 @@ class IncidentService:
         self,
         threat: DeterministicThreat,
         file_id=None,
-    ) -> Incident:
+    ) -> Optional[Incident]:
         """Create an incident from a Tier 1 deterministic threat finding."""
         from datetime import datetime
+
+        # Check if threat should be excluded
+        if self._should_exclude_threat(threat):
+            return None
 
         severity_to_priority = {
             "critical": IncidentPriority.CRITICAL,
@@ -454,7 +530,7 @@ class IncidentService:
 
     def create_from_multiple_outputs(
         self,
-        outputs: list[tuple[AgentOutput, BehavioralChunk]],
+        outputs: List[Tuple[AgentOutput, BehavioralChunk]],
     ) -> Incident:
         """
         Create a single incident from multiple related outputs.
@@ -579,10 +655,10 @@ class IncidentService:
 
     def list_incidents(
         self,
-        status: IncidentStatus | None = None,
-        priority: IncidentPriority | None = None,
+        status: Optional[IncidentStatus] = None,
+        priority: Optional[IncidentPriority] = None,
         limit: int = 100,
-    ) -> list[IncidentSummary]:
+    ) -> List[IncidentSummary]:
         """
         List incidents with optional filters.
 
@@ -663,9 +739,9 @@ class IncidentService:
 
     def _infer_mitre_guess(
         self,
-        rule_name: str | None,
-        category: str | None = None,
-        family: str | None = None,
+        rule_name: Optional[str],
+        category: Optional[str] = None,
+        family: Optional[str] = None,
     ) -> MitreGuess | None:
         """Infer MITRE mapping from deterministic/correlation metadata."""
         rule_key = (rule_name or "").strip().lower()
@@ -706,7 +782,7 @@ class IncidentService:
                     return family
         return None
 
-    def _apply_mitre_fallback(self, incident: Incident, family_hint: str | None = None) -> bool:
+    def _apply_mitre_fallback(self, incident: Incident, family_hint: Optional[str] = None) -> bool:
         """
         Ensure incident has MITRE tactic/technique populated.
 
@@ -763,7 +839,7 @@ class IncidentService:
         self,
         incident_id: str,
         status: IncidentStatus,
-        notes: str | None = None,
+        notes: Optional[str] = None,
     ) -> Incident | None:
         """Update incident status."""
         incident = self._incidents.get(incident_id)
@@ -801,10 +877,10 @@ class IncidentService:
             incident=incident,
         )
 
-    def list_incidents_for_file(self, file_id: str) -> list[Incident]:
+    def list_incidents_for_file(self, file_id: str) -> List[Incident]:
         """Return incidents linked to a specific file_id."""
         self._reload_if_needed()
-        matches: list[Incident] = []
+        matches: List[Incident] = []
         for incident in self._incidents.values():
             file_ids = [str(fid) for fid in (incident.file_ids or [])]
             if file_id in file_ids:
@@ -964,7 +1040,7 @@ class IncidentService:
         )
         return self._derive_indicator_from_corpus(corpus)
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get incident statistics."""
         status_counts = defaultdict(int)
         priority_counts = defaultdict(int)

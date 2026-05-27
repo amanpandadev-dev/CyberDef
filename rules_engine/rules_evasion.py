@@ -274,16 +274,16 @@ class PathNormalizationBypassRule(Status200ThreatRule):
         return None  # Cannot determine actor — skip this event
 
     @classmethod
-    def check_batch(cls, events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(cls, events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """
         Stateful path normalization bypass detection across a batch.
 
         - Dot-encoded bypass (%2e%2e / %252e%252e) → immediate HIGH alert.
         - Structural bypass (// /./ /;/ \\\\)       → counter per actor; alert at ≥5.
         """
-        matches: list[ThreatMatch] = []
-        structural_counts: dict[str, int] = defaultdict(int)
-        structural_last: dict[str, NormalizedEvent] = {}
+        matches: List[ThreatMatch] = []
+        structural_counts: Dict[str, int] = defaultdict(int)
+        structural_last: Dict[str, NormalizedEvent] = {}
 
         for ev in events:
             if not _is_status_200(ev):
@@ -391,7 +391,7 @@ class WAFBypassRule(ThreatRule):
     ]
 
     @staticmethod
-    def _is_public_ip(ip: str | None) -> bool:
+    def _is_public_ip(ip: Optional[str]) -> bool:
         try:
             return ip and ipaddress.ip_address(ip).is_global
         except Exception:
@@ -400,8 +400,8 @@ class WAFBypassRule(ThreatRule):
     @classmethod
     def check_batch(
         cls,
-        events: list[NormalizedEvent]
-    ) -> list[ThreatMatch]:
+        events: List[NormalizedEvent]
+    ) -> List[ThreatMatch]:
 
         matches = []
 

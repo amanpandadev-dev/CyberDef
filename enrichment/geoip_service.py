@@ -17,7 +17,7 @@ from shared_models.events import NormalizedEvent
 logger = get_logger(__name__)
 
 # Global singleton instance
-_geoip_instance: CSVGeoIPService | None = None
+_geoip_instance: Optional[CSVGeoIPService] = None
 
 
 class CSVGeoIPService:
@@ -28,7 +28,7 @@ class CSVGeoIPService:
     Example: 1.0.0.0/24,2077456,OC,Oceania,AU,Australia,0,0
     """
 
-    def __init__(self, csv_path: Path | None = None):
+    def __init__(self, csv_path: Optional[Path] = None):
         # Check multiple possible locations for the CSV file
         possible_paths = [
             csv_path or Path("enrichment/geoip2-ipv4.csv"),
@@ -37,10 +37,10 @@ class CSVGeoIPService:
         ]
 
         self.csv_path = None
-        self.networks: list[tuple[ipaddress.IPv4Network, dict[str, str]]] = []
-        self.network_addresses: list[int] = []  # Precomputed network addresses for faster binary search
+        self.networks: List[Tuple[ipaddress.IPv4Network, Dict[str, str]]] = []
+        self.network_addresses: List[int] = []  # Precomputed network addresses for faster binary search
         self.enabled = False
-        self._lookup_cache: dict[str, dict[str, str] | None] = {}  # IP lookup cache
+        self._lookup_cache: Dict[str, Dict[str, str] | None] = {}  # IP lookup cache
 
         # Find the CSV file
         for path in possible_paths:
@@ -123,7 +123,7 @@ class CSVGeoIPService:
         logger.info(f"Loaded {len(self.networks)} IP networks from CSV")
         return True
 
-    def _lookup_ip(self, ip_str: str) -> dict[str, str] | None:
+    def _lookup_ip(self, ip_str: str) -> Dict[str, str] | None:
         """Look up geographic data for an IP address using binary search and caching."""
         # Check cache first
         if ip_str in self._lookup_cache:
@@ -173,7 +173,7 @@ class CSVGeoIPService:
 
         return event
 
-    def enrich_batch(self, events: list[NormalizedEvent]) -> list[NormalizedEvent]:
+    def enrich_batch(self, events: List[NormalizedEvent]) -> List[NormalizedEvent]:
         """Enrich batch of events with geographic data (optimized for unique IPs)."""
         if not self.enabled or not events:
             return events

@@ -11,7 +11,7 @@ import json
 from collections import defaultdict
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Set
 
 from pydantic import BaseModel, Field
 
@@ -37,36 +37,37 @@ class ActorState(BaseModel):
     Updated after every 15-minute batch.
     """
     ip: str
-    first_seen: str | None = None
-    last_seen: str | None = None
+    first_seen: Optional[str] = None
+    last_seen: Optional[str] = None
 
     # Volume counters
     total_requests: int = 0
-    requests_by_status: dict[str, int] = Field(default_factory=dict)
+    requests_by_status: Dict[str, int] = Field(default_factory=dict)
     unique_uris_accessed: int = 0
-    _uri_set: set[str] = set()  # Not persisted, rebuilt on load
+    _uri_set: Set[str] = set()  # Not persisted, rebuilt on load
 
     # Auth counters
     auth_failures_total: int = 0
+    auth_failures_static_content: int = 0  # Track static content separately
     auth_successes_total: int = 0
 
     # Attack tracking
-    attack_signatures_seen: list[str] = Field(default_factory=list)
-    attack_categories_seen: list[str] = Field(default_factory=list)
-    attack_timeline: list[AttackTimelineEntry] = Field(default_factory=list)
+    attack_signatures_seen: List[str] = Field(default_factory=list)
+    attack_categories_seen: List[str] = Field(default_factory=list)
+    attack_timeline: List[AttackTimelineEntry] = Field(default_factory=list)
 
     # User agents
-    user_agents_seen: list[str] = Field(default_factory=list)
+    user_agents_seen: List[str] = Field(default_factory=list)
 
     # Request rate history (per-batch)
-    request_rate_history: list[dict[str, Any]] = Field(default_factory=list)
+    request_rate_history: List[Dict[str, Any]] = Field(default_factory=list)
 
     # Compounding threat score (0.0 - 1.0)
     threat_score: float = 0.0
 
     # Tracking
     escalated_to_ai: bool = False
-    associated_incidents: list[str] = Field(default_factory=list)
+    associated_incidents: List[str] = Field(default_factory=list)
     batches_seen_in: int = 0
 
     class Config:
@@ -79,13 +80,30 @@ class ThreatStateStore:
     across all 15-minute batches for a given date.
     """
 
+    # Static content extensions to exclude from auth failure counting
+    _STATIC_EXTENSIONS = {
+        '.css', '.js', '.jpg', '.jpeg', '.png', '.gif',
+        '.ico', '.svg', '.json', '.woff', '.woff2',
+        '.ttf', '.eot', '.map', '.webp', '.avif',
+        '.bmp', '.tiff', '.webm', '.mp4', '.mp3',
+        '.pdf', '.zip', '.tar', '.gz'
+    }
+
     def __init__(self, store_date: date | None = None):
         self.store_date = store_date or date.today()
-        self.actors: dict[str, ActorState] = {}
+        self.actors: Dict[str, ActorState] = {}
         self.batch_count: int = 0
         self.total_events: int = 0
         self._file_path = self._get_file_path()
         self._load()
+
+    @staticmethod
+    def _is_static_content(url: Optional[str]) -> bool:
+        """Check if URL is static content that should be excluded."""
+        if not url:
+            return False
+        url_lower = url.lower()
+        return any(url_lower.endswith(ext) for ext in ThreatStateStore._STATIC_EXTENSIONS)
 
     def _get_file_path(self) -> Path:
         settings = get_settings()
@@ -128,7 +146,7 @@ class ThreatStateStore:
 
     def update_from_batch(
         self,
-        events: list[NormalizedEvent],
+        events: List[NormalizedEvent],
         detection_result: Any,
     ) -> None:
         """
@@ -141,7 +159,7 @@ class ThreatStateStore:
         batch_num = self.batch_count
 
         # Group events by source IP
-        ip_events: dict[str, list[NormalizedEvent]] = defaultdict(list)
+        ip_events: Dict[str, List[NormalizedEvent]] = defaultdict(list)
         for ev in events:
             if ev.src_ip:
                 ip_events[ev.src_ip].append(ev)
@@ -170,7 +188,11 @@ class ThreatStateStore:
                     key = str(ev.http_status)
                     actor.requests_by_status[key] = actor.requests_by_status.get(key, 0) + 1
                     if ev.http_status == 401:
-                        actor.auth_failures_total += 1
+                        # Separate static content auth failures from real ones
+                        if self._is_static_content(ev.raw_url):
+                            actor.auth_failures_static_content += 1
+                        else:
+                            actor.auth_failures_total += 1
                     elif ev.http_status == 200:
                         actor.auth_successes_total += 1
 
@@ -239,27 +261,27 @@ class ThreatStateStore:
         """Get state for a specific IP."""
         return self.actors.get(ip)
 
-    def get_high_risk_actors(self, threshold: float = 0.5) -> list[ActorState]:
+    def get_high_risk_actors(self, threshold: float = 0.5) -> List[ActorState]:
         """Get actors with threat score above threshold."""
         actors = [a for a in self.actors.values() if a.threat_score >= threshold]
         actors.sort(key=lambda a: a.threat_score, reverse=True)
         return actors
 
-    def get_active_threats(self) -> list[ActorState]:
+    def get_active_threats(self) -> List[ActorState]:
         """Get all actors that have registered attack signatures today."""
         return [a for a in self.actors.values() if a.attack_signatures_seen]
 
-    def get_category_breakdown(self) -> dict[str, int]:
+    def get_category_breakdown(self) -> Dict[str, int]:
         """Get threat counts by category across all actors."""
-        counts: dict[str, int] = defaultdict(int)
+        counts: Dict[str, int] = defaultdict(int)
         for actor in self.actors.values():
             for cat in actor.attack_categories_seen:
                 counts[cat] += 1
         return dict(counts)
 
-    def get_hourly_timeline(self) -> list[dict[str, Any]]:
+    def get_hourly_timeline(self) -> List[Dict[str, Any]]:
         """Get attack events aggregated by hour."""
-        hourly: dict[str, int] = defaultdict(int)
+        hourly: Dict[str, int] = defaultdict(int)
         for actor in self.actors.values():
             for entry in actor.attack_timeline:
                 try:
@@ -269,7 +291,7 @@ class ThreatStateStore:
                     pass
         return [{"hour": h, "count": c} for h, c in sorted(hourly.items())]
 
-    def get_day_summary(self) -> dict[str, Any]:
+    def get_day_summary(self) -> Dict[str, Any]:
         """Get comprehensive day-level summary."""
         active_threats = self.get_active_threats()
         return {
@@ -288,7 +310,7 @@ class ThreatStateStore:
 
 
 # Global store cache (per date)
-_stores: dict[str, ThreatStateStore] = {}
+_stores: Dict[str, ThreatStateStore] = {}
 
 
 def get_threat_state_store(store_date: date | None = None) -> ThreatStateStore:

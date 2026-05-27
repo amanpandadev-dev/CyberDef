@@ -11,7 +11,7 @@ import time
 from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -42,7 +42,7 @@ class ChunkStorage:
     def __init__(self):
         self.chunks_dir = _get_chunks_dir()
 
-    def store_chunks(self, file_id: str, chunks: list[BehavioralChunk]) -> None:
+    def store_chunks(self, file_id: str, chunks: List[BehavioralChunk]) -> None:
         """
         Store chunks using Parquet with Hive partitioning.
         Massively decreases file size and natively loads into GPU VRAM.
@@ -141,7 +141,7 @@ class ChunkStorage:
             except Exception as e:
                 logger.error(f"Failed to read Parquet file {cf.name}: {e}")
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get storage statistics without loading everything."""
         chunk_files = list(self.chunks_dir.rglob("*.parquet"))
         return {
@@ -152,7 +152,7 @@ class ChunkStorage:
 
 
 # Global instance
-_storage: ChunkStorage | None = None
+_storage: Optional[ChunkStorage] = None
 
 
 def get_chunk_storage() -> ChunkStorage:

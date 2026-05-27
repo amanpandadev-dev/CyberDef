@@ -509,6 +509,8 @@ async def analyze_file(
             ai_analyses=len(ai_outputs),
             incidents_created=len(all_incidents),
         )
+        # logger.info(f"Analysis completed | file_id={file_id}")
+        print(f"Analysis completed | file_id={file_id}", flush=True)
 
         return {
             "file_id": file_id,

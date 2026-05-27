@@ -630,7 +630,7 @@ class DataExfiltrationBasicRule(Recon2xxThreatRule):
 
             if not _is_2xx(event):
                 return None
-            if method == "POST" or method == "GET" and is_sensitive_path(uri) and bytes_out > SINGLE_THRESHOLD:
+            if (method == "POST" or method == "GET") and is_sensitive_path(uri) and bytes_out > SINGLE_THRESHOLD:
                 return ThreatMatch(
                     event_id=event.event_id,
                     rule_name=self.name,

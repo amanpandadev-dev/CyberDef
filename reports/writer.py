@@ -26,6 +26,13 @@ logger = get_logger(__name__)
 REPORTS_DIR = Path(get_settings().base_dir) / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
+# Report rendering guardrails for very large uploads. Counts remain exact, but
+# verbose markdown sections are capped so the API does not stall after analysis.
+MAX_ATTACK_MAP_IPS = 500
+MAX_DETAIL_IPS = 100
+MAX_INCIDENT_ROWS = 500
+MAX_RAW_LOG_FALLBACK_EVENTS = 50_000
+
 
 def _severity_emoji(severity: str) -> str:
     return {
@@ -129,24 +136,58 @@ def _group_ai_by_ip(ai_outputs: list[Any]) -> dict[str, list[Any]]:
     """Group Tier 3 AI analysis outputs by their src_ip field."""
     grouped: dict[str, list[Any]] = defaultdict(list)
     for output in ai_outputs:
-        ips = getattr(output, "src_ips", None)
-
-        if ips:
-            for ip in ips:
-                grouped[ip].append(output)
-        else:
-            ip = getattr(output, "src_ip", None) or "Unknown"
+        ips = _agent_output_ips(output)
+        for ip in ips:
             grouped[ip].append(output)
     return grouped
 
 
-def _build_event_index(events: list[Any] | None) -> dict[str, Any]:
+def _agent_output_ips(output: Any) -> list[str]:
+    """Extract source IPs from an AgentOutput or its nested triage result."""
+    ips = []
+    for value in getattr(output, "src_ips", None) or []:
+        if _is_present_ip(value):
+            ips.append(str(value))
+
+    for value in (
+        getattr(output, "src_ip", None),
+        getattr(getattr(output, "triage", None), "source_ip", None),
+    ):
+        if _is_present_ip(value):
+            ips.append(str(value))
+
+    return sorted(set(ips)) or ["Unknown"]
+
+
+def _is_present_ip(value: Any) -> bool:
+    if value is None:
+        return False
+    text = str(value).strip()
+    return bool(text and text.lower() not in {"-", "null", "none", "unknown"})
+
+
+def _build_event_index(
+    events: list[Any] | None,
+    event_ids: set[str] | None = None,
+) -> dict[str, Any]:
     """Index normalized events by event_id for raw-log lookup."""
     indexed: dict[str, Any] = {}
+    wanted = event_ids or set()
+    if event_ids is not None and not wanted:
+        return indexed
+
     for event in events or []:
         event_id = getattr(event, "event_id", None)
-        if event_id:
-            indexed[str(event_id)] = event
+        if not event_id:
+            continue
+
+        event_id_str = str(event_id)
+        if wanted and event_id_str not in wanted:
+            continue
+
+        indexed[event_id_str] = event
+        if wanted and len(indexed) >= len(wanted):
+            break
     return indexed
 
 
@@ -330,11 +371,7 @@ class ReportWriter:
                 
         t3_ips = set()
         for o in ai_outputs:
-            ip = getattr(o, "src_ip", None)
-            if ip:
-                t3_ips.add(ip)
-            ips = getattr(o, "src_ips", []) or []
-            t3_ips.update(ips)
+            t3_ips.update(ip for ip in _agent_output_ips(o) if ip != "Unknown")
             
         inc_ips = set()
         for inc in incidents:
@@ -342,10 +379,10 @@ class ReportWriter:
                 inc_ips.add(getattr(inc, "primary_actor_ip"))
             inc_ips.update(getattr(inc, "actor_ips", []) or [])
 
-        total_threats = len(t1_ips)
-        total_corr    = len(t2_ips)
-        total_ai      = len(t3_ips)
-        total_inc     = len(inc_ips)
+        total_threats = len(threats)
+        total_corr    = len(patterns)
+        total_ai      = len(ai_outputs)
+        total_inc     = len(incidents)
 
         critical_count = sum(1 for t in threats if t.severity.value == "critical")
         high_count     = sum(1 for t in threats if t.severity.value == "high")
@@ -364,10 +401,14 @@ class ReportWriter:
         _a("")
         _a("| Metric | Count |")
         _a("|--------|-------|")
-        _a(f"| Tier 1 Deterministic Threats (Unique IPs) | **{total_threats}** |")
-        _a(f"| Tier 2 Correlation Findings (Unique IPs) | **{total_corr}** |")
-        _a(f"| Tier 3 AI Analyses (Unique IPs) | **{total_ai}** |")
-        _a(f"| Total Incidents Created (Unique IPs) | **{total_inc}** |")
+        _a(f"| Tier 1 Deterministic Threats | **{total_threats}** |")
+        _a(f"| Tier 1 Unique IPs | **{len(t1_ips)}** |")
+        _a(f"| Tier 2 Correlation Findings | **{total_corr}** |")
+        _a(f"| Tier 2 Unique IPs | **{len(t2_ips)}** |")
+        _a(f"| Tier 3 AI Analyses | **{total_ai}** |")
+        _a(f"| Tier 3 Unique IPs | **{len(t3_ips)}** |")
+        _a(f"| Total Incidents Created | **{total_inc}** |")
+        _a(f"| Unique IPs Represented in Incidents | **{len(inc_ips)}** |")
         _a(f"| Unique Attacker IPs (all tiers) | **{len(all_ips)}** |")
         _a("")
 
@@ -382,7 +423,21 @@ class ReportWriter:
         t1_attack_map = _build_t1_attack_map(threats)  # fan-out:   1 threat → all src_ips (Attack Map)
         t2_by_ip    = _group_patterns_by_ip(patterns)
         t3_by_ip    = _group_ai_by_ip(ai_outputs)
-        event_by_id = _build_event_index(events)
+        affected_event_ids = {
+            str(event_id)
+            for threat in threats
+            for event_id in (getattr(threat, "affected_event_ids", []) or [])
+        }
+        event_by_id = _build_event_index(events, affected_event_ids)
+        raw_log_fallback_events = (
+            events
+            if events and len(events) <= MAX_RAW_LOG_FALLBACK_EVENTS
+            else None
+        )
+        match_evidence_by_event_id = {
+            str(match.event_id): match.evidence
+            for match in (getattr(tier1_result, "matches", []) or [])
+        }
 
         combined_ips = sorted(
             all_ips,
@@ -395,7 +450,13 @@ class ReportWriter:
             ),
         )
 
-        for ip in combined_ips:
+        attack_map_ips = combined_ips[:MAX_ATTACK_MAP_IPS]
+        omitted_attack_map_ips = len(combined_ips) - len(attack_map_ips)
+        if omitted_attack_map_ips > 0:
+            _a(f"_Showing first {len(attack_map_ips):,} IPs; {omitted_attack_map_ips:,} additional IPs omitted from report detail._")
+            _a("")
+
+        for ip in attack_map_ips:
             threats_for_ip = set()
 
             # Tier 1 Threats
@@ -431,11 +492,24 @@ class ReportWriter:
         _a("")
 
         if threats:
-            for ip in combined_ips:
+            tier1_detail_ips = sorted(
+                t1_by_ip.keys(),
+                key=lambda ip: (
+                    -max(
+                        ({"critical": 4, "high": 3, "medium": 2, "low": 1}.get(
+                            t.severity.value, 0) for t in t1_by_ip.get(ip, [])),
+                        default=0,
+                    )
+                ),
+            )[:MAX_DETAIL_IPS]
+            omitted_detail_ips = len(t1_by_ip) - len(tier1_detail_ips)
+            if omitted_detail_ips > 0:
+                _a(f"_Showing first {len(tier1_detail_ips):,} source IP sections; {omitted_detail_ips:,} additional sections omitted._")
+                _a("")
 
-                # Use full fan-out mapping so if a threat involves multiple IPs
-                # it appears in the detail section for every IP (with logs filtered to just that IP).
-                ip_threats = t1_attack_map.get(ip, [])
+            for ip in tier1_detail_ips:
+
+                ip_threats = t1_by_ip.get(ip, [])
 
                 if not ip_threats:
                     continue
@@ -529,19 +603,11 @@ class ReportWriter:
                             _a(f"- {ev}")
                         _a("")
 
-                    # IMPORTANT:
-                    # Filter logs ONLY for the currently grouped IP.
-                    # Pass all_events so the fallback path can scan by src_ip
-                    # when rate-based rules only stored one event_id.
-                    match_evidence_by_event_id = {}
-                    for match in getattr(tier1_result, "matches", []) or []:
-                        match_evidence_by_event_id[str(match.event_id)] = match.evidence
-
                     mapped_raw_logs = _raw_logs_for_threat(
                         threat,
                         event_by_id,
                         filter_ip=ip,
-                        all_events=events,
+                        all_events=raw_log_fallback_events,
                         match_evidence_by_event_id=match_evidence_by_event_id,
                     )
 
@@ -612,7 +678,13 @@ class ReportWriter:
         _a("")
 
         if patterns:
-            for ip in combined_ips:
+            tier2_detail_ips = sorted(t2_by_ip.keys())[:MAX_DETAIL_IPS]
+            omitted_tier2_ips = len(t2_by_ip) - len(tier2_detail_ips)
+            if omitted_tier2_ips > 0:
+                _a(f"_Showing first {len(tier2_detail_ips):,} correlation IP sections; {omitted_tier2_ips:,} additional sections omitted._")
+                _a("")
+
+            for ip in tier2_detail_ips:
                 ip_patterns = t2_by_ip.get(ip, [])
                 if not ip_patterns:
                     continue
@@ -660,7 +732,13 @@ class ReportWriter:
         _a("")
 
         if ai_outputs:
-            for ip in combined_ips:
+            tier3_detail_ips = sorted(t3_by_ip.keys())[:MAX_DETAIL_IPS]
+            omitted_tier3_ips = len(t3_by_ip) - len(tier3_detail_ips)
+            if omitted_tier3_ips > 0:
+                _a(f"_Showing first {len(tier3_detail_ips):,} AI IP sections; {omitted_tier3_ips:,} additional sections omitted._")
+                _a("")
+
+            for ip in tier3_detail_ips:
                 ip_outputs = t3_by_ip.get(ip, [])
                 if not ip_outputs:
                     continue
@@ -797,7 +875,11 @@ class ReportWriter:
         if incidents:
             _a("| # | ID | Title | Priority | Status | Source |")
             _a("|---|-----|-------|----------|--------|--------|")
-            for i, inc in enumerate(incidents, 1):
+            incident_rows_to_render = incidents[:MAX_INCIDENT_ROWS]
+            omitted_incidents = len(incidents) - len(incident_rows_to_render)
+            if omitted_incidents > 0:
+                _a(f"_Showing first {len(incident_rows_to_render):,} incidents; {omitted_incidents:,} additional incidents omitted from markdown summary._")
+            for i, inc in enumerate(incident_rows_to_render, 1):
                 title          = getattr(inc, "title", "Unknown")
                 priority       = getattr(inc, "priority", "unknown")
                 incident_status = getattr(inc, "status", "open")

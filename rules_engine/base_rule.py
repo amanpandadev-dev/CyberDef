@@ -55,7 +55,7 @@ class ThreatRule(ABC):
             self.enforce_success_status_filter
             and self.family in (ThreatFamily.INJECTION, ThreatFamily.CVE_EXPLOIT)
             and event.http_status is not None
-            and not (200 <= event.http_status < 400)
+            and not (200 <= event.http_status < 300)
         ):
             return None
 

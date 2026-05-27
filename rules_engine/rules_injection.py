@@ -1,13 +1,21 @@
 """Family 1: Web Application Injection Attack Rules (13 rules)"""
 
 from __future__ import annotations
+from collections import defaultdict
+from datetime import datetime, timedelta
 
 from rules_engine.base_rule import ThreatRule, ScoredThreatRule
-from rules_engine.models import ThreatFamily, ThreatSeverity
+from rules_engine.models import ThreatFamily, ThreatSeverity, ThreatMatch
+from shared_models.events import NormalizedEvent
 
+from core.logging import get_logger
+import re 
+from collections import defaultdict 
+from datetime import datetime, timedelta 
+from ipaddress import ip_address 
+from urllib.parse import unquote, urlparse
 
-import re
-from urllib.parse import unquote_plus
+logger = get_logger(__name__)
 
 class SQLInjectionRule(ScoredThreatRule):
 
@@ -414,6 +422,7 @@ class LDAPInjectionRule(ThreatRule):
     patterns = [r"\)\s*\(\s*\|", r"\*\)\s*\(", r"\|\s*\(\s*&\s*\("]
 
 
+
 class XPathInjectionRule(ThreatRule):
     name = "xpath_injection"
     category = "xpath_injection"
@@ -421,12 +430,199 @@ class XPathInjectionRule(ThreatRule):
     severity = ThreatSeverity.HIGH
     confidence = 0.8
     description = "XPath injection attempt"
-    check_fields = ["raw_url"]
-    patterns = [
-    r"(?i)\b(?:string|count|contains|starts-with|substring|normalize-space|name|local-name)\s*\(",
-    r"(?i)\b(?:ancestor|descendant|following-sibling|preceding-sibling|parent|child)::",
-    r"(?i)//[A-Za-z_][\w-]*(?:\[\s*.*?\s*\])?",
-    ]
+    check_fields = ["raw_url", "response_code", "user_agent", "src_ip", "timestamp"]
+
+    WINDOW_MINUTES = 15
+    MIN_HITS_PER_SRC_IP = 3
+
+    SKIP_RESPONSE_CODES = {301, 302, 304, 404}
+    STATIC_EXTENSIONS = (
+        ".css", ".js", ".png", ".jpg", ".jpeg", ".svg", ".woff", ".woff2",
+        ".ico", ".map", ".mp4", ".gif", ".webp", ".ttf", ".eot", ".pdf"
+    )
+    BOT_SIGNATURES = (
+        "googlebot", "bingbot", "yandex", "baiduspider", "duckduckbot",
+        "slurp", "curl", "wget", "python-requests", "libwww-perl"
+    )
+    SAFE_XML_TERMS = ("xmlns", "soap", "wsdl", "rss", "sitemap")
+
+    XPATH_REGEX = re.compile(r'''(?ix)(
+        ['"`%27%22]\s*(or|and)\s+['"`0-9a-z]|
+        (contains|starts-with|substring|normalize-space|string-length|translate|concat|count|position|last|name|local-name|namespace-uri|text|node)\s*\(|
+        (ancestor|ancestor-or-self|descendant|descendant-or-self|child|parent|self|following|following-sibling|preceding|preceding-sibling|attribute|namespace)\s*::|
+        //|/\*|//\*|\.\./|/node\s*\(\)|/text\s*\(\)|/comment\s*\(\)|\[[^\]]*(=|!=|<|>|or|and)[^\]]*\]|
+        %2f%2f|%2e%2e|%5b|%5d|%28|%29|%2a|%27|%22|document\s*\(|collection\s*\(|id\s*\(
+    )''')
+
+    def match(self, event: NormalizedEvent) -> ThreatMatch | None:
+        try:
+            if not self._is_candidate(event):
+                return None
+
+            uri = self._normalized_uri(event.raw_url)
+            return ThreatMatch(
+                event_id=event.event_id,
+                rule_name=self.name,
+                category=self.category,
+                family=self.family,
+                severity=self.severity,
+                confidence=0.55,
+                evidence=f"XPath-like payload observed in URI: {uri[:120]}",
+                matched_field="raw_url",
+                raw_url=event.raw_url,
+                timestamp=event.timestamp,
+                src_ip=event.src_ip,
+            )
+        except Exception as e:
+            logger.error(f"[{self.name}] match failed for event {getattr(event, 'event_id', None)}: {e}", exc_info=True)
+            return None
+
+    @classmethod
+    def check_batch(cls, events: list[NormalizedEvent]) -> list[ThreatMatch]:
+        try:
+            per_src: dict[str, list[NormalizedEvent]] = defaultdict(list)
+
+            for ev in events:
+                try:
+                    if cls._is_candidate(ev):
+                        per_src[ev.src_ip or "-"].append(ev)
+                except Exception as e:
+                    logger.warning(
+                        f"[{cls.name}] Failed to process event {getattr(ev, 'event_id', None)}: {e}",
+                        exc_info=True
+                    )
+
+            matches: list[ThreatMatch] = []
+
+            for src_ip, evs in per_src.items():
+                if len(evs) < cls.MIN_HITS_PER_SRC_IP:
+                    continue
+
+                last = cls._pick_latest_event(evs)
+                if not last:
+                    continue
+
+                matches.append(
+                    ThreatMatch(
+                        event_id=last.event_id,
+                        rule_name=cls.name,
+                        category=cls.category,
+                        family=cls.family,
+                        severity=cls.severity,
+                        confidence=0.88,
+                        evidence=(
+                            f"Repeated XPath injection attempts from src_ip={src_ip}: "
+                            f"hits={len(evs)} in {cls.WINDOW_MINUTES}m"
+                        ),
+                        matched_field="raw_url",
+                        raw_url=last.raw_url,
+                        timestamp=last.timestamp,
+                        src_ip=last.src_ip,
+                    )
+                )
+
+            return matches
+
+        except Exception as e:
+            logger.error(f"[{cls.name}] check_batch failed: {e}", exc_info=True)
+            return []
+
+    @classmethod
+    def _is_candidate(cls, event: NormalizedEvent) -> bool:
+        try:
+            src_ip = (event.src_ip or "").strip()
+            if not src_ip or cls._is_private_or_reserved_ip(src_ip):
+                return False
+
+            response_code = getattr(event, "response_code", None)
+            if response_code in cls.SKIP_RESPONSE_CODES:
+                return False
+
+            raw_url = event.raw_url or ""
+            if not raw_url:
+                return False
+
+            uri = cls._normalized_uri(raw_url)
+            if not uri:
+                return False
+
+            if cls._is_static_asset(uri):
+                return False
+
+            user_agent = (getattr(event, "user_agent", "") or "").lower()
+            if cls._is_bot_user_agent(user_agent):
+                return False
+
+            if cls._looks_like_safe_xml_traffic(uri) and not cls._has_xpath_signals(uri):
+                return False
+
+            return bool(cls.XPATH_REGEX.search(uri) and cls._has_xpath_signals(uri))
+
+        except Exception as e:
+            logger.warning(
+                f"[{cls.name}] candidate check failed for event {getattr(event, 'event_id', None)}: {e}",
+                exc_info=True
+            )
+            return False
+
+    @staticmethod
+    def _normalized_uri(raw_url: str) -> str:
+        try:
+            value = (raw_url or "").strip().lower()
+            if not value:
+                return ""
+
+            parsed = urlparse(value)
+            candidate = parsed.path or ""
+            if parsed.query:
+                candidate = f"{candidate}?{parsed.query}"
+
+            decoded = unquote(unquote(candidate))
+            return re.sub(r"\s+", " ", decoded).strip()
+        except Exception:
+            return (raw_url or "").strip().lower()
+
+    @classmethod
+    def _has_xpath_signals(cls, uri: str) -> bool:
+        tokens = (
+            " or ", '" or', "' or", "` or",
+            " and ", '" and', "' and", "` and",
+            "contains(", "starts-with(", "substring(", "normalize-space(",
+            "string-length(", "translate(", "concat(", "count(", "position(",
+            "last(", "name(", "local-name(", "namespace-uri(", "text(",
+            "node(", "//", "../", "/..", "::", "[", "]", "document(",
+            "collection(", "id("
+        )
+        return any(token in uri for token in tokens)
+
+    @classmethod
+    def _looks_like_safe_xml_traffic(cls, uri: str) -> bool:
+        return any(term in uri for term in cls.SAFE_XML_TERMS)
+
+    @classmethod
+    def _is_static_asset(cls, uri: str) -> bool:
+        path = urlparse(uri).path or uri
+        return path.lower().endswith(cls.STATIC_EXTENSIONS)
+
+    @classmethod
+    def _is_bot_user_agent(cls, user_agent: str) -> bool:
+        return any(sig in (user_agent or "").lower() for sig in cls.BOT_SIGNATURES)
+
+    @staticmethod
+    def _is_private_or_reserved_ip(src_ip: str) -> bool:
+        try:
+            ip = ip_address(src_ip)
+            return ip.is_private or ip.is_loopback or ip.is_reserved or ip.is_multicast or ip.is_link_local
+        except Exception:
+            return True
+
+    @staticmethod
+    def _pick_latest_event(events: list[NormalizedEvent]) -> NormalizedEvent | None:
+        try:
+            return max(events, key=lambda e: getattr(e, "timestamp", 0) or 0) if events else None
+        except Exception:
+            return events[-1] if events else None
+
 
 
 class XXERule(ThreatRule):

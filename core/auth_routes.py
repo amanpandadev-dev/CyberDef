@@ -26,7 +26,7 @@ class LoginRequest(BaseModel):
 
 class UserIdentityResponse(BaseModel):
     username: str
-    emp_id: Optional[str] = None
+    emp_id: str | None = None
     name: str
 
 
@@ -81,6 +81,6 @@ async def me(current_user: str = Depends(require_auth)) -> UserIdentityResponse:
     summary="Sign out",
     description="Client-side logout endpoint for consistent auth flow.",
 )
-async def logout(_: str = Depends(require_auth)) -> Dict[str, str]:
+async def logout(_: str = Depends(require_auth)) -> dict[str, str]:
     # Stateless token model: client removes token locally.
     return {"message": "Logged out"}

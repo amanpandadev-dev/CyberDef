@@ -7,7 +7,7 @@ Holds elements securely in RAM and executes batched writes to Parquet only when 
 
 import asyncio
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -24,7 +24,7 @@ class FlushBufferWorker:
     def __init__(self, max_items: int = 10000, trigger_sec: int = 60):
         self.max_items = max_items
         self.trigger_sec = trigger_sec
-        self._queue: List[Dict[str, Any]] = []
+        self._queue: list[dict[str, Any]] = []
         self._last_flush = time.time()
         self._lock = asyncio.Lock()
         self._is_running = False

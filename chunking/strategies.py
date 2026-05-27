@@ -42,7 +42,7 @@ class BaseChunkStrategy(ABC):
     max_window_minutes: int = 60
     default_window_minutes: int = 30
 
-    def __init__(self, window_minutes: Optional[int] = None):
+    def __init__(self, window_minutes: int | None = None):
         self.window_minutes = window_minutes or self.default_window_minutes
 
     @abstractmethod
@@ -59,7 +59,7 @@ class BaseChunkStrategy(ABC):
         pass
 
     @abstractmethod
-    def build_actor_context(self, events: List[NormalizedEvent]) -> ActorContext:
+    def build_actor_context(self, events: list[NormalizedEvent]) -> ActorContext:
         """
         Build actor context from grouped events.
 
@@ -73,9 +73,9 @@ class BaseChunkStrategy(ABC):
 
     def chunk_events(
         self,
-        events: List[NormalizedEvent],
+        events: list[NormalizedEvent],
         file_id: UUID,
-    ) -> List[BehavioralChunk]:
+    ) -> list[BehavioralChunk]:
         """
         Chunk events using this strategy.
 
@@ -93,7 +93,7 @@ class BaseChunkStrategy(ABC):
         sorted_events = sorted(events, key=lambda e: e.timestamp)
 
         # Group by key
-        groups: Dict[str, List[NormalizedEvent]] = defaultdict(list)
+        groups: dict[str, list[NormalizedEvent]] = defaultdict(list)
         for event in sorted_events:
             key = self.get_group_key(event)
             if key:
@@ -113,9 +113,9 @@ class BaseChunkStrategy(ABC):
 
     def _create_time_windows(
         self,
-        events: List[NormalizedEvent],
+        events: list[NormalizedEvent],
         file_id: UUID,
-    ) -> List[BehavioralChunk]:
+    ) -> list[BehavioralChunk]:
         """
         Create time-windowed chunks from a group of events using a fixed grid.
 
@@ -134,7 +134,7 @@ class BaseChunkStrategy(ABC):
         if not events:
             return []
 
-        chunks: List[BehavioralChunk] = []
+        chunks: list[BehavioralChunk] = []
         window_delta = timedelta(minutes=self.window_minutes)
 
         # Sort by timestamp (callers may pass pre-sorted, but guard here for safety)
@@ -146,7 +146,7 @@ class BaseChunkStrategy(ABC):
         # Both advance by window_delta — they NEVER reset to an event timestamp.
         current_window_start = sorted_events[0].timestamp
         current_window_end   = current_window_start + window_delta
-        current_window_events: List[NormalizedEvent] = []
+        current_window_events: list[NormalizedEvent] = []
 
         for event in sorted_events:
             if event.timestamp < current_window_end:
@@ -183,7 +183,7 @@ class BaseChunkStrategy(ABC):
 
     def _build_chunk(
         self,
-        events: List[NormalizedEvent],
+        events: list[NormalizedEvent],
         file_id: UUID,
         window_start: datetime,
     ) -> BehavioralChunk:
@@ -227,7 +227,7 @@ class BaseChunkStrategy(ABC):
             events=events,  # Store for extended threat analysis
         )
 
-    def _build_target_context(self, events: List[NormalizedEvent]) -> TargetContext:
+    def _build_target_context(self, events: list[NormalizedEvent]) -> TargetContext:
         """Build target context from events."""
         dst_ips = set(e.dst_ip for e in events if e.dst_ip)
         dst_hosts = set(e.dst_host for e in events if e.dst_host)
@@ -238,7 +238,7 @@ class BaseChunkStrategy(ABC):
             unique_target_count=len(dst_ips | dst_hosts),
         )
 
-    def _build_activity_profile(self, events: List[NormalizedEvent]) -> ActivityProfile:
+    def _build_activity_profile(self, events: list[NormalizedEvent]) -> ActivityProfile:
         """Build activity profile from events."""
         from shared_models.events import EventAction
 
@@ -283,7 +283,7 @@ class BaseChunkStrategy(ABC):
             events_per_minute=events_per_min,
         )
 
-    def _categorize_ports(self, ports: List[int]) -> List[str]:
+    def _categorize_ports(self, ports: list[int]) -> list[str]:
         """Categorize ports by service."""
         port_map = {
             22: "SSH",
@@ -313,7 +313,7 @@ class BaseChunkStrategy(ABC):
 
     def _detect_temporal_pattern(
         self,
-        events: List[NormalizedEvent],
+        events: list[NormalizedEvent],
     ) -> TemporalPattern:
         """Detect temporal pattern in event sequence."""
         if len(events) < 3:
@@ -388,7 +388,7 @@ class BaseChunkStrategy(ABC):
 
         return TemporalPattern.RANDOM
 
-    def _detect_environment(self, events: List[NormalizedEvent]) -> str | None:
+    def _detect_environment(self, events: list[NormalizedEvent]) -> str | None:
         """Detect environment from events."""
         # Check for environment hints in hostnames
         for event in events:
@@ -418,7 +418,7 @@ class SrcIPChunkStrategy(BaseChunkStrategy):
     def get_group_key(self, event: NormalizedEvent) -> str | None:
         return event.src_ip
 
-    def build_actor_context(self, events: List[NormalizedEvent]) -> ActorContext:
+    def build_actor_context(self, events: list[NormalizedEvent]) -> ActorContext:
         src_ip = events[0].src_ip if events else None
         usernames = set(e.username for e in events if e.username)
 
@@ -441,7 +441,7 @@ class DstHostChunkStrategy(BaseChunkStrategy):
     def get_group_key(self, event: NormalizedEvent) -> str | None:
         return event.dst_host or event.dst_ip
 
-    def build_actor_context(self, events: List[NormalizedEvent]) -> ActorContext:
+    def build_actor_context(self, events: list[NormalizedEvent]) -> ActorContext:
         src_ips = sorted(set(e.src_ip for e in events))
 
         return ActorContext(
@@ -462,7 +462,7 @@ class UserChunkStrategy(BaseChunkStrategy):
     def get_group_key(self, event: NormalizedEvent) -> str | None:
         return event.username
 
-    def build_actor_context(self, events: List[NormalizedEvent]) -> ActorContext:
+    def build_actor_context(self, events: list[NormalizedEvent]) -> ActorContext:
         username = events[0].username if events else None
         src_ips = sorted(set(e.src_ip for e in events))
 

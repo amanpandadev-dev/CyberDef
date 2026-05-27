@@ -7,7 +7,7 @@ Analyzes behavioral summaries to determine if patterns are suspicious.
 from __future__ import annotations
 
 import json
-from typing import Any, Dict
+from typing import Any
 
 from agents.base import BaseAgent
 from shared_models.agents import BehavioralInterpretation
@@ -24,7 +24,7 @@ class BehavioralInterpretationAgent(BaseAgent[BehavioralInterpretation]):
     description = "Analyzes behavioral patterns to identify suspicious activity"
     output_schema = BehavioralInterpretation
 
-    def build_prompt(self, summary: Dict[str, Any]) -> str:
+    def build_prompt(self, summary: dict[str, Any]) -> str:
         """Build prompt for behavioral interpretation with extended threat analysis."""
         prompt = f"""You are an expert behavior analyst specializing in network security and endpoint threat detection.
 

@@ -7,7 +7,7 @@ LangGraph-based orchestration of AI agent ensemble.
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from agents.base import OllamaClient
@@ -42,7 +42,7 @@ class AgentOrchestrator:
     Each agent receives the chunk summary and previous agent outputs.
     """
 
-    def __init__(self, client: Optional[OllamaClient] = None, use_cache: bool = True):
+    def __init__(self, client: OllamaClient | None = None, use_cache: bool = True):
         self.settings = get_settings()
         self.client = client or OllamaClient()
         self.use_cache = use_cache
@@ -56,7 +56,7 @@ class AgentOrchestrator:
 
         self.analyses_completed = 0
         self.cache_hits = 0
-        self.errors: List[AgentErrorModel] = []
+        self.errors: list[AgentErrorModel] = []
 
     async def analyze(
         self,
@@ -185,9 +185,9 @@ class AgentOrchestrator:
 
     async def analyze_batch(
         self,
-        summaries: List[ChunkSummary],
+        summaries: list[ChunkSummary],
         max_concurrent: int = 3,
-    ) -> List[AgentOutput]:
+    ) -> list[AgentOutput]:
         """
         Analyze multiple summaries with controlled concurrency.
 
@@ -262,7 +262,7 @@ class AgentOrchestrator:
             timestamp=datetime.utcnow(),
         ))
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check agent system health."""
         ollama_ok = await self.client.health_check()
 
@@ -273,7 +273,7 @@ class AgentOrchestrator:
             "error_count": len(self.errors),
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get orchestrator statistics including cache metrics."""
         return {
             "analyses_completed": self.analyses_completed,

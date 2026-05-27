@@ -6,7 +6,7 @@ Converts chunks into semantic summaries ready for AI agent processing.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 from behavior_summary.extended_analysis import ExtendedThreatAnalysisMixin
 from behavior_summary.helpers import BehaviorSummaryHelpers
@@ -167,7 +167,7 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
         )
         return summary
 
-    def summarize_batch(self, chunks: List[BehavioralChunk]) -> List[ChunkSummary]:
+    def summarize_batch(self, chunks: list[BehavioralChunk]) -> list[ChunkSummary]:
         """Summarize multiple chunks."""
         return [self.summarize(chunk) for chunk in chunks]
 
@@ -182,9 +182,9 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
         else:
             return f"{start.strftime('%Y-%m-%d %H:%M')}–{end.strftime('%Y-%m-%d %H:%M')} UTC"
 
-    def _build_actor_dict(self, chunk: BehavioralChunk) -> Dict[str, Any]:
+    def _build_actor_dict(self, chunk: BehavioralChunk) -> dict[str, Any]:
         """Build actor dictionary for summary."""
-        actor: Dict[str, Any] = {}
+        actor: dict[str, Any] = {}
 
         if chunk.actor.src_ip:
             actor["src_ip"] = chunk.actor.src_ip
@@ -205,11 +205,11 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
 
         return actor
 
-    def _build_activity_dict(self, chunk: BehavioralChunk) -> Dict[str, Any]:
+    def _build_activity_dict(self, chunk: BehavioralChunk) -> dict[str, Any]:
         """Build activity profile dictionary."""
         profile = chunk.activity_profile
 
-        activity: Dict[str, Any] = {
+        activity: dict[str, Any] = {
             "total_events": profile.total_events,
             "events_per_minute": round(profile.events_per_minute, 2),
         }
@@ -237,7 +237,7 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
 
         return activity
 
-    def _describe_ports(self, ports: List[int]) -> List[str]:
+    def _describe_ports(self, ports: list[int]) -> list[str]:
         """Create human-readable port descriptions."""
         descriptions = []
 
@@ -254,9 +254,9 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
 
         return descriptions
 
-    def _build_context_dict(self, chunk: BehavioralChunk) -> Dict[str, Any]:
+    def _build_context_dict(self, chunk: BehavioralChunk) -> dict[str, Any]:
         """Build environment context dictionary."""
-        context: Dict[str, Any] = {}
+        context: dict[str, Any] = {}
 
         if chunk.context.environment:
             context["environment"] = chunk.context.environment
@@ -276,7 +276,7 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
 
         return context
 
-    def _compute_red_flags(self, chunk: BehavioralChunk) -> List[str]:
+    def _compute_red_flags(self, chunk: BehavioralChunk) -> list[str]:
         """Compute deterministic red flags for the chunk."""
         flags = []
         profile = chunk.activity_profile
@@ -342,7 +342,7 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
         else:
             return f"{byte_count / (1024 * 1024 * 1024):.1f} GB"
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get summarization statistics."""
         return {
             "summaries_created": self.summaries_created,

@@ -24,7 +24,7 @@ class BehaviorSummaryHelpers:
         else:
             return TemporalPattern.STEADY
 
-    def _calculate_anomaly_score(self, chunk: BehavioralChunk) -> Tuple[float, List[str]]:
+    def _calculate_anomaly_score(self, chunk: BehavioralChunk) -> tuple[float, list[str]]:
         """Calculate anomaly score and suspicion reasons."""
         score = 0.0
         reasons = []
@@ -71,7 +71,7 @@ class BehaviorSummaryHelpers:
         self,
         chunk: BehavioralChunk,
         anomaly_score: float,
-    ) -> List[str]:
+    ) -> list[str]:
         """Extract key behavioral observations."""
         observations = []
 
@@ -93,7 +93,7 @@ class BehaviorSummaryHelpers:
         self,
         chunk: BehavioralChunk,
         anomaly_score: float,
-    ) -> List[str]:
+    ) -> list[str]:
         """Recommend actions based on behavior."""
         actions = []
 

@@ -6,7 +6,7 @@ FastAPI routes for incident/case management.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
 # Service instance
-_service: Optional[IncidentService] = None
+_service: IncidentService | None = None
 
 
 def get_service() -> IncidentService:
@@ -38,15 +38,15 @@ def get_service() -> IncidentService:
 
 @router.get(
     "/",
-    response_model=List[IncidentSummary],
+    response_model=list[IncidentSummary],
     summary="List incidents",
     description="List all incidents with optional filtering by status and priority.",
 )
 async def list_incidents(
-    status: Optional[IncidentStatus] = None,
-    priority: Optional[IncidentPriority] = None,
+    status: IncidentStatus | None = None,
+    priority: IncidentPriority | None = None,
     limit: int = 100,
-) -> List[IncidentSummary]:
+) -> list[IncidentSummary]:
     """List incidents."""
     service = get_service()
     return service.list_incidents(status=status, priority=priority, limit=limit)
@@ -54,11 +54,11 @@ async def list_incidents(
 
 @router.get(
     "/stats",
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
     summary="Get incident statistics",
     description="Get statistics about incidents.",
 )
-async def get_stats() -> Dict[str, Any]:
+async def get_stats() -> dict[str, Any]:
     """Get incident statistics."""
     service = get_service()
     return service.get_stats()

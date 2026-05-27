@@ -39,7 +39,7 @@ def _sign(payload_b64: str, secret_key: str) -> str:
     return _b64url_encode(digest)
 
 
-def create_access_token(username: str) -> Tuple[str, int]:
+def create_access_token(username: str) -> tuple[str, int]:
     """Create signed access token and return it with TTL in seconds."""
     settings = get_settings()
     expires_in_seconds = settings.auth_token_ttl_minutes * 60
@@ -131,9 +131,9 @@ def _extract_emp_id(username: str) -> str | None:
     return emp_id or None
 
 
-def _parse_emp_name_map(raw_map: str) -> Dict[str, str]:
+def _parse_emp_name_map(raw_map: str) -> dict[str, str]:
     """Parse comma-separated emp_id:name pairs from env."""
-    mapping: Dict[str, str] = {}
+    mapping: dict[str, str] = {}
     if not raw_map:
         return mapping
 
@@ -156,7 +156,7 @@ def _parse_emp_name_map(raw_map: str) -> Dict[str, str]:
     return mapping
 
 
-def resolve_user_identity(username: str) -> Dict[str, str | None]:
+def resolve_user_identity(username: str) -> dict[str, str | None]:
     """
     Resolve identity details for UI display.
 
@@ -185,7 +185,7 @@ def resolve_user_identity(username: str) -> Dict[str, str | None]:
 
 def _get_token_from_request(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials],
+    credentials: HTTPAuthorizationCredentials | None,
 ) -> str | None:
     if credentials and credentials.scheme.lower() == "bearer":
         return credentials.credentials
@@ -205,7 +205,7 @@ def unauthorized(detail: str = "Authentication required") -> HTTPException:
 
 async def require_auth(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> str:
     """Dependency for protecting endpoints with bearer auth."""
     token = _get_token_from_request(request, credentials)
@@ -221,7 +221,7 @@ async def require_auth(
 
 async def optional_auth(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(_bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
 ) -> str:
     """
     Optional authentication dependency for backend testing.

@@ -6,7 +6,7 @@ Orchestrates entity-centric chunking of normalized events.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from chunking.multi_index import MultiIndexChunkStrategy
@@ -26,7 +26,7 @@ class ChunkingService:
     Uses optimized multi-index strategy for production performance.
     """
 
-    def __init__(self, window_minutes: Optional[int] = None):
+    def __init__(self, window_minutes: int | None = None):
         self.settings = get_settings()
         self.window_minutes = window_minutes or self.settings.chunk_time_window_minutes
 
@@ -41,10 +41,10 @@ class ChunkingService:
 
     async def chunk_events(
         self,
-        events: List[NormalizedEvent],
+        events: list[NormalizedEvent],
         file_id: UUID,
-        strategies: List[str] | None = None,
-    ) -> List[BehavioralChunk]:
+        strategies: list[str] | None = None,
+    ) -> list[BehavioralChunk]:
         """
         Chunk events using optimized multi-index strategy.
 
@@ -76,10 +76,10 @@ class ChunkingService:
 
     def chunk_with_overlap(
         self,
-        events: List[NormalizedEvent],
+        events: list[NormalizedEvent],
         file_id: UUID,
         overlap_minutes: int = 5,
-    ) -> List[BehavioralChunk]:
+    ) -> list[BehavioralChunk]:
         """
         Chunk events with overlapping windows.
 
@@ -135,18 +135,18 @@ class ChunkingService:
 
     def get_summaries_batch(
         self,
-        chunks: List[BehavioralChunk],
-    ) -> List[ChunkSummary]:
+        chunks: list[BehavioralChunk],
+    ) -> list[ChunkSummary]:
         """Convert multiple chunks to summaries."""
         return [ChunkSummary.from_chunk(c) for c in chunks]
 
     def filter_suspicious_chunks(
         self,
-        chunks: List[BehavioralChunk],
+        chunks: list[BehavioralChunk],
         min_events: int = 5,
         min_failure_rate: float = 0.3,
         min_unique_targets: int = 3,
-    ) -> List[BehavioralChunk]:
+    ) -> list[BehavioralChunk]:
         """
         Filter chunks to those with suspicious patterns.
 
@@ -201,7 +201,7 @@ class ChunkingService:
 
         return suspicious
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get chunking statistics."""
         return {
             "chunks_created": self.chunks_created,

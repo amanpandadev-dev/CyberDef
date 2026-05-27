@@ -7,7 +7,7 @@ Infers potential attacker intent and kill chain stage from behavior.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Dict
 
 from agents.base import BaseAgent
 from shared_models.agents import ThreatIntent
@@ -48,7 +48,7 @@ Use the MITRE ATT&CK tactics as reference for kill chain stages:
 Be conservative - prefer lower-stage classifications when uncertain.
 Express low confidence when behavior could have benign explanations."""
 
-    def build_prompt(self, summary: dict[str, Any]) -> str:
+    def build_prompt(self, summary: Dict[str, Any]) -> str:
         """Build prompt for intent analysis."""
         prompt = f"""Analyze this behavioral summary and infer the potential attacker intent.
 

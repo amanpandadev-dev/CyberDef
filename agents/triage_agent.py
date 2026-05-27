@@ -7,7 +7,7 @@ Provides priority assessment and analyst-ready narratives.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Dict
 
 from agents.base import BaseAgent
 from shared_models.agents import TriageResult
@@ -48,7 +48,7 @@ Write summaries appropriate for their audience:
 - Executive: Non-technical, business impact focused
 - Technical: Detailed, actionable for SOC analysts"""
 
-    def build_prompt(self, summary: dict[str, Any]) -> str:
+    def build_prompt(self, summary: Dict[str, Any]) -> str:
         """Build prompt for triage and narrative."""
         prompt = f"""Triage this behavioral summary and generate analyst-ready narratives.
 

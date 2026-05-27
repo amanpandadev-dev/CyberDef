@@ -44,7 +44,7 @@ class RawStorageService:
         file_id: UUID,
         filename: str,
         content: bytes,
-    ) -> tuple[Path, str]:
+    ) -> Tuple[Path, str]:
         """
         Store a file immutably.
 
@@ -175,8 +175,8 @@ class RawStorageService:
 
     async def list_files(
         self,
-        date: datetime | None = None,
-    ) -> list[Path]:
+        date: Optional[datetime] = None,
+    ) -> List[Path]:
         """
         List stored files.
 

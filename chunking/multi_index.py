@@ -8,7 +8,7 @@ Replaces the triple-pass approach for better performance at scale.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, Dict, List
 from uuid import UUID
 
 from chunking.strategies import (
@@ -45,9 +45,9 @@ class MultiIndexChunkStrategy:
 
     async def chunk_events(
         self,
-        events: list[NormalizedEvent],
+        events: List[NormalizedEvent],
         file_id: UUID,
-    ) -> list[BehavioralChunk]:
+    ) -> List[BehavioralChunk]:
         """
         Chunk events using src_ip as the sole primary grouping axis.
 
@@ -78,7 +78,7 @@ class MultiIndexChunkStrategy:
         # dst_host and user strategies are INTENTIONALLY excluded here.
         # Running all three strategies produced N_dst_hosts + N_users extra chunks
         # for the same underlying events (triple-counting bug).
-        src_ip_groups: dict[str, list[NormalizedEvent]] = defaultdict(list)
+        src_ip_groups: Dict[str, List[NormalizedEvent]] = defaultdict(list)
         for event in sorted_events:
             if event.src_ip:
                 src_ip_groups[event.src_ip].append(event)
@@ -89,7 +89,7 @@ class MultiIndexChunkStrategy:
 
         # ── Time-window chunking per source IP ───────────────────────────
         strategy = self.strategies['src_ip']
-        chunks: list[BehavioralChunk] = []
+        chunks: List[BehavioralChunk] = []
 
         for group_key, group_events in src_ip_groups.items():
             window_chunks = strategy._create_time_windows(group_events, file_id)
@@ -107,7 +107,7 @@ class MultiIndexChunkStrategy:
 
         return chunks
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get chunking statistics."""
         return {
             "type": "multi_index",

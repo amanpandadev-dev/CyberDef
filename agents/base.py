@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 from uuid import UUID
 
 import httpx
@@ -34,9 +34,9 @@ class OllamaClient:
 
     def __init__(
         self,
-        host: str | None = None,
-        model: str | None = None,
-        timeout: int | None = None,
+        host: Optional[str] = None,
+        model: Optional[str] = None,
+        timeout: Optional[int] = None,
     ):
         settings = get_settings()
         self.host = host or settings.ollama_host
@@ -49,8 +49,8 @@ class OllamaClient:
     async def generate(
         self,
         prompt: str,
-        system_prompt: str | None = None,
-        temperature: float | None = None,
+        system_prompt: Optional[str] = None,
+        temperature: Optional[float] = None,
     ) -> str:
         """
         Generate a response from Ollama.
@@ -102,8 +102,8 @@ class OllamaClient:
 
     async def chat(
         self,
-        messages: list[dict[str, str]],
-        temperature: float | None = None,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = None,
     ) -> str:
         """
         Chat-style interaction with Ollama.
@@ -190,13 +190,13 @@ Analyze it and respond with the specified JSON format."""
     # Output schema class
     output_schema: type[T]
 
-    def __init__(self, client: OllamaClient | None = None):
+    def __init__(self, client: Optional[OllamaClient] = None):
         self.client = client or OllamaClient()
         self.invocations = 0
         self.errors = 0
 
     @abstractmethod
-    def build_prompt(self, summary: dict[str, Any]) -> str:
+    def build_prompt(self, summary: Dict[str, Any]) -> str:
         """
         Build the user prompt for this agent.
 
@@ -220,7 +220,7 @@ Analyze it and respond with the specified JSON format."""
 
     async def analyze(
         self,
-        summary: dict[str, Any],
+        summary: Dict[str, Any],
         chunk_id: UUID,
     ) -> T:
         """
@@ -283,7 +283,7 @@ Analyze it and respond with the specified JSON format."""
                 chunk_id=str(chunk_id),
             )
 
-    def _parse_json_response(self, response: str) -> dict[str, Any]:
+    def _parse_json_response(self, response: str) -> Dict[str, Any]:
         """Parse JSON from agent response."""
         # Clean up response
         text = response.strip()
@@ -319,7 +319,7 @@ Analyze it and respond with the specified JSON format."""
             raw_output=text[:500],
         )
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get agent statistics."""
         return {
             "agent": self.name,

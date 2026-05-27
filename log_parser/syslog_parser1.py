@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
 
 from core.logging import get_logger
 from log_parser.base import BaseParser, ParserRegistry
@@ -62,9 +62,9 @@ class SyslogApacheParser(BaseParser):
     vendor = "apache_httpd"
     description = "Parser for syslog-wrapped Apache access logs in a raw CSV column"
 
-    column_mappings: dict[str, list[str]] = {}
+    column_mappings: Dict[str, List[str]] = {}
 
-    def can_parse(self, columns: list[str], sample_rows: list[dict[str, Any]]) -> float:
+    def can_parse(self, columns: List[str], sample_rows: List[Dict[str, Any]]) -> float:
         if not columns:
             return 0.0
 
@@ -153,25 +153,25 @@ class SyslogApacheParser(BaseParser):
 
     def _normalize_endpoints(
         self,
-        src_ip: str | None,
-        dst_ip: str | None,
-    ) -> tuple[str | None, str | None]:
+        src_ip: Optional[str],
+        dst_ip: Optional[str],
+    ) -> Tuple[str | None, str | None]:
         src = self._clean_placeholder(src_ip)
         dst = self._clean_placeholder(dst_ip)
         return src, dst
 
-    def _clean_placeholder(self, value: str | None) -> str | None:
+    def _clean_placeholder(self, value: Optional[str]) -> str | None:
         if value is None:
             return None
         text = value.strip()
         return None if text in {"", "-"} else text
 
-    def _unescape_quotes(self, value: str | None) -> str | None:
+    def _unescape_quotes(self, value: Optional[str]) -> str | None:
         if value is None:
             return None
         return value.replace(r"\"", '"').strip()
 
-    def _get_raw(self, data: dict[str, Any]) -> str | None:
+    def _get_raw(self, data: Dict[str, Any]) -> str | None:
         for key, value in data.items():
             if key.strip().lower() in _LOGEVENT_COLS and value is not None:
                 raw = str(value).strip()
@@ -182,7 +182,7 @@ class SyslogApacheParser(BaseParser):
                 return str(value).strip()
         return None
 
-    def _clean_capture(self, value: str | None) -> str | None:
+    def _clean_capture(self, value: Optional[str]) -> str | None:
         if value is None:
             return None
         text = value.strip()
@@ -190,7 +190,7 @@ class SyslogApacheParser(BaseParser):
             text = text[1:-1].strip()
         return text if text != "" else None
 
-    def _parse_ts(self, value: str | None) -> datetime | None:
+    def _parse_ts(self, value: Optional[str]) -> datetime | None:
         if not value or value == "-":
             return None
 

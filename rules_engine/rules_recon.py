@@ -50,13 +50,13 @@ DEBUG_ENDPOINT_REGEX = re.compile(
 )
 
 def _check_recon_probing(
-    events: list[NormalizedEvent],
+    events: List[NormalizedEvent],
     regex: re.Pattern,
     rule_name: str,
     category: str,
     family: ThreatFamily,
     probing_rule_name: str
-) -> list[ThreatMatch]:
+) -> List[ThreatMatch]:
     """Helper to detect systematic probing for sensitive files/paths on 2xx responses."""
     settings = get_settings()
     uri_threshold = settings.probe_uri_threshold
@@ -159,7 +159,7 @@ class SensitiveFileExposureRule(Recon2xxThreatRule):
         return None
 
     @staticmethod
-    def check_batch(events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Detect batch-level probing on 2xx responses."""
         return _check_recon_probing(
             events, SENSITIVE_FILE_REGEX,
@@ -197,7 +197,7 @@ class BackupFileHuntingRule(Recon2xxThreatRule):
         return None
 
     @staticmethod
-    def check_batch(events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Detect batch-level probing on 2xx responses."""
         return _check_recon_probing(
             events, BACKUP_FILE_REGEX,
@@ -235,7 +235,7 @@ class SourceCodeExposureRule(Recon2xxThreatRule):
         return None
 
     @staticmethod
-    def check_batch(events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Detect batch-level probing on 2xx responses."""
         return _check_recon_probing(
             events, SOURCE_CODE_REGEX,
@@ -273,7 +273,7 @@ class DebugEndpointExposureRule(Recon2xxThreatRule):
         return None
 
     @staticmethod
-    def check_batch(events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Detect batch-level probing on 2xx responses."""
         return _check_recon_probing(
             events, DEBUG_ENDPOINT_REGEX,
@@ -425,7 +425,7 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
                 return None
 
             score = 0
-            signals: list[str] = []
+            signals: List[str] = []
 
             response_size = getattr(event, "response_size", 0)
             if response_size and response_size >= 1000:
@@ -526,7 +526,7 @@ class TechFingerprintingRule(Recon2xxThreatRule):
         return None
 
     @classmethod
-    def check_batch(cls, events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(cls, events: List[NormalizedEvent]) -> List[ThreatMatch]:
         grouped = defaultdict(lambda: {"uris": set(), "events": []})
 
         for ev in events:
@@ -539,7 +539,7 @@ class TechFingerprintingRule(Recon2xxThreatRule):
             grouped[src_ip]["uris"].add(uri)
             grouped[src_ip]["events"].append(ev)
 
-        matches: list[ThreatMatch] = []
+        matches: List[ThreatMatch] = []
         for src_ip, stats in grouped.items():
             uris = stats["uris"]
             matched_events = stats["events"]
@@ -664,11 +664,11 @@ class DataExfiltrationLowSlowRule(Recon2xxThreatRule):
         return None
 
     @staticmethod
-    def check_batch(events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Check aggregate bytes_sent per src_ip across all sensitive-path events."""
         try:
-            traffic: dict[str, int] = defaultdict(int)
-            last_event_by_ip: dict[str, NormalizedEvent] = {}
+            traffic: Dict[str, int] = defaultdict(int)
+            last_event_by_ip: Dict[str, NormalizedEvent] = {}
 
             for ev in events:
                 try:
@@ -798,12 +798,12 @@ class RFIRule(Recon2xxThreatRule):
         return None  # Cannot determine actor — skip this event
 
     @classmethod
-    def check_batch(cls, events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(cls, events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Stateful RFI detection across a batch (15-min window)."""
-        matches: list[ThreatMatch] = []
-        single_counts: dict[str, int] = defaultdict(int)
-        single_samples: dict[str, str] = {}
-        single_last_event: dict[str, NormalizedEvent] = {}
+        matches: List[ThreatMatch] = []
+        single_counts: Dict[str, int] = defaultdict(int)
+        single_samples: Dict[str, str] = {}
+        single_last_event: Dict[str, NormalizedEvent] = {}
 
         for ev in events:
             if not _is_2xx(ev):

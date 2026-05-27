@@ -7,7 +7,7 @@ Main FastAPI application entry point.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Dict, List, Set
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,7 +25,7 @@ setup_logging()
 logger = get_logger(__name__)
 
 
-async def pre_flight_check() -> dict[str, bool]:
+async def pre_flight_check() -> Dict[str, bool]:
     """Verify system readiness for air-gapped deployment."""
     settings = get_settings()
     results = {
@@ -137,7 +137,7 @@ app.include_router(case_router, prefix="/api/v1", dependencies=[Depends(require_
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
-async def health_check() -> dict[str, Any]:
+async def health_check() -> Dict[str, Any]:
     """Check system health."""
     settings = get_settings()
 
@@ -168,7 +168,7 @@ async def health_check() -> dict[str, Any]:
 
 # Root endpoint
 @app.get("/", tags=["Root"])
-async def root() -> dict[str, str]:
+async def root() -> Dict[str, str]:
     """Root endpoint."""
     return {
         "name": "AegisNet",
@@ -182,7 +182,7 @@ async def root() -> dict[str, str]:
 async def analyze_file(
     file_id: str,
     current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Three-tier analysis pipeline:
     1. Parse & Normalize events
@@ -330,7 +330,8 @@ async def analyze_file(
             incident = incident_service.create_from_deterministic_threat(
                 threat, file_id=parsed_uuid,
             )
-            all_incidents.append(incident)
+            if incident:  # Only add if not excluded
+                all_incidents.append(incident)
 
         # Tier 2 incidents (new cross-batch correlations)
         if settings.enable_correlation_tier:
@@ -338,7 +339,8 @@ async def analyze_file(
                 incident = incident_service.create_from_correlation(
                     pattern, file_id=parsed_uuid,
                 )
-                all_incidents.append(incident)
+                if incident:  # Only add if not excluded
+                    all_incidents.append(incident)
 
         # â”€â”€ Incremental Commit: Tier 1 & 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         # This ensures findings are visible even if AI phase fails
@@ -378,8 +380,8 @@ async def analyze_file(
 
         if needs_ai and suspicious_chunks:
             # Build set of IPs fully covered by high-confidence deterministic rules
-            fully_covered_ips: set[str] = set()
-            ip_threats: dict[str, list] = {}
+            fully_covered_ips: Set[str] = set()
+            ip_threats: Dict[str, list] = {}
             for threat in tier1_result.threats:
                 for ip in (threat.src_ips or []):
                     ip_threats.setdefault(ip, []).append(threat)
@@ -449,7 +451,7 @@ async def analyze_file(
                 return incident.get("incident_id")
             return None
 
-        def _flatten_incident_entries(entries: list[Any]) -> list[Any]:
+        def _flatten_incident_entries(entries: List[Any]) -> List[Any]:
             flattened = []
             for entry in entries:
                 if isinstance(entry, list):
@@ -555,7 +557,7 @@ async def analyze_file(
 @app.get("/api/v1/threat-summary/today", tags=["Analysis"])
 async def get_today_threat_summary(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get accumulated threat intelligence for today.
     Returns day-level view across all 15-minute batches.
@@ -573,7 +575,7 @@ async def get_today_threat_summary(
 async def get_agent_outputs(
     file_id: str,
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get actual agent analysis outputs for a file.
 
@@ -595,7 +597,7 @@ async def get_agent_outputs(
 @app.get("/api/v1/rollups", tags=["Analysis"])
 async def get_rollup_analysis(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get long-horizon rollup analysis across all analyzed files.
 
@@ -672,7 +674,7 @@ async def get_rollup_analysis(
 @app.get("/api/v1/validation", tags=["Validation"])
 async def get_validation_stats(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get reproducibility validation metrics.
 
@@ -770,7 +772,7 @@ async def get_validation_stats(
 @app.delete("/api/v1/system/clear-all", tags=["System"])
 async def clear_all_data(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Clear ALL analysis data for fresh testing.
     Wipes: DB tables, raw files, processed files, reports, caches, threat state.

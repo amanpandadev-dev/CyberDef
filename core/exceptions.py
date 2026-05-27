@@ -6,7 +6,7 @@ Custom exception hierarchy for the application.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, Optional
 
 
 class AegisNetError(Exception):
@@ -15,15 +15,15 @@ class AegisNetError(Exception):
     def __init__(
         self,
         message: str,
-        details: dict[str, Any] | None = None,
-        cause: Exception | None = None,
+        details: Dict[str, Any] | None = None,
+        cause: Optional[Exception] = None,
     ):
         super().__init__(message)
         self.message = message
         self.details = details or {}
         self.cause = cause
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert exception to dictionary for API responses."""
         result = {
             "error": self.__class__.__name__,
@@ -45,9 +45,9 @@ class ParsingError(AegisNetError):
     def __init__(
         self,
         message: str,
-        file_id: str | None = None,
-        row_number: int | None = None,
-        column: str | None = None,
+        file_id: Optional[str] = None,
+        row_number: Optional[int] = None,
+        column: Optional[str] = None,
         **kwargs: Any,
     ):
         details = kwargs.pop("details", {})
@@ -66,8 +66,8 @@ class StorageError(AegisNetError):
     def __init__(
         self,
         message: str,
-        path: str | None = None,
-        operation: str | None = None,
+        path: Optional[str] = None,
+        operation: Optional[str] = None,
         **kwargs: Any,
     ):
         details = kwargs.pop("details", {})
@@ -84,9 +84,9 @@ class AgentError(AegisNetError):
     def __init__(
         self,
         message: str,
-        agent_name: str | None = None,
-        chunk_id: str | None = None,
-        raw_output: str | None = None,
+        agent_name: Optional[str] = None,
+        chunk_id: Optional[str] = None,
+        raw_output: Optional[str] = None,
         **kwargs: Any,
     ):
         details = kwargs.pop("details", {})

@@ -7,7 +7,7 @@ Maps behavioral patterns to MITRE ATT&CK techniques.
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Dict
 
 from agents.base import BaseAgent
 from shared_models.agents import MitreMapping
@@ -61,7 +61,7 @@ EXFILTRATION:
 Be specific with technique IDs (format: T####.###).
 Only map to techniques that clearly match the observed behavior."""
 
-    def build_prompt(self, summary: dict[str, Any]) -> str:
+    def build_prompt(self, summary: Dict[str, Any]) -> str:
         """Build prompt for MITRE mapping."""
         prompt = f"""Map this behavioral summary to a MITRE ATT&CK technique.
 

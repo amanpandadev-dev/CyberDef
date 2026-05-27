@@ -11,7 +11,7 @@ import hashlib
 import json
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
@@ -40,14 +40,14 @@ class AnalysisCache:
     Uses SHA-256 hash of the chunk summary as the cache key.
     """
 
-    def __init__(self, cache_dir: Path | None = None, max_age_hours: int = 24):
+    def __init__(self, cache_dir: Optional[Path] = None, max_age_hours: int = 24):
         settings = get_settings()
         self.cache_dir = cache_dir or settings.processed_dir / "analysis_cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.max_age_seconds = max_age_hours * 3600
 
         # In-memory cache for fast access
-        self._memory_cache: dict[str, CacheEntry] = {}
+        self._memory_cache: Dict[str, CacheEntry] = {}
 
         # Statistics
         self.hits = 0
@@ -55,7 +55,7 @@ class AnalysisCache:
 
         logger.info(f"Analysis cache initialized | cache_dir={self.cache_dir}, max_age_hours={max_age_hours}")
 
-    def compute_chunk_hash(self, summary: dict[str, Any]) -> str:
+    def compute_chunk_hash(self, summary: Dict[str, Any]) -> str:
         """
         Compute a deterministic hash of the chunk summary.
 
@@ -170,7 +170,7 @@ class AnalysisCache:
         """Deserialize cached output."""
         return AgentOutput.model_validate_json(output_json)
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         total_requests = self.hits + self.misses
         hit_rate = (self.hits / total_requests * 100) if total_requests > 0 else 0
@@ -207,7 +207,7 @@ class AnalysisCache:
 
 
 # Global cache instance
-_cache: AnalysisCache | None = None
+_cache: Optional[AnalysisCache] = None
 
 
 def get_analysis_cache() -> AnalysisCache:

@@ -23,7 +23,7 @@ class Deduplicator:
     Groups events by a composite identity key and keeps the first event.
     """
 
-    def deduplicate(self, events: list[NormalizedEvent]) -> list[NormalizedEvent]:
+    def deduplicate(self, events: List[NormalizedEvent]) -> List[NormalizedEvent]:
         """
         Deduplicate a list of normalized events.
 
@@ -41,7 +41,7 @@ class Deduplicator:
 
         logger.debug(f"Deduplicating batch | input_size={len(events)}")
 
-        unique_events: dict[str, NormalizedEvent] = {}
+        unique_events: Dict[str, NormalizedEvent] = {}
 
         for event in events:
             # Use row_hash as the primary deterministic identifier.
@@ -68,7 +68,7 @@ class Deduplicator:
 
     def write_jsonl(
         self,
-        events: list[NormalizedEvent],
+        events: List[NormalizedEvent],
         output_dir: str | Path,
         file_id: str,
     ) -> Path:
@@ -87,10 +87,10 @@ class Deduplicator:
         )
         return output_path
 
-    def read_jsonl(self, path: str | Path) -> list[NormalizedEvent]:
+    def read_jsonl(self, path: str | Path) -> List[NormalizedEvent]:
         """Read deduplicated normalized events from JSONL."""
         input_path = Path(path)
-        events: list[NormalizedEvent] = []
+        events: List[NormalizedEvent] = []
 
         with input_path.open("r", encoding="utf-8") as f:
             for line in f:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -17,7 +17,7 @@ from shared_models.agents import AgentOutput
 logger = get_logger(__name__)
 
 # Storage file path
-_OUTPUTS_FILE: Path | None = None
+_OUTPUTS_FILE: Optional[Path] = None
 
 
 def _get_outputs_file() -> Path:
@@ -38,7 +38,7 @@ class AgentOutputsStorage:
     for display in the Pipeline view.
     """
 
-    _data: dict[str, list[dict[str, Any]]] = {}
+    _data: Dict[str, List[Dict[str, Any]]] = {}
     _loaded: bool = False
 
     def __init__(self):
@@ -68,7 +68,7 @@ class AgentOutputsStorage:
         except Exception as e:
             logger.error(f"Failed to save agent outputs file: {e}")
 
-    def store_outputs(self, file_id: str, outputs: list[AgentOutput]) -> None:
+    def store_outputs(self, file_id: str, outputs: List[AgentOutput]) -> None:
         """
         Store agent outputs for a file.
 
@@ -138,7 +138,7 @@ class AgentOutputsStorage:
             f"Stored {len(outputs)} agent outputs for file {file_id}",
         )
 
-    def get_outputs(self, file_id: str) -> list[dict[str, Any]]:
+    def get_outputs(self, file_id: str) -> List[Dict[str, Any]]:
         """
         Get stored agent outputs for a file.
 
@@ -150,7 +150,7 @@ class AgentOutputsStorage:
         """
         return AgentOutputsStorage._data.get(file_id, [])
 
-    def get_aggregated_summary(self, file_id: str) -> dict[str, Any]:
+    def get_aggregated_summary(self, file_id: str) -> Dict[str, Any]:
         """
         Get an aggregated summary of all agent outputs for a file.
 
@@ -219,7 +219,7 @@ class AgentOutputsStorage:
 
 
 # Global instance
-_storage: AgentOutputsStorage | None = None
+_storage: Optional[AgentOutputsStorage] = None
 
 
 def get_agent_outputs_storage() -> AgentOutputsStorage:

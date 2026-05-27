@@ -6,7 +6,7 @@ Reference data for MITRE ATT&CK framework.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, List
 
 # MITRE ATT&CK Tactics
 MITRE_TACTICS = {
@@ -91,7 +91,7 @@ MITRE_TECHNIQUES = {
 }
 
 
-def get_technique(technique_id: str) -> dict[str, Any] | None:
+def get_technique(technique_id: str) -> Dict[str, Any] | None:
     """
     Get technique details by ID.
 
@@ -110,7 +110,7 @@ def get_technique(technique_id: str) -> dict[str, Any] | None:
     return None
 
 
-def get_tactic(tactic_id: str) -> dict[str, Any] | None:
+def get_tactic(tactic_id: str) -> Dict[str, Any] | None:
     """
     Get tactic details by ID.
 
@@ -129,7 +129,7 @@ def get_tactic(tactic_id: str) -> dict[str, Any] | None:
     return None
 
 
-def get_tactic_by_name(name: str) -> dict[str, Any] | None:
+def get_tactic_by_name(name: str) -> Dict[str, Any] | None:
     """
     Get tactic details by name.
 
@@ -148,7 +148,7 @@ def get_tactic_by_name(name: str) -> dict[str, Any] | None:
     return None
 
 
-def get_techniques_by_tactic(tactic_name: str) -> list[dict[str, Any]]:
+def get_techniques_by_tactic(tactic_name: str) -> List[Dict[str, Any]]:
     """
     Get all techniques for a given tactic.
 

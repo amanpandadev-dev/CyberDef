@@ -38,7 +38,7 @@ class GeoIPEnrichmentService:
         Path("~/.local/share/GeoIP/GeoLite2-City.mmdb").expanduser(),
     ]
 
-    def __init__(self, db_path: Path | None = None):
+    def __init__(self, db_path: Optional[Path] = None):
         self.reader = None
         self.enabled = False
 
@@ -90,7 +90,7 @@ class GeoIPEnrichmentService:
 
         return event
 
-    def enrich_batch(self, events: list[NormalizedEvent]) -> list[NormalizedEvent]:
+    def enrich_batch(self, events: List[NormalizedEvent]) -> List[NormalizedEvent]:
         """Enrich batch of events with geographic data."""
         if not self.enabled or not self.reader:
             return events

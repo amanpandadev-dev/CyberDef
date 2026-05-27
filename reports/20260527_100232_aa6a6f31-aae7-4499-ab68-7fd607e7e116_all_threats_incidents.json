@@ -1,0 +1,121 @@
+{
+  "MI_ID": "GenAI_SOC",
+  "file_id": "aa6a6f31-aae7-4499-ab68-7fd607e7e116",
+  "filename": "all_threats.csv",
+  "generated_at": "2026-05-27T10:02:32.024315+00:00",
+  "incident_count": 3,
+  "emp_id": null,
+  "incidents": [
+    {
+      "incident_id": "ae617490-39ef-47ce-8c3b-ef6ab3e2d140",
+      "title": "[BLIND_SQL_INJECTION] Blind SQL injection attempt detected from 0.1.0.1",
+      "status": "new",
+      "priority": "critical",
+      "file_ids": [
+        "aa6a6f31-aae7-4499-ab68-7fd607e7e116"
+      ],
+      "first_seen": "2025-10-03T20:23:15",
+      "last_seen": "2026-02-02T23:14:30",
+      "raw_log": "score=12; patterns=SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINTING; evidence=/uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | /uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | <150>Oct  4 01:53:15 servernameabc httpd[12345]: 0.0.0.0 0",
+      "source_ip": "0.1.0.1",
+      "destination_ip": "0.1.0.1",
+      "hostname": "0.1.0.1",
+      "suspicious": true,
+      "suspicious_indicator": "payload",
+      "attack_name": "blind_sql_injection",
+      "brief_description": "Blind SQL injection attempt detected",
+      "recommended_action": "Investigate blind_sql_injection from 0.1.0.1",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "correlation": {
+        "signature_attacks": [
+          "blind_sql_injection",
+          "blind_sql_injection",
+          "Exploit Public-Facing Application"
+        ],
+        "src_ip": "0.1.0.1",
+        "dst_ip": "0.1.0.1",
+        "hostname": "0.1.0.1",
+        "raw_logs": [
+          "score=12; patterns=SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, DB_FINGERPRINTING; evidence=/uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | /uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | <150>Oct  4 01:53:15 servernameabc httpd[12345]: 0.0.0.0 0"
+        ],
+        "correlation_reason": "Deterministic rule match: blind_sql_injection | MITRE ATT&CK: Initial Access - T1190 | High confidence detection (0.92)"
+      }
+    },
+    {
+      "incident_id": "4cc6f2a8-114a-46b5-b5d2-593ed8f5a6a4",
+      "title": "[SQL_INJECTION] SQL injection attempt detected from 0.1.0.1",
+      "status": "new",
+      "priority": "critical",
+      "file_ids": [
+        "aa6a6f31-aae7-4499-ab68-7fd607e7e116"
+      ],
+      "first_seen": "2025-10-03T20:23:15",
+      "last_seen": "2026-02-02T23:14:30",
+      "raw_log": "score=22; patterns=UNION_SELECT, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, UNION_SELECT, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL; evidence=/uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | /uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | /uxportal/uxportalhome.html/ho",
+      "source_ip": "0.1.0.1",
+      "destination_ip": "0.1.0.1",
+      "hostname": "0.1.0.1",
+      "suspicious": true,
+      "suspicious_indicator": "payload",
+      "attack_name": "sql_injection",
+      "brief_description": "SQL injection attempt detected",
+      "recommended_action": "Investigate sql_injection from 0.1.0.1",
+      "confidence_score": 9,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "correlation": {
+        "signature_attacks": [
+          "sql_injection",
+          "sql_injection",
+          "Exploit Public-Facing Application"
+        ],
+        "src_ip": "0.1.0.1",
+        "dst_ip": "0.1.0.1",
+        "hostname": "0.1.0.1",
+        "raw_logs": [
+          "score=22; patterns=UNION_SELECT, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL, UNION_SELECT, DB_FINGERPRINTING, SQL_COMMENT_CONTEXTUAL; evidence=/uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | /uxportal/uxportalhome.html/home'%20UNION%20SELECT@@version-- | /uxportal/uxportalhome.html/ho"
+        ],
+        "correlation_reason": "Deterministic rule match: sql_injection | MITRE ATT&CK: Initial Access - T1190 | High confidence detection (0.90)"
+      }
+    },
+    {
+      "incident_id": "9612093f-07ae-4a96-b788-62a313881c18",
+      "title": "[OS_COMMAND_INJECTION] OS command injection attempt from 0.1.0.1",
+      "status": "new",
+      "priority": "critical",
+      "file_ids": [
+        "aa6a6f31-aae7-4499-ab68-7fd607e7e116"
+      ],
+      "first_seen": "2026-01-22T00:12:56",
+      "last_seen": "2026-01-22T00:12:56",
+      "raw_log": "/content.statementList.fetchJson?searchIn=/content/dam/tcs/investor-relations/financial-statements&selectedQuarter=q3&haiku630498=shell_exec(ifconfig)",
+      "source_ip": "0.1.0.1",
+      "destination_ip": null,
+      "hostname": null,
+      "suspicious": true,
+      "suspicious_indicator": "payload",
+      "attack_name": "os_command_injection",
+      "brief_description": "OS command injection attempt",
+      "recommended_action": "Investigate os_command_injection from 0.1.0.1",
+      "confidence_score": 8,
+      "mitre_tactic": "Initial Access",
+      "mitre_technique": "T1190",
+      "correlation": {
+        "signature_attacks": [
+          "os_command_injection",
+          "os_command_injection",
+          "Exploit Public-Facing Application"
+        ],
+        "src_ip": "0.1.0.1",
+        "dst_ip": null,
+        "hostname": null,
+        "raw_logs": [
+          "/content.statementList.fetchJson?searchIn=/content/dam/tcs/investor-relations/financial-statements&selectedQuarter=q3&haiku630498=shell_exec(ifconfig)"
+        ],
+        "correlation_reason": "Deterministic rule match: os_command_injection | MITRE ATT&CK: Initial Access - T1190 | High confidence detection (0.85)"
+      }
+    }
+  ]
+}

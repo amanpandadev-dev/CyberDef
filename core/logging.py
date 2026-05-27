@@ -10,7 +10,7 @@ import json
 import logging
 import logging.handlers
 import sys
-from typing import Any
+from typing import Any, Optional
 
 from core.config import get_settings
 
@@ -75,7 +75,7 @@ def setup_logging() -> None:
     root.addHandler(file_handler)
 
 
-def get_logger(name: str | None = None, **context: Any) -> logging.Logger:
+def get_logger(name: Optional[str] = None, **context: Any) -> logging.Logger:
     """
     Get a logger instance.
 

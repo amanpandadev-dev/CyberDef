@@ -10,7 +10,7 @@ import csv
 import ipaddress
 from bisect import bisect_right
 from functools import lru_cache
-from typing import Iterable
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -18,7 +18,7 @@ from core.logging import get_logger
 logger = get_logger(__name__)
 
 
-def is_ip_excluded(ip: str | None) -> bool:
+def is_ip_excluded(ip: Optional[str]) -> bool:
     """
     Check if an IP address should be ignored by public-IP correlation checks.
 
@@ -51,7 +51,7 @@ def is_ip_excluded(ip: str | None) -> bool:
         return True
 
 
-def is_ip_public(ip: str | None) -> bool:
+def is_ip_public(ip: Optional[str]) -> bool:
     """
     Check if an IP address is public (not excluded).
     
@@ -67,12 +67,12 @@ def is_ip_public(ip: str | None) -> bool:
     return not is_ip_excluded(ip)
 
 
-def _merge_intervals(intervals: list[tuple[int, int]]) -> tuple[tuple[int, int], ...]:
+def _merge_intervals(intervals: List[Tuple[int, int]]) -> Tuple[Tuple[int, int], ...]:
     if not intervals:
         return ()
 
     intervals.sort()
-    merged: list[tuple[int, int]] = []
+    merged: List[Tuple[int, int]] = []
     start, end = intervals[0]
     for next_start, next_end in intervals[1:]:
         if next_start <= end + 1:
@@ -85,21 +85,21 @@ def _merge_intervals(intervals: list[tuple[int, int]]) -> tuple[tuple[int, int],
 
 
 @lru_cache(maxsize=1)
-def _get_zscaler_lookup() -> tuple[
+def _get_zscaler_lookup() -> Tuple[
     frozenset[int],
     frozenset[int],
-    tuple[tuple[int, int], ...],
-    tuple[int, ...],
-    tuple[tuple[int, int], ...],
-    tuple[int, ...],
+    Tuple[Tuple[int, int], ...],
+    Tuple[int, ...],
+    Tuple[Tuple[int, int], ...],
+    Tuple[int, ...],
 ]:
     """Load Zscaler source IP ranges as exact-IP sets and merged integer intervals."""
     settings = get_settings()
     csv_path = settings.data_dir / "Zscalar_ip_ranges.csv"
-    exact_v4: set[int] = set()
-    exact_v6: set[int] = set()
-    range_v4: list[tuple[int, int]] = []
-    range_v6: list[tuple[int, int]] = []
+    exact_v4: Set[int] = set()
+    exact_v6: Set[int] = set()
+    range_v4: List[Tuple[int, int]] = []
+    range_v6: List[Tuple[int, int]] = []
     total_ranges = 0
 
     if not csv_path.exists():
@@ -156,8 +156,8 @@ def _get_zscaler_lookup() -> tuple[
 
 def _ip_int_in_intervals(
     ip_int: int,
-    intervals: tuple[tuple[int, int], ...],
-    starts: tuple[int, ...],
+    intervals: Tuple[Tuple[int, int], ...],
+    starts: Tuple[int, ...],
 ) -> bool:
     if not intervals:
         return False
@@ -167,7 +167,7 @@ def _ip_int_in_intervals(
 
 
 @lru_cache(maxsize=200000)
-def is_zscaler_ip(ip: str | None) -> bool:
+def is_zscaler_ip(ip: Optional[str]) -> bool:
     """Return True when ip belongs to the configured Zscaler source ranges."""
     if not ip or ip == "-":
         return False
@@ -184,7 +184,7 @@ def is_zscaler_ip(ip: str | None) -> bool:
     return ip_int in exact_v6 or _ip_int_in_intervals(ip_int, range_v6, starts_v6)
 
 
-def get_zscaler_source_ips(ips: Iterable[str | None]) -> set[str]:
+def get_zscaler_source_ips(ips: Iterable[str | None]) -> Set[str]:
     """Return the unique input IP strings that are in the Zscaler source ranges."""
     return {
         ip
@@ -193,7 +193,7 @@ def get_zscaler_source_ips(ips: Iterable[str | None]) -> set[str]:
     }
 
 
-def get_excluded_ranges_summary() -> dict[str, any]:
+def get_excluded_ranges_summary() -> Dict[str, any]:
     """
     Get a summary of built-in public-IP exclusions for diagnostics.
 

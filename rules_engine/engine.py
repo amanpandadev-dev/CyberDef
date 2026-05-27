@@ -41,8 +41,8 @@ class DeterministicEngine:
         "content_scraping",
         "slowloris_suspected",
         "open_redirect",
-        "waf_bypass",
         "http_param_pollution",
+        
     }
 
     def __init__(self):

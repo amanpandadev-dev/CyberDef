@@ -10,8 +10,6 @@ from shared_models.events import NormalizedEvent
 
 from core.logging import get_logger
 import re 
-from collections import defaultdict 
-from datetime import datetime, timedelta 
 from ipaddress import ip_address 
 from urllib.parse import unquote, urlparse
 
@@ -668,6 +666,7 @@ class HTTPParamPollutionRule(ThreatRule):
     _EXCLUDED_PARAMS = {
         "SMTOKEN",
         "SAMLTRANSACTIONID",
+        "SMENC"
     }
 
     @staticmethod

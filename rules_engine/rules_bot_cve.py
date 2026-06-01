@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import re
 import ipaddress
+from ipaddress import ip_address
 from collections import defaultdict
 from collections import Counter
 from datetime import datetime, timezone
@@ -19,7 +20,6 @@ from shared_models.events import NormalizedEvent
 logger = get_logger(__name__)
 
 # Family 7: Bot & Scanner
-
 class KnownScannerUARule(ThreatRule):
     name = "known_scanner_ua"
     category = "recon_scanner"
@@ -29,12 +29,54 @@ class KnownScannerUARule(ThreatRule):
     description = "Known vulnerability scanner user agent"
     check_fields = ["user_agent"]
     patterns = [
-        r"(?:sqlmap|nikto|nmap|nessus|openvas|masscan|zap(?:proxy)?|skipfish|w3af|arachni)",
-        r"(?:burp(?:suite)?|qualys|acunetix|appscan|webinspect|netsparker|invicti)",
-        r"(?:dirbuster|dirb|gobuster|wfuzz|ffuf|feroxbuster)",
-        r"(?:nuclei|subfinder|amass|httpx|dalfox|tplmap|commix|hydra)",
-        r"(?:masscan|zgrab|censys|shodan)",
+        r"(?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|python-requests|libwww-perl|scrapy|aiohttp|mechanize|httpclient|curl|wget|okhttp|powershell(?:/[0-9.]+)?|windowspowershell(?:/[0-9.]+)?|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)\b"
+ 
     ]
+    def match(self, event: NormalizedEvent) -> ThreatMatch | None:
+        try:
+            # Exclude private/reserved IP ranges
+            src_ip = (event.src_ip or "").strip()
+
+            try:
+                ip = ip_address(src_ip)
+                if (
+                    ip.is_private
+                    or ip.is_loopback
+                    or ip.is_link_local
+                    or ip.is_multicast
+                    or ip.is_reserved
+                ):
+                    return None
+            except Exception:
+                # Ignore malformed IPs
+                return None
+
+            user_agent = (event.user_agent or "").lower()
+
+            for pattern in self.patterns:
+                if re.search(pattern, user_agent, re.IGNORECASE):
+                    return ThreatMatch(
+                        event_id=event.event_id,
+                        rule_name=self.name,
+                        category=self.category,
+                        family=self.family,
+                        severity=self.severity,
+                        confidence=self.confidence,
+                        evidence=f"Known scanner User-Agent detected: {user_agent[:100]}",
+                        matched_field="user_agent",
+                        raw_url=event.raw_url,
+                        timestamp=event.timestamp,
+                        src_ip=event.src_ip,
+                    )
+
+            return None
+
+        except Exception as e:
+            logger.error(
+                f"[{self.name}] match failed for event {event.event_id}: {e}",
+                exc_info=True
+            )
+            return None
 
 
 class HeadlessBrowserRule(ThreatRule):
@@ -104,6 +146,11 @@ class Rapid404Rule(RateBasedRule):
             return None
 
 
+
+
+import ipaddress
+
+
 class ContentScrapingRule(RateBasedRule):
     name = "content_scraping"
     category = "bot_automation"
@@ -115,20 +162,55 @@ class ContentScrapingRule(RateBasedRule):
 
     def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         try:
-            # Skip private/internal IPs
-            ip = group_key
-            try:
-                ip_obj = ipaddress.ip_address(ip)
-                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
-                    return None
-            except ValueError:
-                pass
+            if not events:
+                return None
 
-            ok_evts = [ev for ev in events if ev.http_status and 200 <= ev.http_status < 300]
-            uris = {ev.raw_url for ev in ok_evts if ev.raw_url}
+            # group_key may be a username OR an IP (engine groups by actor: username ?? src_ip).
+            # Do NOT treat group_key as an IP — filter by per-event src_ip instead so that
+            # only events originating from public IPs are considered, regardless of whether
+            # the group was keyed by username or IP.
+            def _is_public_ip(ip_str: str | None) -> bool:
+                if not ip_str:
+                    return False
+                try:
+                    ip_obj = ipaddress.ip_address(ip_str.strip())
+                    return not (
+                        ip_obj.is_private
+                        or ip_obj.is_loopback
+                        or ip_obj.is_link_local
+                        or ip_obj.is_reserved
+                        or ip_obj.is_multicast
+                        or ip_obj.is_unspecified
+                    )
+                except (ValueError, AttributeError):
+                    return False
+
+            logger.debug(
+                f"[{self.name}] Checking content scraping for group_key={group_key!r} "
+                f"with {len(events)} events"
+            )
+
+            # Keep only successful requests whose src_ip is a public IP
+            ok_evts = [
+                ev for ev in events
+                if ev.http_status and 200 <= ev.http_status < 300
+                and _is_public_ip(ev.src_ip)
+            ]
+
+            if not ok_evts:
+                return None
+
+            uris = {
+                ev.raw_url
+                for ev in ok_evts
+                if ev.raw_url
+            }
+
             if len(uris) >= self.threshold:
-                last = ok_evts[-1] if ok_evts else events[-1]
-                total_hits = len(ok_evts)
+                last = ok_evts[-1]
+                # Use the actual src_ip from the event for the match, not group_key
+                src_ip = last.src_ip or group_key
+
                 return ThreatMatch(
                     event_id=last.event_id,
                     rule_name=self.name,
@@ -136,17 +218,24 @@ class ContentScrapingRule(RateBasedRule):
                     family=self.family,
                     severity=self.severity,
                     confidence=self.confidence,
-                    evidence=f"{total_hits} hits on {len(uris)} unique URIs from {group_key} (sample: {last.raw_url})",
+                    evidence=(
+                        f"{len(ok_evts)} hits on {len(uris)} unique URIs "
+                        f"from {src_ip} (sample: {last.raw_url})"
+                    ),
                     matched_field="raw_url",
                     raw_url=last.raw_url,
                     timestamp=last.timestamp,
-                    src_ip=last.src_ip,
+                    src_ip=src_ip,
                 )
-            return None
-        except Exception as e:
-            logger.error(f"[{self.name}] check_group failed for key '{group_key}': {e}", exc_info=True)
+
             return None
 
+        except Exception as e:
+            logger.error(
+                f"[{self.name}] check_group failed: {e}",
+                exc_info=True,
+            )
+            return None
 
 class FakeSearchBotRule(ThreatRule):
     name = "fake_search_bot"
@@ -1323,7 +1412,6 @@ BOT_SCANNER_RULES = [
     HeadlessBrowserRule,
     Rapid404Rule,
     ContentScrapingRule,
-    FakeSearchBotRule,
     MaliciousBotSignatureRule,
 ]
 

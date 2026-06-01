@@ -42,6 +42,7 @@ class DeterministicEngine:
         "slowloris_suspected",
         "open_redirect",
         "http_param_pollution",
+        "known_scanner_ua",
         
     }
 

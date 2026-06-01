@@ -401,9 +401,8 @@ class CommandInjectionRule(ThreatRule):
     severity = ThreatSeverity.CRITICAL
     confidence = 0.85
     description = "OS command injection attempt"
-    check_fields = ["raw_url", "original_message"]
+    check_fields = ["raw_url", "referrer"]
     patterns = [
-        r"(?i)((;\s*(whoami|id|uname|cat|ls|bash|sh|shell_exec))|&&|\||`|\$\(|invoke-webrequest|iex|downloadstring|wget|curl|webclient|powershell|\.exe).*powershell(?:\.exe)?",
         r"(?i)\bshell_exec\s*\(",
         r"(?i)((;\s*|\|\||&&|\||`|\$\()\s*(whoami|id|uname|cat|ls|bash|sh|nc|curl|wget)|(powershell(\.exe)?|cmd\.exe).*(invoke-webrequest|downloadstring|iex|webclient)?)",
     ]
@@ -444,13 +443,7 @@ class XPathInjectionRule(ThreatRule):
     )
     SAFE_XML_TERMS = ("xmlns", "soap", "wsdl", "rss", "sitemap")
 
-    XPATH_REGEX = re.compile(r'''(?ix)(
-        ['"`%27%22]\s*(or|and)\s+['"`0-9a-z]|
-        (contains|starts-with|substring|normalize-space|string-length|translate|concat|count|position|last|name|local-name|namespace-uri|text|node)\s*\(|
-        (ancestor|ancestor-or-self|descendant|descendant-or-self|child|parent|self|following|following-sibling|preceding|preceding-sibling|attribute|namespace)\s*::|
-        //|/\*|//\*|\.\./|/node\s*\(\)|/text\s*\(\)|/comment\s*\(\)|\[[^\]]*(=|!=|<|>|or|and)[^\]]*\]|
-        %2f%2f|%2e%2e|%5b|%5d|%28|%29|%2a|%27|%22|document\s*\(|collection\s*\(|id\s*\(
-    )''')
+    XPATH_REGEX = re.compile(r'''(?ix)(['\"`%27%22]\s*(or|and)\s+['\"`0-9a-z]|(contains|starts-with|substring|substring-before|substring-after|normalize-space|string-length|translate|concat|count|sum|floor|ceiling|round|position|last|name|local-name|namespace-uri|text|node)\s*\(|(ancestor|ancestor-or-self|descendant|descendant-or-self|child|parent|self|following|following-sibling|preceding|preceding-sibling|attribute|namespace)\s*::|(?<!http:)(?<!https:)//|/\*|//\*|\.\./|/node\s*\(\)|/text\s*\(\)|/comment\s*\(\)|/processing-instruction\s*\(|\[[^\]]*(=|!=|<|>|<=|>=|or|and)[^\]]*\]|\*\[|\|\s*//|%2f%2f|%2e%2e|%5b|%5d|%28|%29|%2a|%27|%22|document\s*\(|collection\s*\(|id\s*\(|['\"`]\s*/)''')
 
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:

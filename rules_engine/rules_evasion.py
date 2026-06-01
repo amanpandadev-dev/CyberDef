@@ -351,214 +351,214 @@ class PathNormalizationBypassRule(Status200ThreatRule):
         return matches
 
 
-class WAFBypassRule(ThreatRule):
-    name = "waf_bypass"
-    category = "evasion"
-    family = ThreatFamily.EVASION
-    severity = ThreatSeverity.HIGH
-    confidence = 0.80
-    description = "SOC-scored WAF bypass detection"
+# class WAFBypassRule(ThreatRule):
+#     name = "waf_bypass"
+#     category = "evasion"
+#     family = ThreatFamily.EVASION
+#     severity = ThreatSeverity.HIGH
+#     confidence = 0.80
+#     description = "SOC-scored WAF bypass detection"
 
-    check_fields = []
+#     check_fields = []
 
-    WINDOW_MINUTES = 15
-    ALERT_THRESHOLD = 7
+#     WINDOW_MINUTES = 15
+#     ALERT_THRESHOLD = 7
 
-    _STATIC_EXTENSIONS = {
-        ".jpg", ".jpeg", ".png", ".gif", ".css",
-        ".js", ".svg", ".ico", ".woff", ".woff2",
-        ".ttf", ".map"
-    }
+#     _STATIC_EXTENSIONS = {
+#         ".jpg", ".jpeg", ".png", ".gif", ".css",
+#         ".js", ".svg", ".ico", ".woff", ".woff2",
+#         ".ttf", ".map"
+#     }
 
-    # ----------------------------
-    # Regex groups
-    # ----------------------------
+#     # ----------------------------
+#     # Regex groups
+#     # ----------------------------
 
-    _HIGH_SEVERITY = [
-        re.compile(r"(?i)%25[0-9a-f]{2}"),      # double encoding
-        re.compile(r"(?i)(%u[0-9a-f]{4}|\\u[0-9a-f]{4})"),
-        re.compile(r"(?i)(char\(|concat\(|benchmark\(|sleep\(|load_file\()")
-    ]
+#     _HIGH_SEVERITY = [
+#         re.compile(r"(?i)%25[0-9a-f]{2}"),      # double encoding
+#         re.compile(r"(?i)(%u[0-9a-f]{4}|\\u[0-9a-f]{4})"),
+#         re.compile(r"(?i)(char\(|concat\(|benchmark\(|sleep\(|load_file\()")
+#     ]
 
-    _MEDIUM_SEVERITY = [
-        re.compile(r"(?i)(/\*!.*?\*/|--|#|/\*.*?\*/)"),
-        re.compile(r"\b(?:uNiOn|sElEcT|iNsErT|dRoP|uPdAtE|eXeC)\b"),
-        re.compile(r"(?i)(%00|\x00)")
-    ]
+#     _MEDIUM_SEVERITY = [
+#         re.compile(r"(?i)(/\*!.*?\*/|--|#|/\*.*?\*/)"),
+#         re.compile(r"\b(?:uNiOn|sElEcT|iNsErT|dRoP|uPdAtE|eXeC)\b"),
+#         re.compile(r"(?i)(%00|\x00)")
+#     ]
 
-    _LOW_SEVERITY = [
-        re.compile(r"(?i)(%2f|%5c|%252f|%255c|%2e|%252e)")
-    ]
+#     _LOW_SEVERITY = [
+#         re.compile(r"(?i)(%2f|%5c|%252f|%255c|%2e|%252e)")
+#     ]
 
-    @staticmethod
-    def _is_public_ip(ip: Optional[str]) -> bool:
-        try:
-            return ip and ipaddress.ip_address(ip).is_global
-        except Exception:
-            return False
+#     @staticmethod
+#     def _is_public_ip(ip: str | None) -> bool:
+#         try:
+#             return ip and ipaddress.ip_address(ip).is_global
+#         except Exception:
+#             return False
 
-    @classmethod
-    def check_batch(
-        cls,
-        events: List[NormalizedEvent]
-    ) -> List[ThreatMatch]:
+#     @classmethod
+#     def check_batch(
+#         cls,
+#         events: list[NormalizedEvent]
+#     ) -> list[ThreatMatch]:
 
-        matches = []
+#         matches = []
 
-        # per-IP counters
-        suspicious_count = defaultdict(int)
-        latest_event = {}
-        scores = defaultdict(int)
-        techniques = defaultdict(set)
+#         # per-IP counters
+#         suspicious_count = defaultdict(int)
+#         latest_event = {}
+#         scores = defaultdict(int)
+#         techniques = defaultdict(set)
 
-        for ev in events:
+#         for ev in events:
 
-            src_ip = ev.src_ip
+#             src_ip = ev.src_ip
 
-            if not cls._is_public_ip(src_ip):
-                continue
+#             if not cls._is_public_ip(src_ip):
+#                 continue
 
-            status = getattr(ev, "http_status", None)
+#             status = getattr(ev, "http_status", None)
 
-            # Only successful responses
-            if status not in (200, 302):
-                continue
+#             # Only successful responses
+#             if status not in (200, 302):
+#                 continue
 
-            query = " ".join(filter(None, [
-                ev.uri_path,
-                ev.uri_query,
-                ev.original_message
-            ]))
+#             query = " ".join(filter(None, [
+#                 ev.uri_path,
+#                 ev.uri_query,
+#                 ev.original_message
+#             ]))
 
-            if not query:
-                continue
+#             if not query:
+#                 continue
 
-            score = 0
-            matched_patterns = set()
+#             score = 0
+#             matched_patterns = set()
 
-            # Successful suspicious request
-            score += 2
+#             # Successful suspicious request
+#             score += 2
 
-            # ----------------------------
-            # High severity
-            # ----------------------------
+#             # ----------------------------
+#             # High severity
+#             # ----------------------------
 
-            for p in cls._HIGH_SEVERITY:
-                if p.search(query):
-                    score += 5
-                    matched_patterns.add(
-                        p.pattern
-                    )
+#             for p in cls._HIGH_SEVERITY:
+#                 if p.search(query):
+#                     score += 5
+#                     matched_patterns.add(
+#                         p.pattern
+#                     )
 
-            # ----------------------------
-            # Medium severity
-            # ----------------------------
+#             # ----------------------------
+#             # Medium severity
+#             # ----------------------------
 
-            for p in cls._MEDIUM_SEVERITY:
-                if p.search(query):
-                    score += 3
-                    matched_patterns.add(
-                        p.pattern
-                    )
+#             for p in cls._MEDIUM_SEVERITY:
+#                 if p.search(query):
+#                     score += 3
+#                     matched_patterns.add(
+#                         p.pattern
+#                     )
 
-            # ----------------------------
-            # Low severity
-            # ----------------------------
+#             # ----------------------------
+#             # Low severity
+#             # ----------------------------
 
-            for p in cls._LOW_SEVERITY:
-                if p.search(query):
-                    score += 1
-                    matched_patterns.add(
-                        p.pattern
-                    )
+#             for p in cls._LOW_SEVERITY:
+#                 if p.search(query):
+#                     score += 1
+#                     matched_patterns.add(
+#                         p.pattern
+#                     )
 
-            # ----------------------------
-            # Multiple encoded chars
-            # ----------------------------
+#             # ----------------------------
+#             # Multiple encoded chars
+#             # ----------------------------
 
-            encoded = re.findall(
-                r"%[0-9a-fA-F]{2}",
-                query
-            )
+#             encoded = re.findall(
+#                 r"%[0-9a-fA-F]{2}",
+#                 query
+#             )
 
-            if len(encoded) > 3:
-                score += 2
-                matched_patterns.add(
-                    "multiple_encoded_chars"
-                )
+#             if len(encoded) > 3:
+#                 score += 2
+#                 matched_patterns.add(
+#                     "multiple_encoded_chars"
+#                 )
 
-            # ----------------------------
-            # Multiple attack patterns
-            # ----------------------------
+#             # ----------------------------
+#             # Multiple attack patterns
+#             # ----------------------------
 
-            if len(matched_patterns) > 1:
-                score += 3
+#             if len(matched_patterns) > 1:
+#                 score += 3
 
-            # ----------------------------
-            # Static content suppression
-            # ----------------------------
+#             # ----------------------------
+#             # Static content suppression
+#             # ----------------------------
 
-            path = ev.uri_path or ""
+#             path = ev.uri_path or ""
 
-            if any(
-                path.lower().endswith(x)
-                for x in cls._STATIC_EXTENSIONS
-            ):
-                score -= 3
+#             if any(
+#                 path.lower().endswith(x)
+#                 for x in cls._STATIC_EXTENSIONS
+#             ):
+#                 score -= 3
 
-            suspicious_count[src_ip] += 1
-            scores[src_ip] += score
-            latest_event[src_ip] = ev
+#             suspicious_count[src_ip] += 1
+#             scores[src_ip] += score
+#             latest_event[src_ip] = ev
 
-            techniques[src_ip].update(
-                matched_patterns
-            )
+#             techniques[src_ip].update(
+#                 matched_patterns
+#             )
 
-        # ----------------------------
-        # Frequency logic
-        # ----------------------------
+#         # ----------------------------
+#         # Frequency logic
+#         # ----------------------------
 
-        for src_ip,count in suspicious_count.items():
+#         for src_ip,count in suspicious_count.items():
 
-            score = scores[src_ip]
+#             score = scores[src_ip]
 
-            if count > 5:
-                score += 3
+#             if count > 5:
+#                 score += 3
 
-            if score < cls.ALERT_THRESHOLD:
-                continue
+#             if score < cls.ALERT_THRESHOLD:
+#                 continue
 
-            ev = latest_event[src_ip]
+#             ev = latest_event[src_ip]
 
-            matches.append(
-                ThreatMatch(
-                    event_id=ev.event_id,
-                    rule_name=cls.name,
-                    category=cls.category,
-                    family=cls.family,
-                    severity=(
-                        ThreatSeverity.CRITICAL
-                        if score >= 15
-                        else ThreatSeverity.HIGH
-                    ),
-                    confidence=min(
-                        0.65 + score/20,
-                        0.99
-                    ),
-                    evidence=(
-                        f"Possible WAF bypass "
-                        f"(score={score}, "
-                        f"requests={count}, "
-                        f"patterns={list(techniques[src_ip])})"
-                    ),
-                    matched_field="uri_query",
-                    raw_url=ev.raw_url,
-                    timestamp=ev.timestamp,
-                    src_ip=src_ip
-                )
-            )
+#             matches.append(
+#                 ThreatMatch(
+#                     event_id=ev.event_id,
+#                     rule_name=cls.name,
+#                     category=cls.category,
+#                     family=cls.family,
+#                     severity=(
+#                         ThreatSeverity.CRITICAL
+#                         if score >= 15
+#                         else ThreatSeverity.HIGH
+#                     ),
+#                     confidence=min(
+#                         0.65 + score/20,
+#                         0.99
+#                     ),
+#                     evidence=(
+#                         f"Possible WAF bypass "
+#                         f"(score={score}, "
+#                         f"requests={count}, "
+#                         f"patterns={list(techniques[src_ip])})"
+#                     ),
+#                     matched_field="uri_query",
+#                     raw_url=ev.raw_url,
+#                     timestamp=ev.timestamp,
+#                     src_ip=src_ip
+#                 )
+#             )
 
-        return matches
+#         return matches
 
 CACHE_REDIRECT_RULES = [
     OpenRedirectRule,
@@ -568,5 +568,5 @@ CACHE_REDIRECT_RULES = [
 
 EVASION_RULES = [
     DoubleURLEncodingRule, NullByteInjectionRule, CRLFInjectionRule,
-    UnicodeAbuseRule, HTTPVerbTamperingRule, PathNormalizationBypassRule, WAFBypassRule,
+    UnicodeAbuseRule, HTTPVerbTamperingRule, PathNormalizationBypassRule,
 ]

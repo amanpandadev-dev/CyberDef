@@ -403,7 +403,7 @@ class CommandInjectionRule(ThreatRule):
     severity = ThreatSeverity.CRITICAL
     confidence = 0.85
     description = "OS command injection attempt"
-    check_fields = ["raw_url", "original_message"]
+    check_fields = ["raw_url", "httpreferer"]
     patterns = [
         r"(?i)((;\s*(whoami|id|uname|cat|ls|bash|sh|shell_exec))|&&|\||`|\$\(|invoke-webrequest|iex|downloadstring|wget|curl|webclient|powershell|\.exe).*powershell(?:\.exe)?",
         r"(?i)\bshell_exec\s*\(",

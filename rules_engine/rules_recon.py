@@ -760,6 +760,7 @@ class RFIRule(Recon2xxThreatRule):
     confidence = 0.85
     description = "Remote file inclusion attempt (raw/triple/double/single URL-encoding)"
     check_fields = []  # Stateful — handled entirely via check_batch
+    _STATIC_EXTENSIONS = (".css", ".js", ".jpg", ".png", ".gif", ".ico", ".svg", ".json", ".woff2", ".woff")
 
     # Triple encoding:  %25253a%25252f%25252f
     _TRIPLE_ENC = re.compile(
@@ -798,6 +799,12 @@ class RFIRule(Recon2xxThreatRule):
         return None  # Cannot determine actor — skip this event
 
     @classmethod
+    def _is_static_content(cls, raw_url: str | None) -> bool:
+        if not raw_url:
+            return False
+        return urlparse(raw_url).path.lower().endswith(cls._STATIC_EXTENSIONS)
+
+    @classmethod
     def check_batch(cls, events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Stateful RFI detection across a batch (15-min window)."""
         matches: List[ThreatMatch] = []
@@ -807,6 +814,8 @@ class RFIRule(Recon2xxThreatRule):
 
         for ev in events:
             if not _is_2xx(ev):
+                continue
+            if cls._is_static_content(ev.raw_url):
                 continue
             query = " ".join(filter(None, [ev.raw_url, ev.original_message]))
             if not query:

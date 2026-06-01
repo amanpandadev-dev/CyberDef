@@ -11,6 +11,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from core.ip_filter import is_ip_excluded, is_zscaler_ip
 from core.logging import get_logger
 from rules_engine.base_rule import RateBasedRule, ThreatRule
 from rules_engine.models import ThreatFamily, ThreatMatch, ThreatSeverity
@@ -29,12 +30,15 @@ class KnownScannerUARule(ThreatRule):
     description = "Known vulnerability scanner user agent"
     check_fields = ["user_agent"]
     patterns = [
-        r"(?:sqlmap|nikto|nmap|nessus|openvas|masscan|zap(?:proxy)?|skipfish|w3af|arachni)",
-        r"(?:burp(?:suite)?|qualys|acunetix|appscan|webinspect|netsparker|invicti)",
-        r"(?:dirbuster|dirb|gobuster|wfuzz|ffuf|feroxbuster)",
-        r"(?:nuclei|subfinder|amass|httpx|dalfox|tplmap|commix|hydra)",
-        r"(?:masscan|zgrab|censys|shodan)",
+        r"(?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|python-requests|libwww-perl|scrapy|aiohttp|mechanize|httpclient|curl|wget|okhttp|powershell(?:/[0-9.]+)?|windowspowershell(?:/[0-9.]+)?|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)\b",
     ]
+
+    def match(self, event: NormalizedEvent) -> ThreatMatch | None:
+        if event.http_status is None or not (200 <= event.http_status < 300):
+            return None
+        if is_ip_excluded(event.src_ip) or is_zscaler_ip(event.src_ip):
+            return None
+        return super().match(event)
 
 
 class HeadlessBrowserRule(ThreatRule):

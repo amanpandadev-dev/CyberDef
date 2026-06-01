@@ -134,6 +134,10 @@ class NormalizedEvent(BaseModel):
     request_size: Optional[int] = None  # bytes in the HTTP request body
     response_size: Optional[int] = None  # bytes in the HTTP response body
 
+    @property
+    def httpreferer(self) -> Optional[str]:
+        return self.referrer
+
     # Original log fields for forensics
     original_message: Optional[str] = None
     vendor_specific: Optional[Dict[str, Any]] = None

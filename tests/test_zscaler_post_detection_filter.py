@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from rules_engine import engine as engine_module
+from rules_engine import rules_bot_cve as rules_bot_cve_module
 from rules_engine.engine import DeterministicEngine
 from rules_engine.models import ThreatFamily, ThreatMatch, ThreatSeverity
 from rules_engine.rules_auth import BruteForceLoginRule
@@ -49,7 +50,7 @@ def make_event(
         protocol=NetworkProtocol.HTTPS,
         http_method="GET",
         http_status=http_status,
-        url=url,
+        raw_url=url,
         uri_path=uri_path if uri_path is not None else url,
         uri_query=uri_query,
         user_agent=user_agent,
@@ -65,6 +66,11 @@ def zscaler_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
         engine_module,
         "get_zscaler_source_ips",
         lambda ips: {ip for ip in set(ips) if ip == ZSCALER_IP},
+    )
+    monkeypatch.setattr(
+        rules_bot_cve_module,
+        "is_zscaler_ip",
+        lambda ip: ip == ZSCALER_IP,
     )
 
 
@@ -150,7 +156,7 @@ def test_zscaler_post_detection_filter_removes_only_selected_rule_matches(
     assert expected_rule_name not in rule_names_for(events_factory(ZSCALER_IP), **kwargs)
 
 
-def test_zscaler_post_detection_filter_does_not_remove_unlisted_rules() -> None:
+def test_known_scanner_ua_excludes_zscaler_sources() -> None:
     events = [
         make_event(
             ZSCALER_IP,
@@ -160,7 +166,7 @@ def test_zscaler_post_detection_filter_does_not_remove_unlisted_rules() -> None:
         )
     ]
 
-    assert "known_scanner_ua" in rule_names_for(events, pattern_rules=[KnownScannerUARule()])
+    assert "known_scanner_ua" not in rule_names_for(events, pattern_rules=[KnownScannerUARule()])
 
 
 class _ImmediateFuture:

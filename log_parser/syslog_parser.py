@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlsplit
 
 from core.logging import get_logger
@@ -58,9 +58,9 @@ class SyslogApacheParser(BaseParser):
     vendor = "apache_httpd"
     description = "Parser for syslog-wrapped Apache access logs in a raw CSV column"
 
-    column_mappings: dict[str, list[str]] = {}
+    column_mappings: Dict[str, List[str]] = {}
 
-    def can_parse(self, columns: list[str], sample_rows: list[dict[str, Any]]) -> float:
+    def can_parse(self, columns: List[str], sample_rows: List[Dict[str, Any]]) -> float:
         if not columns:
             return 0.0
 
@@ -181,20 +181,20 @@ class SyslogApacheParser(BaseParser):
 
     def _normalize_endpoints(
         self,
-        src_ip: str | None,
-        dst_ip: str | None,
-    ) -> tuple[str | None, str | None]:
+        src_ip: Optional[str],
+        dst_ip: Optional[str],
+    ) -> Tuple[str | None, str | None]:
         src = self._clean_placeholder(src_ip)
         dst = self._clean_placeholder(dst_ip)
         return src, dst
 
-    def _clean_placeholder(self, value: str | None) -> str | None:
+    def _clean_placeholder(self, value: Optional[str]) -> str | None:
         if value is None:
             return None
         text = value.strip()
         return None if text in {"", "-"} else text
 
-    def _parse_user_domain(self, value: str | None) -> tuple[str | None, str | None]:
+    def _parse_user_domain(self, value: Optional[str]) -> Tuple[str | None, str | None]:
         text = (value or "").replace(",", " ").strip()
         tokens = [token for token in text.split() if token and token not in {":", "%"}]
 
@@ -222,7 +222,7 @@ class SyslogApacheParser(BaseParser):
     def _looks_like_ip(self, value: str) -> bool:
         return bool(re.fullmatch(r"\d+(?:\.\d+){1,}\S*", value))
 
-    def _parse_quoted_tail(self, value: str | None) -> tuple[str | None, str | None]:
+    def _parse_quoted_tail(self, value: Optional[str]) -> Tuple[str | None, str | None]:
         text = (value or "").strip()
         if not text:
             return None, None
@@ -235,12 +235,12 @@ class SyslogApacheParser(BaseParser):
         user_agent = self._unescape_quotes(quoted[1]) if len(quoted) > 1 else None
         return referer, user_agent
 
-    def _unescape_quotes(self, value: str | None) -> str | None:
+    def _unescape_quotes(self, value: Optional[str]) -> str | None:
         if value is None:
             return None
         return value.replace(r"\"", '"').strip()
 
-    def _get_raw(self, data: dict[str, Any]) -> str | None:
+    def _get_raw(self, data: Dict[str, Any]) -> str | None:
         for key, value in data.items():
             if key.strip().lower() in _LOGEVENT_COLS and value is not None:
                 raw = str(value).strip()
@@ -251,7 +251,7 @@ class SyslogApacheParser(BaseParser):
                 return str(value).strip()
         return None
 
-    def _clean_capture(self, value: str | None) -> str | None:
+    def _clean_capture(self, value: Optional[str]) -> str | None:
         if value is None:
             return None
         text = value.strip()
@@ -259,13 +259,13 @@ class SyslogApacheParser(BaseParser):
             text = text[1:-1].strip()
         return text if text != "" else None
 
-    def _split_uri(self, raw_uri: str | None) -> tuple[str | None, str | None]:
+    def _split_uri(self, raw_uri: Optional[str]) -> Tuple[str | None, str | None]:
         if not raw_uri or raw_uri == "-":
             return raw_uri, None
         parsed = urlsplit(raw_uri)
         return parsed.path or raw_uri.split("?", 1)[0] or None, parsed.query or None
 
-    def _parse_ts(self, value: str | None) -> datetime | None:
+    def _parse_ts(self, value: Optional[str]) -> datetime | None:
         if not value or value == "-":
             return None
 

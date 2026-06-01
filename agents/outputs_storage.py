@@ -79,6 +79,13 @@ class AgentOutputsStorage:
         # Convert to serializable format with summaries
         output_summaries = []
         for output in outputs:
+            if not output.has_agent_result():
+                logger.warning(
+                    f"Skipping empty agent output for file {file_id} | "
+                    f"chunk_id={output.chunk_id}, errors={len(output.errors)}"
+                )
+                continue
+
             summary = {
                 "analysis_id": str(output.analysis_id),
                 "chunk_id": str(output.chunk_id),
@@ -86,6 +93,16 @@ class AgentOutputsStorage:
                 "requires_human_review": output.requires_human_review,
                 "total_processing_time_ms": output.total_processing_time_ms,
                 "created_at": output.created_at.isoformat() if output.created_at else None,
+                "error_count": len(output.errors),
+                "errors": [
+                    {
+                        "agent_name": error.agent_name,
+                        "error_type": error.error_type,
+                        "error_message": error.error_message,
+                        "timestamp": error.timestamp.isoformat() if error.timestamp else None,
+                    }
+                    for error in output.errors
+                ],
             }
 
             # Behavioral Agent Output
@@ -186,6 +203,7 @@ class AgentOutputsStorage:
         return {
             "has_data": True,
             "total_chunks_analyzed": len(outputs),
+            "total_agent_errors": sum(o.get("error_count", 0) for o in outputs),
             "avg_confidence": sum(o.get("overall_confidence", 0) for o in outputs) / len(outputs) if outputs else 0,
             "behavioral": {
                 "total": len(behavioral_summaries),

@@ -74,6 +74,7 @@ class OllamaClient:
             "model": self.model,
             "prompt": prompt,
             "stream": False,
+            "format": "json",
             "options": {
                 "temperature": temp,
                 "num_predict": 2048,
@@ -83,22 +84,31 @@ class OllamaClient:
         if system_prompt:
             payload["system"] = system_prompt
 
-        try:
-            response = await self._client.post(
-                f"{self.host}/api/generate",
-                json=payload,
-            )
-            response.raise_for_status()
+        settings = get_settings()
+        last_error: httpx.HTTPError | None = None
+        for attempt in range(1, settings.agent_max_retries + 1):
+            try:
+                response = await self._client.post(
+                    f"{self.host}/api/generate",
+                    json=payload,
+                )
+                response.raise_for_status()
 
-            result = response.json()
-            return result.get("response", "")
+                result = response.json()
+                return result.get("response", "")
 
-        except httpx.HTTPError as e:
-            logger.error(f"Ollama API error | error={e}")
-            raise AgentError(
-                f"Ollama API error: {str(e)}",
-                details={"host": self.host, "model": self.model},
-            )
+            except httpx.HTTPError as e:
+                last_error = e
+                logger.warning(
+                    f"Ollama API attempt failed | attempt={attempt}, "
+                    f"max_attempts={settings.agent_max_retries}, error={e}"
+                )
+
+        logger.error(f"Ollama API error | error={last_error}")
+        raise AgentError(
+            f"Ollama API error: {str(last_error)}",
+            details={"host": self.host, "model": self.model},
+        )
 
     async def chat(
         self,

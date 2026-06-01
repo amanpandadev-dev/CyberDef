@@ -60,9 +60,9 @@ class FileMetadataRepository:
     @staticmethod
     def list_all(
         session: Session,
-        status: FileStatus | None = None,
+        status: Optional[FileStatus] = None,
         limit: int = 100
-    ) -> list[FileMetadataDB]:
+    ) -> List[FileMetadataDB]:
         """List file metadata with optional status filter."""
         query = select(FileMetadataDB).order_by(FileMetadataDB.uploaded_at.desc())
 

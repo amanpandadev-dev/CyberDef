@@ -57,10 +57,19 @@ Write summaries appropriate for their audience:
 
     def build_prompt(self, summary: dict[str, Any]) -> str:
         """Build prompt for triage and narrative."""
+        agent_context = summary.get("_agent_context", {})
+        prior_outputs = agent_context.get("prior_outputs", {})
+        agent_errors = agent_context.get("agent_errors", [])
         prompt = f"""Triage this behavioral summary and generate analyst-ready narratives.
 
 BEHAVIORAL SUMMARY:
 {json.dumps(summary, indent=2)}
+
+PRIOR AGENT OUTPUTS:
+{json.dumps(prior_outputs, indent=2)}
+
+AGENT ERRORS OR MISSING CONTEXT:
+{json.dumps(agent_errors, indent=2)}
 
 Respond with ONLY this JSON format:
 {{
@@ -89,6 +98,7 @@ Guidelines:
 - Recommended action should be specific and actionable
 - Executive summary should focus on business impact
 - Technical summary should include relevant technical details
+- If an upstream agent failed or is missing, mention the uncertainty in risk_reason or technical_summary
 - Suggest data sources that would help confirm/deny the threat
 - If an extracted field is not available, use null or "null"
 - confidence_score must align with confidence (0.0-1.0 mapped to 1-10)

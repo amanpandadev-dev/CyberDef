@@ -5,10 +5,12 @@ Pydantic models for AI agent inputs and outputs.
 All agent outputs are strict JSON with confidence scores.
 """
 
+from __future__ import annotations
+
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, field_validator
@@ -91,7 +93,7 @@ class BehavioralInterpretation(BaseAgentOutput):
     )
 
     # Evidence references
-    key_indicators: list[str] = Field(
+    key_indicators: List[str] = Field(
         default_factory=list,
         description="Specific indicators that led to this interpretation"
     )
@@ -117,7 +119,7 @@ class ThreatIntent(BaseAgentOutput):
         ge=0.0,
         le=1.0
     )
-    alternative_intents: list[str] = Field(
+    alternative_intents: List[str] = Field(
         default_factory=list,
         description="Other possible intents considered"
     )
@@ -158,7 +160,7 @@ class MitreMapping(BaseAgentOutput):
     )
 
     # Secondary mappings
-    related_techniques: list[dict[str, Any]] = Field(
+    related_techniques: List[Dict[str, Any]] = Field(
         default_factory=list,
         description="Other potentially related techniques"
     )
@@ -200,7 +202,7 @@ class TriageResult(BaseAgentOutput):
     )
 
     # Enrichment suggestions
-    enrichment_suggestions: list[str] = Field(
+    enrichment_suggestions: List[str] = Field(
         default_factory=list,
         description="Suggested data sources for further investigation"
     )
@@ -233,6 +235,9 @@ class AgentOutput(BaseModel):
     mitre: Optional[MitreMapping] = None
     triage: Optional[TriageResult] = None
 
+    # Per-agent errors captured during graph execution
+    errors: List[AgentError] = Field(default_factory=list)
+
     # Overall assessment
     overall_confidence: float = Field(
         default=0.0,
@@ -248,6 +253,10 @@ class AgentOutput(BaseModel):
     # Metadata
     total_processing_time_ms: int = 0
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    def has_agent_result(self) -> bool:
+        """Return True when at least one agent produced a valid result."""
+        return any([self.behavioral, self.intent, self.mitre, self.triage])
 
     def compute_overall_confidence(self) -> float:
         """Compute average confidence from all agent outputs."""

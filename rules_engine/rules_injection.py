@@ -401,7 +401,11 @@ class CommandInjectionRule(ThreatRule):
     severity = ThreatSeverity.CRITICAL
     confidence = 0.85
     description = "OS command injection attempt"
+<<<<<<< HEAD
+    check_fields = ["raw_url", "httpreferer"]
+=======
     check_fields = ["raw_url", "referrer"]
+>>>>>>> 503d3f8a08e98f5c8fa1167258b7e4c54128e0e5
     patterns = [
         r"(?i)\bshell_exec\s*\(",
         r"(?i)((;\s*|\|\||&&|\||`|\$\()\s*(whoami|id|uname|cat|ls|bash|sh|nc|curl|wget)|(powershell(\.exe)?|cmd\.exe).*(invoke-webrequest|downloadstring|iex|webclient)?)",
@@ -469,9 +473,9 @@ class XPathInjectionRule(ThreatRule):
             return None
 
     @classmethod
-    def check_batch(cls, events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(cls, events: List[NormalizedEvent]) -> List[ThreatMatch]:
         try:
-            per_src: dict[str, list[NormalizedEvent]] = defaultdict(list)
+            per_src: Dict[str, List[NormalizedEvent]] = defaultdict(list)
 
             for ev in events:
                 try:
@@ -483,7 +487,7 @@ class XPathInjectionRule(ThreatRule):
                         exc_info=True
                     )
 
-            matches: list[ThreatMatch] = []
+            matches: List[ThreatMatch] = []
 
             for src_ip, evs in per_src.items():
                 if len(evs) < cls.MIN_HITS_PER_SRC_IP:
@@ -608,7 +612,7 @@ class XPathInjectionRule(ThreatRule):
             return True
 
     @staticmethod
-    def _pick_latest_event(events: list[NormalizedEvent]) -> NormalizedEvent | None:
+    def _pick_latest_event(events: List[NormalizedEvent]) -> NormalizedEvent | None:
         try:
             return max(events, key=lambda e: getattr(e, "timestamp", 0) or 0) if events else None
         except Exception:
@@ -664,7 +668,7 @@ class HTTPParamPollutionRule(ThreatRule):
 
     @staticmethod
     def _is_public_ip(
-        ip: str | None
+        ip: Optional[str]
     ) -> bool:
 
         try:

@@ -8,7 +8,7 @@ These are the primary input format for AI agents.
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -50,7 +50,7 @@ class TimeWindow(BaseModel):
 class ActorContext(BaseModel):
     """Actor information for a chunk."""
     src_ip: Optional[str] = None
-    src_ips: list[str] = Field(default_factory=list)  # If multiple
+    src_ips: List[str] = Field(default_factory=list)  # If multiple
     username: Optional[str] = None
     hostname: Optional[str] = None
     is_internal: Optional[bool] = None
@@ -59,9 +59,9 @@ class ActorContext(BaseModel):
 class TargetContext(BaseModel):
     """Target information for a chunk."""
     dst_ip: Optional[str] = None
-    dst_ips: list[str] = Field(default_factory=list)
+    dst_ips: List[str] = Field(default_factory=list)
     dst_host: Optional[str] = None
-    dst_hosts: list[str] = Field(default_factory=list)
+    dst_hosts: List[str] = Field(default_factory=list)
     unique_target_count: int = 0
 
 
@@ -119,16 +119,16 @@ class BehavioralChunk(BaseModel):
     activity_profile: ActivityProfile
 
     # Port analysis
-    port_traffic: dict[int, int] = Field(default_factory=dict)  # port -> count
-    unique_ports: set[int] = Field(default_factory=set)
-    ports: list[int] = Field(default_factory=list)  # Ordered by frequency
-    port_categories: list[str] = Field(default_factory=list)  # SSH, RDP, HTTP, etc.
+    port_traffic: Dict[int, int] = Field(default_factory=dict)  # port -> count
+    unique_ports: Set[int] = Field(default_factory=set)
+    ports: List[int] = Field(default_factory=list)  # Ordered by frequency
+    port_categories: List[str] = Field(default_factory=list)  # SSH, RDP, HTTP, etc.
 
     # Protocol distribution
-    protocol_distribution: dict[str, int] = Field(default_factory=dict)
+    protocol_distribution: Dict[str, int] = Field(default_factory=dict)
 
     # Action distribution
-    action_distribution: dict[str, int] = Field(default_factory=dict)
+    action_distribution: Dict[str, int] = Field(default_factory=dict)
 
     # Temporal analysis
     temporal_pattern: TemporalPattern = TemporalPattern.STEADY
@@ -137,10 +137,10 @@ class BehavioralChunk(BaseModel):
     context: EnvironmentContext = Field(default_factory=EnvironmentContext)
 
     # Raw events for extended threat analysis
-    events: list[Any] = Field(default_factory=list)
+    events: List[Any] = Field(default_factory=list)
 
     # Traceability - list of event IDs that compose this chunk
-    source_event_ids: list[UUID] = Field(default_factory=list)
+    source_event_ids: List[UUID] = Field(default_factory=list)
 
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -160,24 +160,40 @@ class ChunkSummary(BaseModel):
     duration_minutes: int
 
     # Actor summary
-    actor: dict[str, Any]
+    actor: Dict[str, Any]
 
     # Activity profile (structured)
-    activity_profile: dict[str, Any]
+    activity_profile: Dict[str, Any]
 
     # Ports accessed
-    ports: list[int]
-    port_descriptions: list[str]  # e.g., ["SSH (22)", "RDP (3389)"]
+    ports: List[int]
+    port_descriptions: List[str]  # e.g., ["SSH (22)", "RDP (3389)"]
 
     # Temporal behavior
     temporal_pattern: str
     temporal_description: str  # Human-readable
 
     # Environment context
-    context: dict[str, Any]
+    context: Dict[str, Any]
 
     # Red flags (deterministically computed)
-    red_flags: list[str] = Field(default_factory=list)
+    red_flags: List[str] = Field(default_factory=list)
+
+    # Deterministic scoring and reason codes
+    anomaly_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    reason_codes: List[str] = Field(default_factory=list)
+
+    # Richer context for grounded agent prompts
+    target_context: Dict[str, Any] = Field(default_factory=dict)
+    activity_ratios: Dict[str, float] = Field(default_factory=dict)
+    sample_evidence_refs: List[str] = Field(default_factory=list)
+
+    # HTTP/Web attack patterns
+    http_methods_seen: Optional[List[str]] = None
+    http_status_codes: Optional[Dict[str, int]] = None
+    suspicious_uri_patterns: Optional[List[str]] = None
+    user_agents_seen: Optional[List[str]] = None
+    http_attack_indicators: Optional[List[str]] = None
 
     @classmethod
     def from_chunk(cls, chunk: BehavioralChunk) -> "ChunkSummary":
@@ -264,4 +280,11 @@ class ChunkSummary(BaseModel):
             ),
             context=chunk.context.model_dump(exclude_none=True),
             red_flags=red_flags,
+            anomaly_score=0.0,
+            reason_codes=red_flags,
+            target_context=chunk.targets.model_dump(exclude_none=True),
+            activity_ratios={
+                "failure_rate": round(chunk.activity_profile.failure_rate, 4),
+            },
+            sample_evidence_refs=[str(event_id) for event_id in chunk.source_event_ids[:5]],
         )

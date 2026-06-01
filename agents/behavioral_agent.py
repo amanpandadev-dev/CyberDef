@@ -20,7 +20,7 @@ class BehavioralInterpretationAgent(BaseAgent[BehavioralInterpretation]):
     Answers: Is this behavior meaningful or suspicious on its own?
     """
 
-    name = "behavioral_interpreter"
+    name = "behavioral_interpretation"
     description = "Analyzes behavioral patterns to identify suspicious activity"
     output_schema = BehavioralInterpretation
 

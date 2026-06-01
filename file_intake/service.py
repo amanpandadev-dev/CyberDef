@@ -52,7 +52,7 @@ class FileIntakeService:
         filename: str,
         content: bytes,
         source: FileSource = FileSource.MANUAL_UPLOAD,
-        description: str | None = None,
+        description: Optional[str] = None,
     ) -> FileUploadResponse:
         """
         Upload and store a CSV file.
@@ -244,9 +244,9 @@ class FileIntakeService:
 
     async def list_files(
         self,
-        status: FileStatus | None = None,
+        status: Optional[FileStatus] = None,
         limit: int = 100,
-    ) -> list[FileMetadata]:
+    ) -> List[FileMetadata]:
         """List files with optional status filter."""
         with get_db_session() as session:
             db_files = FileMetadataRepository.list_all(session, status, limit)

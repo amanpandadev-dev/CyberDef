@@ -7,7 +7,7 @@ Pydantic models for incident management and reporting.
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -56,7 +56,7 @@ class IncidentTimeline(BaseModel):
     event_type: str
     description: str
     actor: Optional[str] = None
-    evidence_refs: list[str] = Field(default_factory=list)
+    evidence_refs: List[str] = Field(default_factory=list)
 
 
 class Incident(BaseModel):
@@ -79,17 +79,17 @@ class Incident(BaseModel):
     last_seen: datetime
 
     # Related data
-    chunk_ids: list[UUID] = Field(default_factory=list)
-    agent_output_ids: list[UUID] = Field(default_factory=list)
-    file_ids: list[UUID] = Field(default_factory=list)
+    chunk_ids: List[UUID] = Field(default_factory=list)
+    agent_output_ids: List[UUID] = Field(default_factory=list)
+    file_ids: List[UUID] = Field(default_factory=list)
 
     # Actor information
     primary_actor_ip: Optional[str] = None
-    actor_ips: list[str] = Field(default_factory=list)
-    affected_hosts: list[str] = Field(default_factory=list)
+    actor_ips: List[str] = Field(default_factory=list)
+    affected_hosts: List[str] = Field(default_factory=list)
 
     # MITRE mapping
-    mitre_techniques: list[MitreReference] = Field(default_factory=list)
+    mitre_techniques: List[MitreReference] = Field(default_factory=list)
     primary_tactic: Optional[str] = None
 
     # Confidence
@@ -98,7 +98,7 @@ class Incident(BaseModel):
     # Narratives
     executive_summary: str = ""
     technical_summary: str = ""
-    recommended_actions: list[str] = Field(default_factory=list)
+    recommended_actions: List[str] = Field(default_factory=list)
 
     # Analyst-mapped fields for UI/JSON export
     mi_id: str = Field(default="GenAI_SOC", alias="$MI_ID")
@@ -115,7 +115,7 @@ class Incident(BaseModel):
     mitre_technique: Optional[str] = None
 
     # Timeline
-    timeline: list[IncidentTimeline] = Field(default_factory=list)
+    timeline: List[IncidentTimeline] = Field(default_factory=list)
 
     # Detection metadata
     detection_tier: Optional[str] = None  # "deterministic", "correlation", "ai_agent"
@@ -123,8 +123,8 @@ class Incident(BaseModel):
 
     # Assignment and tracking
     assigned_to: Optional[str] = None
-    tags: list[str] = Field(default_factory=list)
-    notes: list[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
+    notes: List[str] = Field(default_factory=list)
 
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -139,9 +139,9 @@ class IncidentCreateRequest(BaseModel):
     title: str
     description: str
     priority: IncidentPriority = IncidentPriority.MEDIUM
-    chunk_ids: list[UUID] = Field(default_factory=list)
+    chunk_ids: List[UUID] = Field(default_factory=list)
     assigned_to: Optional[str] = None
-    tags: list[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
 
 
 class IncidentUpdateRequest(BaseModel):
@@ -150,7 +150,7 @@ class IncidentUpdateRequest(BaseModel):
     priority: Optional[IncidentPriority] = None
     assigned_to: Optional[str] = None
     notes: Optional[str] = None
-    tags: Optional[list[str]] = None
+    tags: Optional[List[str]] = None
 
 
 class IncidentSummary(BaseModel):
@@ -164,7 +164,7 @@ class IncidentSummary(BaseModel):
     chunk_count: int
     confidence: float
     primary_tactic: Optional[str] = None
-    file_ids: list[UUID] = Field(default_factory=list)
+    file_ids: List[UUID] = Field(default_factory=list)
     raw_log: Optional[str] = None
     source_ip: Optional[str] = None
     destination_ip: Optional[str] = None
@@ -184,13 +184,13 @@ class IncidentReport(BaseModel):
     incident: Incident
 
     # Extended details
-    behavioral_interpretations: list[dict] = Field(default_factory=list)
-    threat_intents: list[dict] = Field(default_factory=list)
-    mitre_mappings: list[dict] = Field(default_factory=list)
+    behavioral_interpretations: List[dict] = Field(default_factory=list)
+    threat_intents: List[dict] = Field(default_factory=list)
+    mitre_mappings: List[dict] = Field(default_factory=list)
 
     # Traceability
-    source_files: list[dict] = Field(default_factory=list)
-    event_sample: list[dict] = Field(default_factory=list)
+    source_files: List[dict] = Field(default_factory=list)
+    event_sample: List[dict] = Field(default_factory=list)
 
     # Generated at
     generated_at: datetime = Field(default_factory=datetime.utcnow)

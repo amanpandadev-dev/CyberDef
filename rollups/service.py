@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import UUID, uuid4
 
 # GPU acceleration: try to import cuDF (RAPIDS)
@@ -32,9 +32,9 @@ class ActorProfile(BaseModel):
     profile_id: UUID = Field(default_factory=uuid4)
 
     # Identity
-    primary_ip: str | None = None
-    all_ips: list[str] = Field(default_factory=list)
-    username: str | None = None
+    primary_ip: Optional[str] = None
+    all_ips: List[str] = Field(default_factory=list)
+    username: Optional[str] = None
 
     # Time span
     first_seen: datetime
@@ -47,11 +47,11 @@ class ActorProfile(BaseModel):
     total_denials: int = 0
 
     # Target analysis
-    unique_targets: set[str] = Field(default_factory=set)
+    unique_targets: Set[str] = Field(default_factory=set)
     target_count: int = 0
 
     # Port analysis
-    ports_accessed: set[int] = Field(default_factory=set)
+    ports_accessed: Set[int] = Field(default_factory=set)
     sensitive_port_access: bool = False
 
     # Patterns
@@ -59,11 +59,11 @@ class ActorProfile(BaseModel):
 
     # Risk indicators
     risk_score: float = 0.0
-    risk_factors: list[str] = Field(default_factory=list)
+    risk_factors: List[str] = Field(default_factory=list)
 
     # Source chunks
-    chunk_ids: list[UUID] = Field(default_factory=list)
-    file_ids: set[UUID] = Field(default_factory=set)
+    chunk_ids: List[UUID] = Field(default_factory=list)
+    file_ids: Set[UUID] = Field(default_factory=set)
 
     class Config:
         arbitrary_types_allowed = True
@@ -83,13 +83,13 @@ class RollupResult(BaseModel):
     files_analyzed: int
 
     # Actor profiles
-    actor_profiles: list[ActorProfile] = Field(default_factory=list)
+    actor_profiles: List[ActorProfile] = Field(default_factory=list)
 
     # High-risk actors
-    high_risk_actors: list[str] = Field(default_factory=list)
+    high_risk_actors: List[str] = Field(default_factory=list)
 
     # Cross-file correlations
-    cross_file_patterns: list[dict[str, Any]] = Field(default_factory=list)
+    cross_file_patterns: List[Dict[str, Any]] = Field(default_factory=list)
 
     # Created timestamp
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -128,17 +128,17 @@ class RollupService:
         instead of full Pydantic models (~50KB+). This prevents OOM for 500k+ chunks.
         """
         # Lightweight per-actor accumulators (NOT full chunk objects)
-        actor_stats: dict[str, dict] = {}
+        actor_stats: Dict[str, dict] = {}
 
         # Global trackers
         start_time = None
         end_time = None
-        file_ids: set[UUID] = set()
+        file_ids: Set[UUID] = set()
         chunks_count = 0
 
         # Cross-file trackers
-        actor_files: dict[str, set[UUID]] = defaultdict(set)
-        target_files: dict[str, set[UUID]] = defaultdict(set)
+        actor_files: Dict[str, Set[UUID]] = defaultdict(set)
+        target_files: Dict[str, Set[UUID]] = defaultdict(set)
 
         for chunk in chunks:
             chunks_count += 1
@@ -328,7 +328,7 @@ class RollupService:
         active_days: int,
         sensitive_access: bool,
         pattern: TemporalPattern,
-    ) -> tuple[float, list[str]]:
+    ) -> Tuple[float, List[str]]:
         """Calculate risk score and factors."""
         score = 0.0
         factors = []
@@ -376,7 +376,7 @@ class RollupService:
 
         return min(score, 1.0), factors
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get rollup statistics."""
         return {
             "rollups_performed": self.rollups_performed,

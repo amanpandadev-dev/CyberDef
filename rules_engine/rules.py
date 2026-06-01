@@ -14,7 +14,7 @@ from rules_engine.rules_injection import INJECTION_RULES
 from rules_engine.rules_recon import INFO_LEAKAGE_RULES, PATH_FILE_RULES
 
 
-def get_all_rule_classes() -> list[type[ThreatRule]]:
+def get_all_rule_classes() -> List[type[ThreatRule]]:
     """Get all rule classes."""
     return (
         INJECTION_RULES
@@ -29,17 +29,17 @@ def get_all_rule_classes() -> list[type[ThreatRule]]:
     )
 
 
-def get_all_rules() -> list[ThreatRule]:
+def get_all_rules() -> List[ThreatRule]:
     """Get instantiated rule objects."""
     return [cls() for cls in get_all_rule_classes()]
 
 
-def get_pattern_rules() -> list[ThreatRule]:
+def get_pattern_rules() -> List[ThreatRule]:
     """Get only regex-based (non-rate) rules."""
     return [cls() for cls in get_all_rule_classes() if not issubclass(cls, RateBasedRule)]
 
 
-def get_rate_rules() -> list[RateBasedRule]:
+def get_rate_rules() -> List[RateBasedRule]:
     """Get only rate-based rules."""
     return [cls() for cls in get_all_rule_classes() if issubclass(cls, RateBasedRule)]
 

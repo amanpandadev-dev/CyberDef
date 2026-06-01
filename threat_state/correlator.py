@@ -7,7 +7,7 @@ Tier 2: Cross-batch correlation rules that detect threats invisible in
 single 15-minute windows. Uses the Threat State Store accumulated data.
 """
 
-from typing import Any
+from typing import Any, Dict, List, Set
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -29,17 +29,17 @@ class CorrelationFinding(BaseModel):
     confidence: float
     description: str
     src_ip: str
-    evidence: dict[str, Any] = Field(default_factory=dict)
+    evidence: Dict[str, Any] = Field(default_factory=dict)
     detection_tier: str = "correlation"
 
 
 class CorrelationResult(BaseModel):
     """Result from Tier 2 day-level correlation."""
-    findings: list[CorrelationFinding] = Field(default_factory=list)
-    new_patterns: list[CorrelationFinding] = Field(default_factory=list)
+    findings: List[CorrelationFinding] = Field(default_factory=list)
+    new_patterns: List[CorrelationFinding] = Field(default_factory=list)
     processing_time_ms: int = 0
     needs_ai_review: bool = False
-    ai_review_reasons: list[str] = Field(default_factory=list)
+    ai_review_reasons: List[str] = Field(default_factory=list)
 
 
 class DayLevelCorrelator:
@@ -50,14 +50,14 @@ class DayLevelCorrelator:
 
     def __init__(self, store: ThreatStateStore):
         self.store = store
-        self._previously_reported: set[str] = set()
+        self._previously_reported: Set[str] = set()
 
-    def correlate(self, events: list[NormalizedEvent] | None = None) -> CorrelationResult:
+    def correlate(self, events: List[NormalizedEvent] | None = None) -> CorrelationResult:
         """Run all correlation rules and return new findings."""
         import time
         start = time.perf_counter_ns()
 
-        all_findings: list[CorrelationFinding] = []
+        all_findings: List[CorrelationFinding] = []
 
         for actor in self.store.actors.values():
             # Run each correlation rule
@@ -101,21 +101,24 @@ class DayLevelCorrelator:
         )
 
     # -- C1: Low-and-slow brute force --
-    def _check_low_slow_brute_force(self, actor: ActorState) -> list[CorrelationFinding]:
-        if actor.auth_failures_total >= 50:
+    def _check_low_slow_brute_force(self, actor: ActorState) -> List[CorrelationFinding]:
+        # Exclude static content failures from the count
+        real_auth_failures = actor.auth_failures_total
+        
+        if real_auth_failures >= 50:
             return [CorrelationFinding(
                 correlation_rule="low_slow_brute_force",
                 category="broken_authentication",
                 severity="high",
                 confidence=0.85,
-                description=f"Low-and-slow brute force: {actor.auth_failures_total} auth failures across {actor.batches_seen_in} batches",
+                description=f"Low-and-slow brute force: {real_auth_failures} auth failures across {actor.batches_seen_in} batches (excluding {actor.auth_failures_static_content} static content failures)",
                 src_ip=actor.ip,
-                evidence={"auth_failures": actor.auth_failures_total, "batches": actor.batches_seen_in},
+                evidence={"auth_failures": real_auth_failures, "static_content_failures": actor.auth_failures_static_content, "batches": actor.batches_seen_in},
             )]
         return []
 
     # -- C2: Distributed reconnaissance --
-    def _check_distributed_recon(self, events: list[NormalizedEvent]) -> list[CorrelationFinding]:
+    def _check_distributed_recon(self, events: List[NormalizedEvent]) -> List[CorrelationFinding]:
         findings = []
         from collections import defaultdict
 
@@ -181,7 +184,7 @@ class DayLevelCorrelator:
         return findings
 
     # -- C3: Multi-vector attacker --
-    def _check_multi_vector(self, actor: ActorState) -> list[CorrelationFinding]:
+    def _check_multi_vector(self, actor: ActorState) -> List[CorrelationFinding]:
         if len(actor.attack_categories_seen) >= 3:
             return [CorrelationFinding(
                 correlation_rule="multi_vector_attacker",
@@ -195,7 +198,7 @@ class DayLevelCorrelator:
         return []
 
     # -- C4: Kill-chain progression --
-    def _check_kill_chain(self, actor: ActorState) -> list[CorrelationFinding]:
+    def _check_kill_chain(self, actor: ActorState) -> List[CorrelationFinding]:
         recon_cats = {"recon_scanner", "bot_automation"}
         exploit_cats = {"sql_injection", "cross_site_scripting", "os_command_injection",
                         "path_traversal", "lfi", "local_file_inclusion", "rfi", "remote_code_execution",
@@ -224,7 +227,7 @@ class DayLevelCorrelator:
         return []
 
     # -- C5: Scanner persistence --
-    def _check_scanner_persistence(self, actor: ActorState) -> list[CorrelationFinding]:
+    def _check_scanner_persistence(self, actor: ActorState) -> List[CorrelationFinding]:
         scanner_uas = ["sqlmap", "nikto", "nuclei", "dirbuster", "gobuster",
                        "wfuzz", "ffuf", "burp", "nmap", "acunetix", "nessus"]
         persistent_scanners = [
@@ -244,7 +247,7 @@ class DayLevelCorrelator:
         return []
 
     # -- C6: Rate acceleration --
-    def _check_rate_acceleration(self, actor: ActorState) -> list[CorrelationFinding]:
+    def _check_rate_acceleration(self, actor: ActorState) -> List[CorrelationFinding]:
         """Detect rate acceleration across the last three time windows."""
         # Only check public IPs and configured custom exclusions.
         if is_ip_excluded(actor.ip):
@@ -295,7 +298,7 @@ class DayLevelCorrelator:
 
 
     # -- C7: Off-hours anomaly --
-    def _check_off_hours(self, actor: ActorState) -> list[CorrelationFinding]:
+    def _check_off_hours(self, actor: ActorState) -> List[CorrelationFinding]:
         off_hours_attacks = 0
         for entry in actor.attack_timeline:
             try:
@@ -317,7 +320,7 @@ class DayLevelCorrelator:
         return []
 
     # -- C8: Data exfiltration pattern --
-    def _check_data_exfil(self, actor: ActorState) -> list[CorrelationFinding]:
+    def _check_data_exfil(self, actor: ActorState) -> List[CorrelationFinding]:
         import ipaddress
 
         # Check if IP is public (uses centralized IP filter with custom exclusions)

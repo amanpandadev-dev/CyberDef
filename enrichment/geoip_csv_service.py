@@ -26,9 +26,9 @@ class CSVGeoIPService:
     Example: 1.0.0.0/24,2077456,OC,Oceania,AU,Australia,0,0
     """
 
-    def __init__(self, csv_path: Path | None = None, auto_download: bool = True):
+    def __init__(self, csv_path: Optional[Path] = None, auto_download: bool = True):
         self.csv_path = csv_path or Path("data/geoip2-ipv4.csv")
-        self.networks: list[tuple[ipaddress.IPv4Network, dict[str, str]]] = []
+        self.networks: List[Tuple[ipaddress.IPv4Network, Dict[str, str]]] = []
         self.enabled = False
 
         # GitHub CSV URL
@@ -138,7 +138,7 @@ class CSVGeoIPService:
         logger.info(f"Loaded {len(self.networks)} IP networks")
         return True
 
-    def _lookup_ip(self, ip_str: str) -> dict[str, str] | None:
+    def _lookup_ip(self, ip_str: str) -> Dict[str, str] | None:
         """Look up geographic data for an IP address."""
         try:
             ip = ipaddress.IPv4Address(ip_str)
@@ -168,7 +168,7 @@ class CSVGeoIPService:
 
         return event
 
-    def enrich_batch(self, events: list[NormalizedEvent]) -> list[NormalizedEvent]:
+    def enrich_batch(self, events: List[NormalizedEvent]) -> List[NormalizedEvent]:
         """Enrich batch of events with geographic data."""
         if not self.enabled:
             return events

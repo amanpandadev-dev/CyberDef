@@ -34,6 +34,10 @@ class KnownScannerUARule(ThreatRule):
     ]
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:
+            # Only match successful status codes in the 2xx range
+            if event.http_status is None or not (200 <= event.http_status < 300):
+                return None
+
             # Exclude private/reserved IP ranges
             src_ip = (event.src_ip or "").strip()
 

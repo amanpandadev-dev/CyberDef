@@ -6,19 +6,54 @@ Main FastAPI application entry point.
 
 from __future__ import annotations
 
+import csv
+from datetime import date
+import io
+import shutil
 from contextlib import asynccontextmanager
 from typing import Any
+from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+# pyrefly: ignore [missing-import]
+import httpx
+# pyrefly: ignore [missing-import]
+from sqlalchemy import text
+# pyrefly: ignore [missing-import]
+import uvicorn
 
+from agents.base import OllamaClient
+from agents.cache import get_analysis_cache
+from agents.orchestrator import AgentOrchestrator
+from agents.outputs_storage import get_agent_outputs_storage
+from behavior_summary.service import BehaviorSummaryService
 from case_api.routes import router as case_router
-from core.auth import optional_auth, require_auth
+from chunking.service import ChunkingService
+from core.auth import optional_auth, require_auth, resolve_user_identity
 from core.auth_routes import router as auth_router
 from core.config import get_settings
+from core.flush_buffer import get_flush_worker
+from core.ip_filter import is_ip_excluded, is_zscaler_ip
 from core.logging import get_logger, setup_logging
+from database import close_db, get_db_session, init_db
 from file_intake.routes import router as file_router
+from file_intake.service import FileIntakeService
+from file_watcher import FileWatcher
+from file_watcher.handler import handle_new_csv
+from incidents.service import IncidentService
+from log_parser.base import ParserRegistry
+from normalization.deduplication import Deduplicator
+from normalization.service import NormalizationService
+from reports.writer import ReportWriter
+from rollups import RollupService
+from rollups.chunk_storage import get_chunk_storage
+from rules_engine.engine import DeterministicEngine
+from shared_models.chunks import TemporalPattern
+from shared_models.events import RawEventRow
+from threat_state.correlator import CorrelationResult, DayLevelCorrelator
+from threat_state.store import get_threat_state_store
 
 # Initialize logging
 setup_logging()
@@ -38,8 +73,6 @@ async def pre_flight_check() -> dict[str, bool]:
 
     # 1. Check Database
     try:
-        from database import get_db_session
-        from sqlalchemy import text
         with get_db_session() as session:
             session.execute(text("SELECT 1"))
         results["database"] = True
@@ -48,7 +81,6 @@ async def pre_flight_check() -> dict[str, bool]:
 
     # 2. Check Ollama API & Models
     try:
-        import httpx
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get(f"{settings.ollama_host}/api/tags")
             if resp.status_code == 200:
@@ -81,20 +113,16 @@ async def lifespan(app: FastAPI):
     settings.ensure_dirs()
 
     # Initialize database
-    from database import init_db
     init_db()
     
     # Pre-flight readiness check
     await pre_flight_check()
 
-    # Start file watcher â€” auto-analyze CSVs dropped into data/
-    from file_watcher import FileWatcher
-    from file_watcher.handler import handle_new_csv
+    # Start file watcher — auto-analyze CSVs dropped into data/
     watcher = FileWatcher(on_new_file=handle_new_csv, watch_dir=settings.data_dir)
     await watcher.start()
 
     # Start high-throughput Flush Buffer
-    from core.flush_buffer import get_flush_worker
     flush_worker = get_flush_worker()
     await flush_worker.start()
 
@@ -103,7 +131,6 @@ async def lifespan(app: FastAPI):
     # Cleanup on shutdown
     await watcher.stop()
     await flush_worker.stop()
-    from database import close_db
     close_db()
     logger.info("AegisNet shutting down")
 
@@ -144,7 +171,6 @@ async def health_check() -> dict[str, Any]:
     # Check Ollama availability
     ollama_ok = False
     try:
-        from agents.base import OllamaClient
         client = OllamaClient()
         ollama_ok = await client.health_check()
         await client.close()
@@ -177,7 +203,7 @@ async def root() -> dict[str, str]:
     }
 
 
-# Analysis endpoint â€” Three-Tier Pipeline
+# Analysis endpoint — Three-Tier Pipeline
 @app.post("/api/v1/analyze", tags=["Analysis"])
 async def analyze_file(
     file_id: str,
@@ -196,29 +222,10 @@ async def analyze_file(
     Note: Authentication is optional for backend testing. If no token is provided,
     a default test user will be used.
     """
-    import csv
-    import io
-    from datetime import date
-    from uuid import UUID
-
-    from agents.orchestrator import AgentOrchestrator
-    from behavior_summary.service import BehaviorSummaryService
-    from chunking.service import ChunkingService
-    from core.auth import resolve_user_identity
-    from core.config import get_settings
-    from file_intake.service import FileIntakeService
-    from incidents.service import IncidentService
-    from log_parser.base import ParserRegistry
-    from normalization.service import NormalizationService
-    from rules_engine.engine import DeterministicEngine
-    from shared_models.events import RawEventRow
-    from threat_state.correlator import CorrelationResult, DayLevelCorrelator
-    from threat_state.store import get_threat_state_store
-
     settings = get_settings()
     logger.info(f"Starting three-tier analysis pipeline | file_id={file_id} | correlation_enabled={settings.enable_correlation_tier} | ai_enabled={settings.enable_ai_tier}")
 
-    # â”€â”€ Step 0: Get & parse file â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # — Step 0: Get & parse file ————————————————————————————————————————————
     file_service = FileIntakeService()
     file_metadata = await file_service.get_file(file_id)
 
@@ -228,7 +235,7 @@ async def analyze_file(
             detail=f"File not found: {file_id}",
         )
 
-    # â”€â”€ Step 0: Immediate Status Update â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # — Step 0: Immediate Status Update ————————————————————————————————————
     await file_service.start_processing(file_id)
 
     try:
@@ -293,7 +300,6 @@ async def analyze_file(
         event_batch = normalizer.normalize_batch_parallel(parsed_events)
 
         # Post-normalization deduplication
-        from normalization.deduplication import Deduplicator
         deduplicator = Deduplicator()
         deduped_events = deduplicator.deduplicate(event_batch.events)
         dedupe_path = deduplicator.write_jsonl(deduped_events, settings.processed_dir, file_id) 
@@ -301,17 +307,17 @@ async def analyze_file(
 
         logger.info(f"Parse, normalize & deduplicate complete | file_id={file_id}, events={len(enriched_events)}")
 
-        # â”€â”€ TIER 1: Deterministic Rules Engine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # — TIER 1: Deterministic Rules Engine ————————————————————————————————
         engine = DeterministicEngine()
         tier1_result = engine.scan_parallel(enriched_events)
 
         logger.info(f"Tier 1 complete | threats={len(tier1_result.threats)}, matches={len(tier1_result.matches)}, time_ms={tier1_result.processing_time_ms}")
 
-        # â”€â”€ Update Threat State Store â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # — Update Threat State Store ——————————————————————————————————————————
         state_store = get_threat_state_store(date.today())
         state_store.update_from_batch(enriched_events, tier1_result)
 
-        # â”€â”€ TIER 2: Day-Level Correlator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # — TIER 2: Day-Level Correlator ——————————————————————————————————————
         if settings.enable_correlation_tier:
             correlator = DayLevelCorrelator(state_store)
             tier2_result = correlator.correlate(events=enriched_events)
@@ -320,7 +326,7 @@ async def analyze_file(
             logger.info("Tier 2 (Correlation) disabled by configuration")
             tier2_result = CorrelationResult(findings=[], new_patterns=[])
 
-        # â”€â”€ Create incidents from Tier 1 & Tier 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # — Create incidents from Tier 1 & Tier 2 —————————————————————————————
         incident_service = IncidentService()
         all_incidents = []
         parsed_uuid = UUID(file_id)
@@ -340,7 +346,7 @@ async def analyze_file(
                 )
                 all_incidents.append(incident)
 
-        # â”€â”€ Incremental Commit: Tier 1 & 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # — Incremental Commit: Tier 1 & 2 —————————————————————————————————————
         # This ensures findings are visible even if AI phase fails
         await file_service.update_analysis_stats(
             file_id=file_id,
@@ -351,29 +357,73 @@ async def analyze_file(
             incidents_created=len(all_incidents),
         )
 
-        # â”€â”€ Chunking & TIER 3: AI Agent Pipeline (if needed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # — Chunking & TIER 3: AI Agent Pipeline (if needed) ———————————————————
         chunking_svc = ChunkingService()
         chunks = await chunking_svc.chunk_events(enriched_events, file_id=parsed_uuid)
 
-        # Balanced filtering â€” catches low-volume targeted attacks too
+        # Balanced filtering — catches low-volume targeted attacks too
         suspicious_chunks = chunking_svc.filter_suspicious_chunks(
             chunks,
-            min_events=10,           # catch targeted attacks (â‰¥10 events)
-            min_failure_rate=0.3,    # original threshold â€” good balance
+            min_events=10,           # catch targeted attacks (≥10 events)
+            min_failure_rate=0.3,    # original threshold — good balance
             min_unique_targets=3,    # original threshold
         )
 
+        # Collect IPs that triggered Tier 1 or Tier 2 threats/findings
+        incident_ips: set[str] = set()
+        for threat in tier1_result.threats:
+            if threat.src_ip:
+                incident_ips.add(threat.src_ip)
+            for ip in threat.src_ips:
+                if ip:
+                    incident_ips.add(ip)
+        if settings.enable_correlation_tier:
+            for pattern in tier2_result.findings:
+                if pattern.src_ip:
+                    incident_ips.add(pattern.src_ip)
+
+        # Ensure chunks associated with Tier 1/2 incidents are included in suspicious_chunks
+        suspicious_chunk_ids = {c.chunk_id for c in suspicious_chunks}
+        for chunk in chunks:
+            if chunk.chunk_id not in suspicious_chunk_ids:
+                ip = chunk.actor.src_ip if chunk.actor else None
+                ips = chunk.actor.src_ips if chunk.actor else []
+                if (ip and ip in incident_ips) or any(i in incident_ips for i in ips if i):
+                    suspicious_chunks.append(chunk)
+                    suspicious_chunk_ids.add(chunk.chunk_id)
+
+        # Filter out chunks originating from private/internal or Zscaler IPs before AI escalation
+        filtered_chunks = []
+        for chunk in suspicious_chunks:
+            ip = chunk.actor.src_ip if chunk.actor else None
+            ips = chunk.actor.src_ips if chunk.actor else []
+            
+            # Check if primary IP or any of secondary IPs are private/Zscaler
+            is_internal_or_zscaler = False
+            if ip and (is_ip_excluded(ip) or is_zscaler_ip(ip)):
+                is_internal_or_zscaler = True
+            elif any(is_ip_excluded(i) or is_zscaler_ip(i) for i in ips if i):
+                is_internal_or_zscaler = True
+                
+            if not is_internal_or_zscaler:
+                filtered_chunks.append(chunk)
+        
+        suspicious_chunks = filtered_chunks
+
         # Store chunks for rollup via Async Flush Buffer
-        from core.flush_buffer import get_flush_worker
         flush_worker = get_flush_worker()
         for chunk in chunks:
             await flush_worker.submit_chunk(chunk)
 
         ai_outputs = []
-        needs_ai = tier1_result.needs_ai_review or tier2_result.needs_ai_review
+        needs_ai = settings.enable_ai_tier and (
+            tier1_result.needs_ai_review 
+            or tier2_result.needs_ai_review 
+            or bool(incident_ips)
+        )
 
-        # â”€â”€ Scale optimization: risk-score, deprioritize, and cap for AI â”€â”€
-        MAX_AI_CHUNKS = 20          # Generous cap â€” ~4 min with 5 concurrent
+        # — Scale optimization: risk-score, deprioritize, and cap for AI ———————
+        MAX_AI_CHUNKS = 20          # Generous cap — ~4 min with 5 concurrent
         MAX_AI_CONCURRENT = 2       # Reduce to 2 to prevent Ollama HTTP timeouts during heavy load
 
         if needs_ai and suspicious_chunks:
@@ -397,7 +447,6 @@ async def analyze_file(
                 score += min(profile.events_per_minute / 50.0, 2.0)
                 score += profile.failure_rate * 3.0
                 score += min(chunk.targets.unique_target_count / 10.0, 2.0)
-                from shared_models.chunks import TemporalPattern
                 if chunk.temporal_pattern == TemporalPattern.ESCALATING:
                     score += 2.0
                 elif chunk.temporal_pattern == TemporalPattern.BURSTY:
@@ -405,6 +454,11 @@ async def analyze_file(
                 score += min(profile.total_events / 500.0, 1.0)
 
                 chunk_ip = chunk.actor.src_ip if chunk.actor else None
+                chunk_ips = chunk.actor.src_ips if chunk.actor else []
+                is_incident_chunk = (chunk_ip and chunk_ip in incident_ips) or any(i in incident_ips for i in chunk_ips if i)
+                if is_incident_chunk:
+                    score += 100.0
+
                 if chunk_ip and chunk_ip in fully_covered_ips:
                     score *= 0.5
 
@@ -426,7 +480,6 @@ async def analyze_file(
                 )
 
                 # Store agent outputs
-                from agents.outputs_storage import get_agent_outputs_storage
                 outputs_storage = get_agent_outputs_storage()
                 outputs_storage.store_outputs(file_id, ai_outputs)
 
@@ -440,7 +493,7 @@ async def analyze_file(
             else:
                 logger.info("No chunks qualified for AI review")
         else:
-            logger.info("Tier 3 AI skipped â€” deterministic analysis sufficient")
+            logger.info("Tier 3 AI skipped — deterministic analysis sufficient")
 
         def _incident_id_value(incident: Any) -> Any:
             if hasattr(incident, "incident_id"):
@@ -472,8 +525,7 @@ async def analyze_file(
 
         logger.info(f"Three-tier analysis complete | file_id={file_id}, events={len(enriched_events)}, tier1_threats={len(tier1_result.threats)}, tier2_correlations={len(tier2_result.new_patterns)}, ai_analyses={len(ai_outputs)}, total_incidents={len(all_incidents)}")
 
-        # â”€â”€ Generate human-readable report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        from reports.writer import ReportWriter
+        # — Generate human-readable report —————————————————————————————————————
         report_writer = ReportWriter()
         report_path = report_writer.generate_report(
             file_id=file_id,
@@ -560,10 +612,6 @@ async def get_today_threat_summary(
     Get accumulated threat intelligence for today.
     Returns day-level view across all 15-minute batches.
     """
-    from datetime import date
-
-    from threat_state.store import get_threat_state_store
-
     store = get_threat_state_store(date.today())
     return store.get_day_summary()
 
@@ -583,8 +631,6 @@ async def get_agent_outputs(
     - MITRE Mapping
     - Triage & Narrative
     """
-    from agents.outputs_storage import get_agent_outputs_storage
-
     storage = get_agent_outputs_storage()
     summary = storage.get_aggregated_summary(file_id)
 
@@ -607,9 +653,6 @@ async def get_rollup_analysis(
     Returns:
         Rollup analysis with actor profiles and risk scores
     """
-    from rollups import RollupService
-    from rollups.chunk_storage import get_chunk_storage
-
     # Get storage and initialize service
     chunk_storage = get_chunk_storage()
     rollup_service = RollupService()
@@ -682,9 +725,6 @@ async def get_validation_stats(
         - Agent statistics
         - Analysis counts
     """
-    from agents.cache import get_analysis_cache
-    from agents.outputs_storage import get_agent_outputs_storage
-
     # Get cache stats
     cache = get_analysis_cache()
     cache_stats = cache.get_stats()
@@ -717,7 +757,7 @@ async def get_validation_stats(
     return {
         "reproducibility": {
             "status": "enabled",
-            "description": "Same input (chunk hash) â†’ Same output (cached result)",
+            "description": "Same input (chunk hash) → Same output (cached result)",
             "cache_hit_rate": cache_stats.get("hit_rate_percent", 0),
             "total_cache_entries": cache_stats.get("memory_entries", 0),
         },
@@ -725,7 +765,7 @@ async def get_validation_stats(
             "temperature": settings.ollama_temperature,
             "max_temperature": 0.2,
             "model": settings.ollama_model,
-            "description": "Low temperature (â‰¤0.2) for deterministic outputs",
+            "description": "Low temperature (≤0.2) for deterministic outputs",
         },
         "safeguards": [
             "Temperature capped at 0.2 for determinism",
@@ -766,7 +806,7 @@ async def get_validation_stats(
     }
 
 
-# â”€â”€ Clear All Data endpoint (for fresh testing) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# — Clear All Data endpoint (for fresh testing) —————————————————————————————————
 @app.delete("/api/v1/system/clear-all", tags=["System"])
 async def clear_all_data(
     _current_user: str = Depends(optional_auth),
@@ -775,16 +815,11 @@ async def clear_all_data(
     Clear ALL analysis data for fresh testing.
     Wipes: DB tables, raw files, processed files, reports, caches, threat state.
     """
-    import shutil
-
     settings = get_settings()
     cleared = []
 
     # 1. Clear PostgreSQL tables
     try:
-        from sqlalchemy import text
-
-        from database import get_db_session
         with get_db_session() as session:
             for table in ['files', 'file_intakes', 'agent_outputs', 'behavior_summaries',
                           'cases', 'chunks', 'incidents', 'normalized_events']:
@@ -811,7 +846,7 @@ async def clear_all_data(
         processed_dir.mkdir(parents=True, exist_ok=True)
         cleared.append('processed_files')
 
-    # 4. Clear generated reports (only .md files â€” preserve source code)
+    # 4. Clear generated reports (only .md files — preserve source code)
     reports_dir = settings.base_dir / 'reports'
     if reports_dir.exists():
         report_files = list(reports_dir.glob('*_report.md'))
@@ -822,7 +857,6 @@ async def clear_all_data(
 
     # 5. Clear analysis cache from memory
     try:
-        from agents.cache import get_analysis_cache
         cache = get_analysis_cache()
         cache._memory_cache.clear()
         cleared.append('analysis_cache')
@@ -850,8 +884,6 @@ async def global_exception_handler(request, exc):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
     settings = get_settings()
     uvicorn.run(
         "main:app",

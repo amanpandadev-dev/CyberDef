@@ -43,6 +43,13 @@ Priority levels:
 - Low: Unusual but likely benign, review when time permits
 - Informational: Context only, no action needed
 
+FALSE POSITIVE AND SUPPRESSION RULE:
+- Carefully inspect if the behavior matches benign operational patterns, such as internal health monitoring checks, automated load balancer probes, search engine indexers, or legitimate administrative scripting.
+- If the behavioral interpretation deems the activity not suspicious, or if you classify it as a False Positive / benign noise, you MUST:
+  1. Assign a priority of `Low` or `Informational`.
+  2. Set the `"suspicious"` flag to `false`.
+  3. Assign a high `"confidence"` score (e.g., `0.9` or `1.0`) and matching `"confidence_score"` (e.g., `9` or `10`) to confirm this decision.
+
 Be actionable and specific in your recommendations.
 Write summaries appropriate for their audience:
 - Executive: Non-technical, business impact focused
@@ -84,7 +91,9 @@ Guidelines:
 - Technical summary should include relevant technical details
 - Suggest data sources that would help confirm/deny the threat
 - If an extracted field is not available, use null or "null"
-- confidence_score must align with confidence (0.0-1.0 mapped to 1-10)"""
+- confidence_score must align with confidence (0.0-1.0 mapped to 1-10)
+- If the behavior is classified as a False Positive or benign noise (such as health check probes, standard crawlers, or internal administrative scripting), set `"suspicious": false`, `"priority": "Informational"`, `"confidence": 0.9` (or above), and `"confidence_score": 9` (or above).
+"""
 
         return prompt
 

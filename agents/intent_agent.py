@@ -50,10 +50,15 @@ Express low confidence when behavior could have benign explanations."""
 
     def build_prompt(self, summary: dict[str, Any]) -> str:
         """Build prompt for intent analysis."""
+        agent_context = summary.get("_agent_context", {})
+        prior_outputs = agent_context.get("prior_outputs", {})
         prompt = f"""Analyze this behavioral summary and infer the potential attacker intent.
 
 BEHAVIORAL SUMMARY:
 {json.dumps(summary, indent=2)}
+
+PRIOR AGENT OUTPUTS:
+{json.dumps(prior_outputs, indent=2)}
 
 Respond with ONLY this JSON format:
 {{
@@ -67,6 +72,7 @@ Respond with ONLY this JSON format:
 Guidelines:
 - Map to the MOST LIKELY kill chain stage
 - Consider all evidence before deciding
+- Treat the Behavioral Interpretation output as prior analysis, not as new evidence
 - Include plausible alternatives
 - Lower confidence if behavior could be normal system activity"""
 

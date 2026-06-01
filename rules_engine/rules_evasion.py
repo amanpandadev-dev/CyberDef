@@ -274,16 +274,16 @@ class PathNormalizationBypassRule(Status200ThreatRule):
         return None  # Cannot determine actor — skip this event
 
     @classmethod
-    def check_batch(cls, events: list[NormalizedEvent]) -> list[ThreatMatch]:
+    def check_batch(cls, events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """
         Stateful path normalization bypass detection across a batch.
 
         - Dot-encoded bypass (%2e%2e / %252e%252e) → immediate HIGH alert.
         - Structural bypass (// /./ /;/ \\\\)       → counter per actor; alert at ≥5.
         """
-        matches: list[ThreatMatch] = []
-        structural_counts: dict[str, int] = defaultdict(int)
-        structural_last: dict[str, NormalizedEvent] = {}
+        matches: List[ThreatMatch] = []
+        structural_counts: Dict[str, int] = defaultdict(int)
+        structural_last: Dict[str, NormalizedEvent] = {}
 
         for ev in events:
             if not _is_status_200(ev):

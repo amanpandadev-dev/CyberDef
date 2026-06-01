@@ -6,7 +6,7 @@ Maps agent outputs to validated MITRE ATT&CK techniques.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Dict, List
 
 from core.logging import get_logger
 from mitre.tactics import get_technique
@@ -24,7 +24,7 @@ class MitreMapper:
         self.mappings_validated = 0
         self.unknown_techniques = 0
 
-    def validate_mapping(self, mapping: MitreMapping) -> dict[str, Any]:
+    def validate_mapping(self, mapping: MitreMapping) -> Dict[str, Any]:
         """
         Validate and enrich a MITRE mapping.
 
@@ -68,11 +68,11 @@ class MitreMapper:
 
     def suggest_techniques_for_behavior(
         self,
-        ports: list[int],
+        ports: List[int],
         has_denials: bool,
         has_multiple_targets: bool,
         temporal_pattern: str,
-    ) -> list[dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Suggest potential MITRE techniques based on behavior.
 
@@ -161,7 +161,7 @@ class MitreMapper:
 
         return suggestions
 
-    def get_technique_context(self, technique_id: str) -> dict[str, Any]:
+    def get_technique_context(self, technique_id: str) -> Dict[str, Any]:
         """
         Get full context for a technique including related techniques.
 
@@ -197,7 +197,7 @@ class MitreMapper:
             "related_techniques": related,
         }
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get mapping statistics."""
         return {
             "mappings_validated": self.mappings_validated,

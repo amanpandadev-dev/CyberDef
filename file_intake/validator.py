@@ -46,8 +46,8 @@ class FileValidator:
         Returns:
             FileValidationResult with validation details
         """
-        errors: list[str] = []
-        warnings: list[str] = []
+        errors: List[str] = []
+        warnings: List[str] = []
 
         file_size = len(content)
 
@@ -196,7 +196,7 @@ class FileValidator:
 
         return max(delimiters, key=delimiters.get)
 
-    def _detect_header(self, rows: list[list[str]]) -> bool:
+    def _detect_header(self, rows: List[List[str]]) -> bool:
         """Detect if first row is a header."""
         if len(rows) < 2:
             return True

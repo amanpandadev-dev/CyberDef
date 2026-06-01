@@ -16,7 +16,7 @@ import json
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Set
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -81,7 +81,7 @@ def _activity_window(first_seen: Any, last_seen: Any) -> str | None:
         return None
 
 
-def _group_threats_by_ip(threats: list[Any]) -> dict[str, list[Any]]:
+def _group_threats_by_ip(threats: List[Any]) -> Dict[str, List[Any]]:
     """
     Group Tier 1 threat objects by their CANONICAL source IP.
 
@@ -93,7 +93,7 @@ def _group_threats_by_ip(threats: list[Any]) -> dict[str, list[Any]]:
       3. "Unknown"
     The full list of participating IPs is still shown in the metadata table.
     """
-    grouped: dict[str, list[Any]] = defaultdict(list)
+    grouped: Dict[str, List[Any]] = defaultdict(list)
     for threat in threats:
         primary = getattr(threat, "src_ip", None)
         if not primary:
@@ -103,7 +103,7 @@ def _group_threats_by_ip(threats: list[Any]) -> dict[str, list[Any]]:
     return grouped
 
 
-def _build_t1_attack_map(threats: list[Any]) -> dict[str, list[Any]]:
+def _build_t1_attack_map(threats: List[Any]) -> Dict[str, List[Any]]:
     """
     Full fan-out map: every participating IP → all threats it appears in.
 
@@ -112,7 +112,7 @@ def _build_t1_attack_map(threats: list[Any]) -> dict[str, list[Any]]:
     Unlike _group_threats_by_ip this does NOT deduplicate — a multi-IP
     threat will appear under all its src_ips here.
     """
-    attack_map: dict[str, list[Any]] = defaultdict(list)
+    attack_map: Dict[str, List[Any]] = defaultdict(list)
     for threat in threats:
         ips = getattr(threat, "src_ips", []) or []
         if not ips:
@@ -123,18 +123,18 @@ def _build_t1_attack_map(threats: list[Any]) -> dict[str, list[Any]]:
     return attack_map
 
 
-def _group_patterns_by_ip(patterns: list[Any]) -> dict[str, list[Any]]:
+def _group_patterns_by_ip(patterns: List[Any]) -> Dict[str, List[Any]]:
     """Group Tier 2 correlation patterns by src_ip."""
-    grouped: dict[str, list[Any]] = defaultdict(list)
+    grouped: Dict[str, List[Any]] = defaultdict(list)
     for pattern in patterns:
         ip = getattr(pattern, "src_ip", None) or "Unknown"
         grouped[ip].append(pattern)
     return grouped
 
 
-def _group_ai_by_ip(ai_outputs: list[Any]) -> dict[str, list[Any]]:
+def _group_ai_by_ip(ai_outputs: List[Any]) -> Dict[str, List[Any]]:
     """Group Tier 3 AI analysis outputs by their src_ip field."""
-    grouped: dict[str, list[Any]] = defaultdict(list)
+    grouped: Dict[str, List[Any]] = defaultdict(list)
     for output in ai_outputs:
         ips = _agent_output_ips(output)
         for ip in ips:
@@ -142,7 +142,7 @@ def _group_ai_by_ip(ai_outputs: list[Any]) -> dict[str, list[Any]]:
     return grouped
 
 
-def _agent_output_ips(output: Any) -> list[str]:
+def _agent_output_ips(output: Any) -> List[str]:
     """Extract source IPs from an AgentOutput or its nested triage result."""
     ips = []
     for value in getattr(output, "src_ips", None) or []:
@@ -167,11 +167,11 @@ def _is_present_ip(value: Any) -> bool:
 
 
 def _build_event_index(
-    events: list[Any] | None,
-    event_ids: set[str] | None = None,
-) -> dict[str, Any]:
+    events: List[Any] | None,
+    event_ids: Set[str] | None = None,
+) -> Dict[str, Any]:
     """Index normalized events by event_id for raw-log lookup."""
-    indexed: dict[str, Any] = {}
+    indexed: Dict[str, Any] = {}
     wanted = event_ids or set()
     if event_ids is not None and not wanted:
         return indexed
@@ -229,11 +229,11 @@ def _event_urls(event: Any) -> dict:
 
 def _raw_logs_for_threat(
     threat: Any,
-    event_by_id: dict[str, Any],
+    event_by_id: Dict[str, Any],
     limit: int = 5,
     filter_ip: "str | None" = None,
-    all_events: "list[Any] | None" = None,
-    match_evidence_by_event_id: "dict[str, str] | None" = None,
+    all_events: "List[Any] | None" = None,
+    match_evidence_by_event_id: "Dict[str, str] | None" = None,
 ) -> list:
     """
     Return (src_ip, urls, raw_log, reason) quadruples for a deterministic threat.
@@ -314,7 +314,7 @@ def _raw_logs_for_threat(
 class ReportWriter:
     """Writes human-readable threat analysis reports to the reports/ folder."""
 
-    def __init__(self, reports_dir: Path | None = None):
+    def __init__(self, reports_dir: Optional[Path] = None):
         self.reports_dir = reports_dir or REPORTS_DIR
         self.reports_dir.mkdir(parents=True, exist_ok=True)
 
@@ -327,10 +327,10 @@ class ReportWriter:
         events_normalized: int,
         tier1_result: Any,
         tier2_result: Any,
-        ai_outputs: list[Any],
-        incidents: list[Any],
-        events: list[Any] | None = None,
-        day_summary: dict[str, Any] | None = None,
+        ai_outputs: List[Any],
+        incidents: List[Any],
+        events: List[Any] | None = None,
+        day_summary: Dict[str, Any] | None = None,
     ) -> Path:
         """Generate and save a complete analysis report. Returns the file path."""
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -338,7 +338,7 @@ class ReportWriter:
         report_name = f"{ts}_{file_id}_{safe_name}_report.md"
         report_path = self.reports_dir / report_name
 
-        lines: list[str] = []
+        lines: List[str] = []
         _a = lines.append
 
         # ── Header ────────────────────────────────────────────────────────────
@@ -388,7 +388,7 @@ class ReportWriter:
         high_count     = sum(1 for t in threats if t.severity.value == "high")
 
         # Collect all unique attacker IPs across all tiers for summary
-        all_ips: set[str] = t1_ips | t2_ips | t3_ips
+        all_ips: Set[str] = t1_ips | t2_ips | t3_ips
 
         _a("## 📊 Executive Summary")
         _a("")
@@ -839,8 +839,8 @@ class ReportWriter:
         # ── MITRE ATT&CK Summary ─────────────────────────────────────────────
         _a("## 🎯 MITRE ATT&CK Coverage Summary")
         _a("")
-        mitre_seen: set[str] = set()
-        mitre_rows: list[str] = []
+        mitre_seen: Set[str] = set()
+        mitre_rows: List[str] = []
         for output in ai_outputs:
             if hasattr(output, "mitre") and output.mitre:
                 m = output.mitre
@@ -921,8 +921,8 @@ class ReportWriter:
         *,
         file_id: str,
         filename: str,
-        incidents: list[Any],
-        emp_id: str | None = None,
+        incidents: List[Any],
+        emp_id: Optional[str] = None,
     ) -> Path:
         """Generate a machine-readable incident JSON report for a file."""
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -948,9 +948,9 @@ class ReportWriter:
         )
         return report_path
 
-    def _incident_to_json(self, incident: Any) -> dict[str, Any]:
+    def _incident_to_json(self, incident: Any) -> Dict[str, Any]:
         """Convert an incident model into the required report JSON shape."""
-        data: dict[str, Any]
+        data: Dict[str, Any]
         if hasattr(incident, "model_dump"):
             data = incident.model_dump(mode="json")
         elif isinstance(incident, dict):
@@ -1022,7 +1022,7 @@ class ReportWriter:
             "correlation": correlation_context,
         }
 
-    def _build_correlation_reason(self, data: dict[str, Any]) -> str:
+    def _build_correlation_reason(self, data: Dict[str, Any]) -> str:
         """Build a strong reason for correlation based on incident data."""
         reasons = []
         detection_tier = data.get("detection_tier", "unknown")
@@ -1087,7 +1087,7 @@ class ReportWriter:
             "Investigate the source IP and affected endpoints. Review application logs for additional context.",
         )
 
-    def _get_overall_recommendations(self, threats: list, correlations: list) -> list[str]:
+    def _get_overall_recommendations(self, threats: list, correlations: list) -> List[str]:
         recs = []
         categories = set()
         for t in threats:

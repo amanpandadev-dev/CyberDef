@@ -11,7 +11,7 @@ import hashlib
 import json
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
@@ -46,7 +46,7 @@ class RawEventRow(BaseModel):
     """
     file_id: UUID
     row_number: int
-    raw_data: dict[str, Any]
+    raw_data: Dict[str, Any]
 
     @computed_field
     @property
@@ -63,23 +63,23 @@ class ParsedEvent(BaseModel):
     """
     file_id: UUID
     row_hash: str
-    timestamp: datetime | None = None
-    source_address: str | None = None
-    destination_address: str | None = None
-    destination_hostname: str | None = None
-    action: str | None = None
-    protocol: str | None = None
-    source_port: int | None = None
-    destination_port: int | None = None
-    username: str | None = None
-    application: str | None = None
-    bytes_sent: int | None = None
-    bytes_received: int | None = None
-    duration_ms: int | None = None
-    raw_message: str | None = None
-    vendor_specific: dict[str, Any] = Field(default_factory=dict)
-    parsed_data: dict[str, Any] | None = None  # Extended fields for normalization
-    parse_errors: list[str] = Field(default_factory=list)
+    timestamp: Optional[datetime] = None
+    source_address: Optional[str] = None
+    destination_address: Optional[str] = None
+    destination_hostname: Optional[str] = None
+    action: Optional[str] = None
+    protocol: Optional[str] = None
+    source_port: Optional[int] = None
+    destination_port: Optional[int] = None
+    username: Optional[str] = None
+    application: Optional[str] = None
+    bytes_sent: Optional[int] = None
+    bytes_received: Optional[int] = None
+    duration_ms: Optional[int] = None
+    raw_message: Optional[str] = None
+    vendor_specific: Dict[str, Any] = Field(default_factory=dict)
+    parsed_data: Optional[Dict[str, Any]] = None  # Extended fields for normalization
+    parse_errors: List[str] = Field(default_factory=list)
 
 
 class NormalizedEvent(BaseModel):
@@ -95,52 +95,56 @@ class NormalizedEvent(BaseModel):
 
     # Core network fields
     src_ip: str
-    src_port: int | None = None
-    dst_ip: str | None = None
-    dst_port: int | None = None
-    dst_host: str | None = None
+    src_port: Optional[int] = None
+    dst_ip: Optional[str] = None
+    dst_port: Optional[int] = None
+    dst_host: Optional[str] = None
 
     # Action and protocol
     action: EventAction
     protocol: NetworkProtocol = NetworkProtocol.OTHER
 
     # Identity
-    username: str | None = None
+    username: Optional[str] = None
 
     # Traffic metrics
-    bytes_sent: int | None = None
-    bytes_received: int | None = None
-    duration_ms: int | None = None
+    bytes_sent: Optional[int] = None
+    bytes_received: Optional[int] = None
+    duration_ms: Optional[int] = None
 
     # Application context
-    application: str | None = None
+    application: Optional[str] = None
 
     # Internal/External classification
-    is_internal_src: bool | None = None
-    is_internal_dst: bool | None = None
+    is_internal_src: Optional[bool] = None
+    is_internal_dst: Optional[bool] = None
 
     # ========== HTTP/WEB APPLICATION FIELDS ==========
 
     # HTTP metadata
-    http_method: str | None = None  # GET, POST, PUT, DELETE, etc.
-    http_status: int | None = None  # 200, 404, 500, etc.
-    http_version: str | None = None  # HTTP/1.1, HTTP/2
-    raw_url: str | None = None  # Full URL if available
-    uri_path: str | None = None
-    uri_query: str | None = None
-    user_agent: str | None = None
-    referrer: str | None = None
-    content_type: str | None = None  # e.g. application/json
-    request_size: int | None = None  # bytes in the HTTP request body
-    response_size: int | None = None  # bytes in the HTTP response body
+    http_method: Optional[str] = None  # GET, POST, PUT, DELETE, etc.
+    http_status: Optional[int] = None  # 200, 404, 500, etc.
+    http_version: Optional[str] = None  # HTTP/1.1, HTTP/2
+    raw_url: Optional[str] = None  # Full URL if available
+    uri_path: Optional[str] = None
+    uri_query: Optional[str] = None
+    user_agent: Optional[str] = None
+    referrer: Optional[str] = None
+    content_type: Optional[str] = None  # e.g. application/json
+    request_size: Optional[int] = None  # bytes in the HTTP request body
+    response_size: Optional[int] = None  # bytes in the HTTP response body
+
+    @property
+    def httpreferer(self) -> Optional[str]:
+        return self.referrer
 
     # Original log fields for forensics
-    original_message: str | None = None
-    vendor_specific: dict[str, Any] | None = None
+    original_message: Optional[str] = None
+    vendor_specific: Optional[Dict[str, Any]] = None
 
     # Enrichment flags
     enriched: bool = False
-    enrichment_source: str | None = None
+    enrichment_source: Optional[str] = None
 
     model_config = ConfigDict()
 
@@ -149,7 +153,7 @@ class EventBatch(BaseModel):
     """Batch of normalized events for processing."""
     batch_id: UUID = Field(default_factory=uuid4)
     file_id: UUID
-    events: list[NormalizedEvent]
+    events: List[NormalizedEvent]
     total_rows_processed: int
     parse_error_count: int
     created_at: datetime = Field(default_factory=datetime.utcnow)

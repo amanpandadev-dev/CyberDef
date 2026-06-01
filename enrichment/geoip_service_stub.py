@@ -26,14 +26,14 @@ class GeoIPEnrichmentService:
     so callers do not need modification, but all methods are no-ops.
     """
 
-    def __init__(self, db_path: Path | None = None):
+    def __init__(self, db_path: Optional[Path] = None):
         self.reader = None
 
     def enrich_event(self, event: NormalizedEvent) -> NormalizedEvent:
         """Return event unchanged (pass-through)."""
         return event
 
-    def enrich_batch(self, events: list[NormalizedEvent]) -> list[NormalizedEvent]:
+    def enrich_batch(self, events: List[NormalizedEvent]) -> List[NormalizedEvent]:
         """Return events unchanged (pass-through)."""
         return events
 

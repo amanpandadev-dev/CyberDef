@@ -10,8 +10,9 @@ from ipaddress import ip_address
 from collections import defaultdict
 from collections import Counter
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional, Set, Tuple
 
+from core.ip_filter import is_ip_excluded, is_zscaler_ip
 from core.logging import get_logger
 from rules_engine.base_rule import RateBasedRule, ThreatRule
 from rules_engine.models import ThreatFamily, ThreatMatch, ThreatSeverity
@@ -29,8 +30,12 @@ class KnownScannerUARule(ThreatRule):
     description = "Known vulnerability scanner user agent"
     check_fields = ["user_agent"]
     patterns = [
+<<<<<<< HEAD
+        r"(?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|python-requests|libwww-perl|scrapy|aiohttp|mechanize|httpclient|curl|wget|okhttp|powershell(?:/[0-9.]+)?|windowspowershell(?:/[0-9.]+)?|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)\b",
+=======
         r"(?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|python-requests|libwww-perl|scrapy|aiohttp|mechanize|httpclient|curl|wget|okhttp|powershell(?:/[0-9.]+)?|windowspowershell(?:/[0-9.]+)?|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)\b"
  
+>>>>>>> 503d3f8a08e98f5c8fa1167258b7e4c54128e0e5
     ]
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:
@@ -82,6 +87,13 @@ class KnownScannerUARule(ThreatRule):
             )
             return None
 
+    def match(self, event: NormalizedEvent) -> ThreatMatch | None:
+        if event.http_status is None or not (200 <= event.http_status < 300):
+            return None
+        if is_ip_excluded(event.src_ip) or is_zscaler_ip(event.src_ip):
+            return None
+        return super().match(event)
+
 
 class HeadlessBrowserRule(ThreatRule):
     name = "headless_browser"
@@ -109,7 +121,7 @@ class Rapid404Rule(RateBasedRule):
     description = "Rapid 404 generation (directory brute-forcing)"
     threshold = 50
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         try:
             # Check for Public IP only
             try:
@@ -164,7 +176,7 @@ class ContentScrapingRule(RateBasedRule):
     description = "Systematic content scraping"
     threshold = 200
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         try:
             if not events:
                 return None
@@ -250,6 +262,30 @@ class FakeSearchBotRule(ThreatRule):
     description = "Fake search engine bot"
     check_fields = ["user_agent"]
     patterns = [r"(?:Googlebot|Bingbot|baiduspider|YandexBot)(?!/)"]
+
+    # Legitimate bot patterns with version numbers
+    _LEGITIMATE_BOT_PATTERNS = [
+        r'Googlebot/\d+\.\d+',
+        r'Googlebot-Image/\d+\.\d+',
+        r'Googlebot-Video/\d+\.\d+',
+        r'Googlebot-News',
+        r'bingbot/\d+\.\d+',
+        r'YandexBot/\d+\.\d+',
+        r'Baiduspider/\d+\.\d+',
+        r'Baiduspider-render/\d+\.\d+',
+    ]
+
+    def match(self, event: NormalizedEvent) -> ThreatMatch | None:
+        """Override to exclude legitimate search bots with proper version strings."""
+        user_agent = event.user_agent or ""
+        
+        # Check if it's a legitimate bot (has proper version format)
+        for pattern in self._LEGITIMATE_BOT_PATTERNS:
+            if re.search(pattern, user_agent, re.IGNORECASE):
+                return None  # Legitimate bot, don't flag
+        
+        # Now check for fake bots using parent class logic
+        return super().match(event)
 
 
 class MaliciousBotSignatureRule(ThreatRule):
@@ -343,7 +379,7 @@ class HTTPFloodRule(RateBasedRule):
     @classmethod
     def _has_real_user_id(
         cls,
-        user_id: str | None
+        user_id: Optional[str]
     ) -> bool:
 
         return bool(
@@ -355,7 +391,7 @@ class HTTPFloodRule(RateBasedRule):
     @classmethod
     def _is_known_bot(
         cls,
-        user_agent: str | None
+        user_agent: Optional[str]
     ) -> bool:
 
         if not user_agent:
@@ -386,7 +422,7 @@ class HTTPFloodRule(RateBasedRule):
 
     @staticmethod
     def _normalize_user_agent(
-        user_agent: str | None
+        user_agent: Optional[str]
     ) -> str:
 
         if not user_agent:
@@ -419,8 +455,8 @@ class HTTPFloodRule(RateBasedRule):
 
     @staticmethod
     def _safe_add(
-        target: set[str],
-        value: str | None,
+        target: Set[str],
+        value: Optional[str],
         max_size: int
     ):
 
@@ -432,7 +468,7 @@ class HTTPFloodRule(RateBasedRule):
 
     @staticmethod
     def _format_src_ips(
-        src_ips: set[str],
+        src_ips: Set[str],
         limit: int = 10
     ) -> str:
 
@@ -457,7 +493,7 @@ class HTTPFloodRule(RateBasedRule):
 
     def check_group(
         self,
-        events: list[NormalizedEvent],
+        events: List[NormalizedEvent],
         group_key: str
     ) -> ThreatMatch | None:
 
@@ -739,7 +775,7 @@ class RateLimitBypassAfterThrottleRule(RateBasedRule):
     description = "Sustained request bursts despite repeated HTTP 429 throttling"
     threshold = 60
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         try:
             total_batch_events = len(events)
             if total_batch_events < self.threshold:
@@ -839,13 +875,13 @@ class SlowlorisRule(RateBasedRule):
 
     _TIMEOUT_CODES = {408, 499, 504}
 
-    def _is_trusted_monitor(self, user_agent: str | None) -> bool:
+    def _is_trusted_monitor(self, user_agent: Optional[str]) -> bool:
         if not user_agent:
             return False
         normalized_ua = " ".join(str(user_agent).lower().split())
         return any(trusted in normalized_ua for trusted in self.TRUSTED_MONITORS)
 
-    def _is_static_asset(self, raw_url: str | None) -> bool:
+    def _is_static_asset(self, raw_url: Optional[str]) -> bool:
         path = urlparse(raw_url or "").path.lower()
         return path.endswith(self.STATIC_EXTENSIONS)
 
@@ -916,7 +952,7 @@ class SlowlorisRule(RateBasedRule):
         return None
 
     @staticmethod
-    def _percentile(values: list[float], percentile: float) -> float | None:
+    def _percentile(values: List[float], percentile: float) -> float | None:
         if not values:
             return None
         if percentile <= 0:
@@ -932,9 +968,9 @@ class SlowlorisRule(RateBasedRule):
             return ordered[f]
         return ordered[f] + (ordered[c] - ordered[f]) * (k - f)
 
-    def _dedupe_events(self, events: list[NormalizedEvent]) -> list[NormalizedEvent]:
-        seen: set[str] = set()
-        deduped: list[NormalizedEvent] = []
+    def _dedupe_events(self, events: List[NormalizedEvent]) -> List[NormalizedEvent]:
+        seen: Set[str] = set()
+        deduped: List[NormalizedEvent] = []
 
         for ev in events:
             key_parts = [
@@ -953,9 +989,9 @@ class SlowlorisRule(RateBasedRule):
 
         return deduped
 
-    def _filter_window(self, events: list[NormalizedEvent]) -> list[NormalizedEvent]:
-        timestamped: list[tuple[datetime, NormalizedEvent]] = []
-        untimestamped: list[NormalizedEvent] = []
+    def _filter_window(self, events: List[NormalizedEvent]) -> List[NormalizedEvent]:
+        timestamped: List[Tuple[datetime, NormalizedEvent]] = []
+        untimestamped: List[NormalizedEvent] = []
 
         for ev in events:
             ts = self._to_datetime(getattr(ev, "timestamp", None))
@@ -975,7 +1011,7 @@ class SlowlorisRule(RateBasedRule):
         windowed.extend(untimestamped)
         return windowed
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         try:
             if not events:
                 return None
@@ -990,7 +1026,7 @@ class SlowlorisRule(RateBasedRule):
             working_events = self._dedupe_events(events)
             working_events = self._filter_window(working_events)
 
-            filtered_events: list[NormalizedEvent] = []
+            filtered_events: List[NormalizedEvent] = []
             for ev in working_events:
                 if self._is_trusted_monitor(getattr(ev, "user_agent", None)):
                     continue
@@ -1028,7 +1064,7 @@ class SlowlorisRule(RateBasedRule):
             error_ratio = (error_count / total_requests) if total_requests else 0.0
             timeout_ratio = (timeout_count / total_requests) if total_requests else 0.0
 
-            timestamped_events: list[tuple[datetime, NormalizedEvent]] = []
+            timestamped_events: List[Tuple[datetime, NormalizedEvent]] = []
             for ev in filtered_events:
                 ts = self._to_datetime(getattr(ev, "timestamp", None))
                 if ts is not None:
@@ -1066,7 +1102,7 @@ class SlowlorisRule(RateBasedRule):
             long_lived_count = sum(1 for t in request_times if t >= self.LONG_LIVED_REQUEST_TIME_SECONDS)
 
             score = 0
-            reasons: list[str] = []
+            reasons: List[str] = []
 
             if timeout_count >= self.MIN_TIMEOUT_COUNT:
                 score += 4
@@ -1189,7 +1225,7 @@ class APIRateAbuseRule(RateBasedRule):
         # parts[0] is '' (leading slash), parts[1] is 'api', parts[2] is the group name
         return "/" + "/".join(parts[1:3]) if len(parts) >= 3 else raw_url
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         """
         Three-case API abuse detection within a 15-minute window.
 
@@ -1199,9 +1235,9 @@ class APIRateAbuseRule(RateBasedRule):
         """
         try:
             total_count: int = 0
-            group_count: dict[str, int] = defaultdict(int)
-            unique_groups: set[str] = set()
-            last_event: NormalizedEvent | None = None
+            group_count: Dict[str, int] = defaultdict(int)
+            unique_groups: Set[str] = set()
+            last_event: Optional[NormalizedEvent] = None
 
             for ev in events:
                 # Ignore authenticated actors for this specific rule
@@ -1316,7 +1352,7 @@ class ResourceExhaustionRule(RateBasedRule):
         r"^/process(/|$)"
     ]
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         try:
             import re
             hits = 0

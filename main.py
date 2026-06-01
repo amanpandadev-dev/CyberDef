@@ -60,7 +60,7 @@ setup_logging()
 logger = get_logger(__name__)
 
 
-async def pre_flight_check() -> dict[str, bool]:
+async def pre_flight_check() -> Dict[str, bool]:
     """Verify system readiness for air-gapped deployment."""
     settings = get_settings()
     results = {
@@ -164,7 +164,7 @@ app.include_router(case_router, prefix="/api/v1", dependencies=[Depends(require_
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
-async def health_check() -> dict[str, Any]:
+async def health_check() -> Dict[str, Any]:
     """Check system health."""
     settings = get_settings()
 
@@ -194,7 +194,7 @@ async def health_check() -> dict[str, Any]:
 
 # Root endpoint
 @app.get("/", tags=["Root"])
-async def root() -> dict[str, str]:
+async def root() -> Dict[str, str]:
     """Root endpoint."""
     return {
         "name": "AegisNet",
@@ -208,7 +208,7 @@ async def root() -> dict[str, str]:
 async def analyze_file(
     file_id: str,
     current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Three-tier analysis pipeline:
     1. Parse & Normalize events
@@ -336,7 +336,8 @@ async def analyze_file(
             incident = incident_service.create_from_deterministic_threat(
                 threat, file_id=parsed_uuid,
             )
-            all_incidents.append(incident)
+            if incident:  # Only add if not excluded
+                all_incidents.append(incident)
 
         # Tier 2 incidents (new cross-batch correlations)
         if settings.enable_correlation_tier:
@@ -344,7 +345,8 @@ async def analyze_file(
                 incident = incident_service.create_from_correlation(
                     pattern, file_id=parsed_uuid,
                 )
-                all_incidents.append(incident)
+                if incident:  # Only add if not excluded
+                    all_incidents.append(incident)
 
         # — Incremental Commit: Tier 1 & 2 —————————————————————————————————————
         # This ensures findings are visible even if AI phase fails
@@ -428,8 +430,8 @@ async def analyze_file(
 
         if needs_ai and suspicious_chunks:
             # Build set of IPs fully covered by high-confidence deterministic rules
-            fully_covered_ips: set[str] = set()
-            ip_threats: dict[str, list] = {}
+            fully_covered_ips: Set[str] = set()
+            ip_threats: Dict[str, list] = {}
             for threat in tier1_result.threats:
                 for ip in (threat.src_ips or []):
                     ip_threats.setdefault(ip, []).append(threat)
@@ -484,8 +486,15 @@ async def analyze_file(
                 outputs_storage.store_outputs(file_id, ai_outputs)
 
                 # Create incidents from AI
-                for output, chunk in zip(ai_outputs, ai_chunks):
-                    if output.requires_human_review:
+                chunks_by_id = {chunk.chunk_id: chunk for chunk in ai_chunks}
+                for output in ai_outputs:
+                    chunk = chunks_by_id.get(output.chunk_id)
+                    if not chunk:
+                        logger.warning(
+                            f"Skipping AI incident creation - chunk not found | chunk_id={output.chunk_id}"
+                        )
+                        continue
+                    if output.has_agent_result() and output.requires_human_review:
                         incident = incident_service.create_from_agent_output(output, chunk)
                         all_incidents.append(incident)
 
@@ -502,7 +511,7 @@ async def analyze_file(
                 return incident.get("incident_id")
             return None
 
-        def _flatten_incident_entries(entries: list[Any]) -> list[Any]:
+        def _flatten_incident_entries(entries: List[Any]) -> List[Any]:
             flattened = []
             for entry in entries:
                 if isinstance(entry, list):
@@ -607,7 +616,7 @@ async def analyze_file(
 @app.get("/api/v1/threat-summary/today", tags=["Analysis"])
 async def get_today_threat_summary(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get accumulated threat intelligence for today.
     Returns day-level view across all 15-minute batches.
@@ -621,7 +630,7 @@ async def get_today_threat_summary(
 async def get_agent_outputs(
     file_id: str,
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get actual agent analysis outputs for a file.
 
@@ -641,7 +650,7 @@ async def get_agent_outputs(
 @app.get("/api/v1/rollups", tags=["Analysis"])
 async def get_rollup_analysis(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get long-horizon rollup analysis across all analyzed files.
 
@@ -715,7 +724,7 @@ async def get_rollup_analysis(
 @app.get("/api/v1/validation", tags=["Validation"])
 async def get_validation_stats(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Get reproducibility validation metrics.
 
@@ -739,10 +748,22 @@ async def get_validation_stats(
     total_mitre = 0
     total_triage = 0
     total_analyses = 0
+    total_agent_errors = 0
+    agent_error_counts = {
+        "behavioral_interpretation": 0,
+        "threat_intent": 0,
+        "mitre_mapping": 0,
+        "triage": 0,
+    }
 
     for file_id, outputs in all_outputs.items():
         total_analyses += len(outputs)
         for output in outputs:
+            total_agent_errors += int(output.get("error_count", 0) or 0)
+            for error in output.get("errors", []):
+                agent_name = error.get("agent_name")
+                if agent_name in agent_error_counts:
+                    agent_error_counts[agent_name] += 1
             if "behavioral" in output:
                 total_behavioral += 1
             if "intent" in output:
@@ -779,29 +800,30 @@ async def get_validation_stats(
             "behavioral": {
                 "agent": "Behavioral Summary",
                 "invocations": total_behavioral,
-                "errors": 0,
+                "errors": agent_error_counts["behavioral_interpretation"],
                 "success_rate": 1 if total_behavioral > 0 else 0,
             },
             "intent": {
                 "agent": "Threat Intent",
                 "invocations": total_intent,
-                "errors": 0,
+                "errors": agent_error_counts["threat_intent"],
                 "success_rate": 1 if total_intent > 0 else 0,
             },
             "mitre": {
                 "agent": "MITRE Mapping",
                 "invocations": total_mitre,
-                "errors": 0,
+                "errors": agent_error_counts["mitre_mapping"],
                 "success_rate": 1 if total_mitre > 0 else 0,
             },
             "triage": {
                 "agent": "Triage & Narrative",
                 "invocations": total_triage,
-                "errors": 0,
+                "errors": agent_error_counts["triage"],
                 "success_rate": 1 if total_triage > 0 else 0,
             },
         },
         "total_analyses": total_analyses,
+        "total_agent_errors": total_agent_errors,
         "files_analyzed": len(all_outputs),
     }
 
@@ -810,7 +832,7 @@ async def get_validation_stats(
 @app.delete("/api/v1/system/clear-all", tags=["System"])
 async def clear_all_data(
     _current_user: str = Depends(optional_auth),
-) -> dict[str, Any]:
+) -> Dict[str, Any]:
     """
     Clear ALL analysis data for fresh testing.
     Wipes: DB tables, raw files, processed files, reports, caches, threat state.

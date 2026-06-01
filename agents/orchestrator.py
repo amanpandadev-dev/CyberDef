@@ -1,14 +1,21 @@
 """
 Agent Orchestrator
 
-LangGraph-based orchestration of AI agent ensemble.
+Graph-based orchestration of the AI agent ensemble.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from datetime import datetime
+from typing import Any, TypedDict
 from uuid import UUID
+
+try:
+    from langgraph.graph import END, StateGraph
+except Exception:  # pragma: no cover - fallback for incomplete local installs
+    END = "__end__"
+    StateGraph = None
 
 from agents.base import OllamaClient
 from agents.behavioral_agent import BehavioralInterpretationAgent
@@ -18,28 +25,37 @@ from agents.mitre_agent import MitreReasoningAgent
 from agents.triage_agent import TriageNarrativeAgent
 from core.config import get_settings
 from core.logging import get_logger
-from shared_models.agents import (
-    AgentError as AgentErrorModel,
-)
-from shared_models.agents import (
-    AgentOutput,
-)
+from shared_models.agents import AgentError as AgentErrorModel
+from shared_models.agents import AgentOutput
 from shared_models.chunks import ChunkSummary
 
 logger = get_logger(__name__)
+
+PROMPT_SCHEMA_VERSION = "agent_graph_v2"
+
+
+class AgentGraphState(TypedDict, total=False):
+    """Shared state passed through the multi-agent graph."""
+
+    chunk_id: UUID
+    summary_dict: dict[str, Any]
+    output: AgentOutput
+    errors: list[AgentErrorModel]
+    total_time_ms: int
+    skip_if_not_suspicious: bool
+    stop_downstream: bool
+    stop_reason: str
 
 
 class AgentOrchestrator:
     """
     Orchestrates the AI agent ensemble for threat analysis.
 
-    Pipeline:
-    1. Behavioral Interpretation Agent
-    2. Threat Intent Agent
-    3. MITRE Reasoning Agent
-    4. Triage & Narrative Agent
+    Graph:
+    Behavioral Interpretation -> Threat Intent -> MITRE Mapping -> Triage
 
-    Each agent receives the chunk summary and previous agent outputs.
+    Downstream agents receive the original chunk summary plus prior agent
+    outputs through an explicit graph context.
     """
 
     def __init__(self, client: OllamaClient | None = None, use_cache: bool = True):
@@ -48,7 +64,6 @@ class AgentOrchestrator:
         self.use_cache = use_cache
         self.cache: AnalysisCache = get_analysis_cache()
 
-        # Initialize agents
         self.behavioral_agent = BehavioralInterpretationAgent(self.client)
         self.intent_agent = ThreatIntentAgent(self.client)
         self.mitre_agent = MitreReasoningAgent(self.client)
@@ -57,6 +72,32 @@ class AgentOrchestrator:
         self.analyses_completed = 0
         self.cache_hits = 0
         self.errors: list[AgentErrorModel] = []
+        self._graph = self._build_graph()
+
+    def _build_graph(self) -> Any:
+        """Build the LangGraph state machine when the dependency is available."""
+        if StateGraph is None:
+            logger.warning("LangGraph unavailable; using internal graph runner fallback")
+            return None
+
+        graph = StateGraph(AgentGraphState)
+        graph.add_node("behavioral", self._behavioral_node)
+        graph.add_node("intent", self._intent_node)
+        graph.add_node("mitre", self._mitre_node)
+        graph.add_node("triage", self._triage_node)
+        graph.add_node("finalize", self._finalize_node)
+
+        graph.set_entry_point("behavioral")
+        graph.add_conditional_edges(
+            "behavioral",
+            self._route_after_behavioral,
+            {"intent": "intent", "finalize": "finalize"},
+        )
+        graph.add_edge("intent", "mitre")
+        graph.add_edge("mitre", "triage")
+        graph.add_edge("triage", "finalize")
+        graph.add_edge("finalize", END)
+        return graph.compile()
 
     async def analyze(
         self,
@@ -64,22 +105,17 @@ class AgentOrchestrator:
         skip_if_not_suspicious: bool = True,
     ) -> AgentOutput:
         """
-        Run full agent analysis on a chunk summary.
-
-        Args:
-            summary: ChunkSummary to analyze
-            skip_if_not_suspicious: Skip intent/MITRE if behavioral says not suspicious
-
-        Returns:
-            AgentOutput with all agent results
+        Run graph-based agent analysis on a chunk summary.
         """
         chunk_id = summary.chunk_id
-        # Use mode='json' to properly serialize UUIDs and other complex types
-        summary_dict = summary.model_dump(mode='json')
+        summary_dict = summary.model_dump(mode="json")
+        cache_payload = {
+            "prompt_schema_version": PROMPT_SCHEMA_VERSION,
+            "summary": summary_dict,
+        }
 
-        # Check cache first for reproducibility
         if self.use_cache:
-            chunk_hash = self.cache.compute_chunk_hash(summary_dict)
+            chunk_hash = self.cache.compute_chunk_hash(cache_payload)
             cached_result = self.cache.get_cached_result(
                 chunk_hash,
                 model=self.client.model,
@@ -89,99 +125,190 @@ class AgentOrchestrator:
                 self.cache_hits += 1
                 self.analyses_completed += 1
                 logger.info(
-                    f"Returning cached analysis (reproducibility ensured) | chunk_id={chunk_id}, chunk_hash={chunk_hash[:16]}"
+                    f"Returning cached graph analysis | chunk_id={chunk_id}, "
+                    f"chunk_hash={chunk_hash[:16]}"
                 )
-                # Update chunk_id to match current request
-                cached_result.chunk_id = chunk_id
+                self._retarget_output_chunk_id(cached_result, chunk_id)
                 return cached_result
 
+        logger.info(f"Starting graph agent analysis | chunk_id={chunk_id}")
+
+        initial_state: AgentGraphState = {
+            "chunk_id": chunk_id,
+            "summary_dict": summary_dict,
+            "output": AgentOutput(chunk_id=chunk_id),
+            "errors": [],
+            "total_time_ms": 0,
+            "skip_if_not_suspicious": skip_if_not_suspicious,
+            "stop_downstream": False,
+        }
+        final_state = await self._run_graph(initial_state)
+        output = final_state["output"]
+
+        if output.has_agent_result():
+            self.analyses_completed += 1
+            if self.use_cache:
+                chunk_hash = self.cache.compute_chunk_hash(cache_payload)
+                self.cache.cache_result(
+                    chunk_hash,
+                    output,
+                    model=self.client.model,
+                    temperature=self.client.temperature,
+                )
+        else:
+            logger.warning(
+                f"Graph analysis produced no valid agent outputs | chunk_id={chunk_id}, "
+                f"errors={len(output.errors)}"
+            )
+
         logger.info(
-            f"Starting agent analysis | chunk_id={chunk_id}"
+            f"Graph agent analysis complete | chunk_id={chunk_id}, "
+            f"has_result={output.has_agent_result()}, "
+            f"overall_confidence={output.overall_confidence}, "
+            f"errors={len(output.errors)}, "
+            f"requires_review={output.requires_human_review}, "
+            f"time_ms={output.total_processing_time_ms}"
         )
+        return output
 
-        output = AgentOutput(chunk_id=chunk_id)
-        total_time_ms = 0
+    async def _run_graph(self, state: AgentGraphState) -> AgentGraphState:
+        """Run the compiled LangGraph, or an equivalent internal fallback."""
+        if self._graph is not None:
+            return await self._graph.ainvoke(state)
 
-        # Step 1: Behavioral Interpretation
+        state = await self._behavioral_node(state)
+        if self._route_after_behavioral(state) == "finalize":
+            return await self._finalize_node(state)
+        state = await self._intent_node(state)
+        state = await self._mitre_node(state)
+        state = await self._triage_node(state)
+        return await self._finalize_node(state)
+
+    async def _behavioral_node(self, state: AgentGraphState) -> AgentGraphState:
+        chunk_id = state["chunk_id"]
+        output = state["output"]
         try:
-            behavioral = await self.behavioral_agent.analyze(
-                summary_dict, chunk_id
-            )
+            behavioral = await self.behavioral_agent.analyze(state["summary_dict"], chunk_id)
             output.behavioral = behavioral
-            total_time_ms += behavioral.processing_time_ms
+            state["total_time_ms"] = state.get("total_time_ms", 0) + behavioral.processing_time_ms
+            if (
+                state.get("skip_if_not_suspicious", True)
+                and not behavioral.is_suspicious
+                and behavioral.confidence >= self.settings.min_confidence_threshold
+            ):
+                state["stop_downstream"] = True
+                state["stop_reason"] = "behavioral_confident_benign"
+        except Exception as e:
+            self._record_agent_error(state, "behavioral_interpretation", str(e))
+            state["stop_downstream"] = True
+            state["stop_reason"] = "behavioral_failed"
+        return state
 
-            logger.debug(
-                f"Behavioral analysis complete | is_suspicious={behavioral.is_suspicious}, confidence={behavioral.confidence}"
+    def _route_after_behavioral(self, state: AgentGraphState) -> str:
+        return "finalize" if state.get("stop_downstream") else "intent"
+
+    async def _intent_node(self, state: AgentGraphState) -> AgentGraphState:
+        chunk_id = state["chunk_id"]
+        output = state["output"]
+        try:
+            intent = await self.intent_agent.analyze(
+                self._summary_with_context(state, include=("behavioral",)),
+                chunk_id,
             )
-
-            # Early exit if not suspicious and configured to skip
-            if skip_if_not_suspicious and not behavioral.is_suspicious:
-                if behavioral.confidence >= self.settings.min_confidence_threshold:
-                    logger.info(
-                        f"Skipping further analysis - behavior not suspicious | chunk_id={chunk_id}, confidence={behavioral.confidence}"
-                    )
-                    output.total_processing_time_ms = total_time_ms
-                    output.requires_human_review = False
-                    self.analyses_completed += 1
-                    return output
-
-        except Exception as e:
-            self._log_agent_error("behavioral_interpretation", chunk_id, str(e))
-
-        # Step 2: Threat Intent
-        try:
-            intent = await self.intent_agent.analyze(summary_dict, chunk_id)
             output.intent = intent
-            total_time_ms += intent.processing_time_ms
-
+            state["total_time_ms"] = state.get("total_time_ms", 0) + intent.processing_time_ms
         except Exception as e:
-            self._log_agent_error("threat_intent", chunk_id, str(e))
+            self._record_agent_error(state, "threat_intent", str(e))
+        return state
 
-        # Step 3: MITRE Mapping
+    async def _mitre_node(self, state: AgentGraphState) -> AgentGraphState:
+        chunk_id = state["chunk_id"]
+        output = state["output"]
         try:
-            mitre = await self.mitre_agent.analyze(summary_dict, chunk_id)
+            mitre = await self.mitre_agent.analyze(
+                self._summary_with_context(state, include=("behavioral", "intent")),
+                chunk_id,
+            )
             output.mitre = mitre
-            total_time_ms += mitre.processing_time_ms
-
+            state["total_time_ms"] = state.get("total_time_ms", 0) + mitre.processing_time_ms
         except Exception as e:
-            self._log_agent_error("mitre_mapping", chunk_id, str(e))
+            self._record_agent_error(state, "mitre_mapping", str(e))
+        return state
 
-        # Step 4: Triage & Narrative
+    async def _triage_node(self, state: AgentGraphState) -> AgentGraphState:
+        chunk_id = state["chunk_id"]
+        output = state["output"]
         try:
-            triage = await self.triage_agent.analyze(summary_dict, chunk_id)
+            triage = await self.triage_agent.analyze(
+                self._summary_with_context(
+                    state,
+                    include=("behavioral", "intent", "mitre"),
+                    include_errors=True,
+                ),
+                chunk_id,
+            )
             output.triage = triage
-            total_time_ms += triage.processing_time_ms
-
+            state["total_time_ms"] = state.get("total_time_ms", 0) + triage.processing_time_ms
         except Exception as e:
-            self._log_agent_error("triage", chunk_id, str(e))
+            self._record_agent_error(state, "triage", str(e))
+        return state
 
-        # Finalize output
-        output.total_processing_time_ms = total_time_ms
+    async def _finalize_node(self, state: AgentGraphState) -> AgentGraphState:
+        output = state["output"]
+        output.total_processing_time_ms = state.get("total_time_ms", 0)
+        output.errors = list(state.get("errors", []))
         output.compute_overall_confidence()
 
-        # Determine if human review is needed
-        output.requires_human_review = self._needs_human_review(output)
+        if state.get("stop_reason") == "behavioral_confident_benign":
+            output.requires_human_review = False
+        elif output.has_agent_result():
+            output.requires_human_review = self._needs_human_review(output)
+        else:
+            output.requires_human_review = True
+        return state
 
-        self.analyses_completed += 1
+    def _summary_with_context(
+        self,
+        state: AgentGraphState,
+        include: tuple[str, ...],
+        include_errors: bool = False,
+    ) -> dict[str, Any]:
+        summary = dict(state["summary_dict"])
+        output = state["output"]
+        prior_outputs: dict[str, Any] = {}
+        for name in include:
+            result = getattr(output, name, None)
+            if result:
+                prior_outputs[name] = result.model_dump(mode="json", exclude_none=True)
+        summary["_agent_context"] = {
+            "prompt_schema_version": PROMPT_SCHEMA_VERSION,
+            "prior_outputs": prior_outputs,
+            "agent_errors": [
+                error.model_dump(mode="json")
+                for error in state.get("errors", [])
+            ] if include_errors else [],
+        }
+        return summary
 
-        # Cache the result for future reproducibility
-        if self.use_cache:
-            chunk_hash = self.cache.compute_chunk_hash(summary_dict)
-            self.cache.cache_result(
-                chunk_hash,
-                output,
-                model=self.client.model,
-                temperature=self.client.temperature,
-            )
-            logger.debug(
-                f"Cached analysis result | chunk_id={chunk_id}, chunk_hash={chunk_hash[:16]}"
-            )
-
-        logger.info(
-            f"Agent analysis complete | chunk_id={chunk_id}, overall_confidence={output.overall_confidence}, requires_review={output.requires_human_review}, time_ms={total_time_ms}"
+    def _record_agent_error(
+        self,
+        state: AgentGraphState,
+        agent_name: str,
+        error_message: str,
+    ) -> None:
+        error = AgentErrorModel(
+            chunk_id=state["chunk_id"],
+            agent_name=agent_name,
+            error_type="analysis_error",
+            error_message=error_message,
+            timestamp=datetime.utcnow(),
         )
-
-        return output
+        state.setdefault("errors", []).append(error)
+        self.errors.append(error)
+        logger.error(
+            f"Agent error | agent={agent_name}, chunk_id={state['chunk_id']}, "
+            f"error={error_message}"
+        )
 
     async def analyze_batch(
         self,
@@ -191,43 +318,43 @@ class AgentOrchestrator:
         """
         Analyze multiple summaries with controlled concurrency.
 
-        Args:
-            summaries: List of ChunkSummary objects
-            max_concurrent: Maximum concurrent analyses
-
-        Returns:
-            List of AgentOutput results
+        The returned list includes one AgentOutput per input summary, preserving
+        chunk identity even when a chunk fails. Callers should use chunk_id
+        rather than positional zip for downstream joins.
         """
         semaphore = asyncio.Semaphore(max_concurrent)
 
         async def analyze_with_semaphore(summary: ChunkSummary) -> AgentOutput:
             async with semaphore:
-                return await self.analyze(summary)
+                try:
+                    return await self.analyze(summary)
+                except Exception as e:
+                    logger.error(
+                        f"Batch analysis error | chunk_id={summary.chunk_id}, error={e}"
+                    )
+                    output = AgentOutput(chunk_id=summary.chunk_id)
+                    output.errors.append(
+                        AgentErrorModel(
+                            chunk_id=summary.chunk_id,
+                            agent_name="orchestrator",
+                            error_type="batch_analysis_error",
+                            error_message=str(e),
+                            timestamp=datetime.utcnow(),
+                        )
+                    )
+                    return output
 
         tasks = [analyze_with_semaphore(s) for s in summaries]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Filter out exceptions
-        outputs = []
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                logger.error(
-                    f"Batch analysis error | chunk_id={summaries[i].chunk_id}, error={result}"
-                )
-            else:
-                outputs.append(result)
-
-        return outputs
+        return await asyncio.gather(*tasks)
 
     def _needs_human_review(self, output: AgentOutput) -> bool:
         """Determine if output needs human review."""
-        # Always review if behavioral says suspicious
         if output.behavioral and output.behavioral.is_suspicious:
             return True
 
-        # Always review Medium+ priority
         if output.triage:
             from shared_models.agents import IncidentPriority
+
             high_priorities = {
                 IncidentPriority.CRITICAL,
                 IncidentPriority.HIGH,
@@ -236,31 +363,19 @@ class AgentOrchestrator:
             if output.triage.priority in high_priorities:
                 return True
 
-        # Review if low overall confidence
         if output.overall_confidence < self.settings.min_confidence_threshold:
             return True
 
         return False
 
-    def _log_agent_error(
-        self,
-        agent_name: str,
-        chunk_id: UUID,
-        error_message: str,
-    ):
-        """Log and record agent error."""
-        logger.error(
-            f"Agent error | agent={agent_name}, chunk_id={chunk_id}, error={error_message}"
-        )
-
-        from datetime import datetime
-        self.errors.append(AgentErrorModel(
-            chunk_id=chunk_id,
-            agent_name=agent_name,
-            error_type="analysis_error",
-            error_message=error_message,
-            timestamp=datetime.utcnow(),
-        ))
+    def _retarget_output_chunk_id(self, output: AgentOutput, chunk_id: UUID) -> None:
+        """Update cached output IDs to match the current chunk."""
+        output.chunk_id = chunk_id
+        for result in (output.behavioral, output.intent, output.mitre, output.triage):
+            if result:
+                result.chunk_id = chunk_id
+        for error in output.errors:
+            error.chunk_id = chunk_id
 
     async def health_check(self) -> dict[str, Any]:
         """Check agent system health."""
@@ -271,6 +386,7 @@ class AgentOrchestrator:
             "model": self.client.model,
             "analyses_completed": self.analyses_completed,
             "error_count": len(self.errors),
+            "graph_enabled": self._graph is not None,
         }
 
     def get_stats(self) -> dict[str, Any]:
@@ -280,6 +396,8 @@ class AgentOrchestrator:
             "cache_hits": self.cache_hits,
             "cache_enabled": self.use_cache,
             "error_count": len(self.errors),
+            "graph_enabled": self._graph is not None,
+            "prompt_schema_version": PROMPT_SCHEMA_VERSION,
             "cache": self.cache.get_stats() if self.use_cache else None,
             "agents": {
                 "behavioral": self.behavioral_agent.get_stats(),

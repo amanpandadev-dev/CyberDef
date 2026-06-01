@@ -7,7 +7,7 @@ Pydantic models for file intake, validation, and metadata.
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -40,9 +40,9 @@ class FileValidationResult(BaseModel):
     detected_encoding: str = "utf-8"
     detected_delimiter: str = ","
     has_header: bool = True
-    validation_errors: list[str] = Field(default_factory=list)
-    validation_warnings: list[str] = Field(default_factory=list)
-    sample_columns: list[str] = Field(default_factory=list)
+    validation_errors: List[str] = Field(default_factory=list)
+    validation_warnings: List[str] = Field(default_factory=list)
+    sample_columns: List[str] = Field(default_factory=list)
 
 
 class FileMetadata(BaseModel):
@@ -69,7 +69,7 @@ class FileMetadata(BaseModel):
     # Content metadata
     row_count: Optional[int] = None
     column_count: Optional[int] = None
-    columns: list[str] = Field(default_factory=list)
+    columns: List[str] = Field(default_factory=list)
 
     # Parser hints
     detected_format: Optional[str] = None  # firewall, network_log, etc.
@@ -101,7 +101,7 @@ class FileUploadRequest(BaseModel):
     filename: str
     content_type: str = "text/csv"
     description: Optional[str] = None
-    tags: list[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
 
 
 class FileUploadResponse(BaseModel):
@@ -128,6 +128,6 @@ class DirectoryScanResult(BaseModel):
     files_found: int
     files_processed: int
     files_skipped: int
-    file_ids: list[UUID] = Field(default_factory=list)
-    errors: list[str] = Field(default_factory=list)
+    file_ids: List[UUID] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
     scan_duration_ms: int = 0

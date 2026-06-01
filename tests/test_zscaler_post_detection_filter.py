@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional, Set
 from uuid import uuid4
 
 import pytest
@@ -75,33 +75,33 @@ def engine_with_rules(*, pattern_rules=None, rate_rules=None) -> DeterministicEn
     return engine
 
 
-def rule_names_for(events: list[NormalizedEvent], *, pattern_rules=None, rate_rules=None) -> set[str]:
+def rule_names_for(events: List[NormalizedEvent], *, pattern_rules=None, rate_rules=None) -> Set[str]:
     result = engine_with_rules(pattern_rules=pattern_rules, rate_rules=rate_rules).scan(events)
     return {match.rule_name for match in result.matches}
 
 
-def brute_force_events(src_ip: str) -> list[NormalizedEvent]:
+def brute_force_events(src_ip: str) -> List[NormalizedEvent]:
     return [
         make_event(src_ip, http_status=401, url="/login")
         for _ in range(BruteForceLoginRule.threshold)
     ]
 
 
-def rapid_404_events(src_ip: str) -> list[NormalizedEvent]:
+def rapid_404_events(src_ip: str) -> List[NormalizedEvent]:
     return [
         make_event(src_ip, http_status=404, url=f"/missing-{idx}")
         for idx in range(Rapid404Rule.threshold)
     ]
 
 
-def content_scraping_events(src_ip: str) -> list[NormalizedEvent]:
+def content_scraping_events(src_ip: str) -> List[NormalizedEvent]:
     return [
         make_event(src_ip, http_status=200, url=f"/article/{idx}")
         for idx in range(ContentScrapingRule.threshold)
     ]
 
 
-def slowloris_events(src_ip: str) -> list[NormalizedEvent]:
+def slowloris_events(src_ip: str) -> List[NormalizedEvent]:
     start = datetime(2026, 5, 20, 12, 0, 0)
     return [
         make_event(
@@ -116,7 +116,7 @@ def slowloris_events(src_ip: str) -> list[NormalizedEvent]:
     ]
 
 
-def open_redirect_events(src_ip: str) -> list[NormalizedEvent]:
+def open_redirect_events(src_ip: str) -> List[NormalizedEvent]:
     return [
         make_event(
             src_ip,

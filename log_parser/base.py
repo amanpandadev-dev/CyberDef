@@ -7,7 +7,7 @@ Abstract base class and registry for CSV parsers.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Dict, List
 
 from core.logging import get_logger
 from shared_models.events import ParsedEvent, RawEventRow
@@ -28,15 +28,15 @@ class BaseParser(ABC):
     description: str = "Base parser"
 
     # Column mappings (override in subclasses)
-    column_mappings: dict[str, list[str]] = {}
+    column_mappings: Dict[str, List[str]] = {}
 
     def __init__(self):
-        self.parse_errors: list[str] = []
+        self.parse_errors: List[str] = []
         self.rows_parsed: int = 0
         self.rows_failed: int = 0
 
     @abstractmethod
-    def can_parse(self, columns: list[str], sample_rows: list[dict[str, Any]]) -> float:
+    def can_parse(self, columns: List[str], sample_rows: List[Dict[str, Any]]) -> float:
         """
         Determine if this parser can handle the given file.
 
@@ -62,7 +62,7 @@ class BaseParser(ABC):
         """
         pass
 
-    def parse_batch(self, raw_rows: list[RawEventRow]) -> list[ParsedEvent]:
+    def parse_batch(self, raw_rows: List[RawEventRow]) -> List[ParsedEvent]:
         """
         Parse a batch of rows.
 
@@ -90,7 +90,7 @@ class BaseParser(ABC):
 
         return events
 
-    def find_column(self, data: dict[str, Any], field_name: str) -> Any | None:
+    def find_column(self, data: Dict[str, Any], field_name: str) -> Any | None:
         """
         Find a column value using multiple possible column names.
 
@@ -115,7 +115,7 @@ class BaseParser(ABC):
 
         return None
 
-    def _clean_value(self, value: Any, placeholders: list[str] = None) -> str | None:
+    def _clean_value(self, value: Any, placeholders: List[str] = None) -> str | None:
         """
         Clean a value by treating common placeholders as None.
 
@@ -150,7 +150,7 @@ class BaseParser(ABC):
         """
         return self._clean_value(value, placeholders=["-", "", "0.0.0.0"])
 
-    def get_stats(self) -> dict[str, Any]:
+    def get_stats(self) -> Dict[str, Any]:
         """Get parsing statistics."""
         return {
             "parser": self.name,
@@ -173,7 +173,7 @@ class ParserRegistry:
     Manages parser discovery and selection based on file content.
     """
 
-    _parsers: dict[str, type[BaseParser]] = {}
+    _parsers: Dict[str, type[BaseParser]] = {}
 
     @classmethod
     def register(cls, parser_class: type[BaseParser]) -> type[BaseParser]:
@@ -200,8 +200,8 @@ class ParserRegistry:
     @classmethod
     def detect_parser(
         cls,
-        columns: list[str],
-        sample_rows: list[dict[str, Any]],
+        columns: List[str],
+        sample_rows: List[Dict[str, Any]],
     ) -> BaseParser:
         """
         Detect the best parser for the given file.
@@ -239,7 +239,7 @@ class ParserRegistry:
         return best_parser
 
     @classmethod
-    def list_parsers(cls) -> list[dict[str, str]]:
+    def list_parsers(cls) -> List[Dict[str, str]]:
         """List all registered parsers."""
         return [
             {

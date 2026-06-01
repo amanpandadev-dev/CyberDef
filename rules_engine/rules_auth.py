@@ -5,6 +5,7 @@ Family 2: Authentication, Session & Access Control Rules (9 rules)
 from __future__ import annotations
 
 import re
+from typing import List, Optional
 from urllib.parse import urlparse
 
 from rules_engine.base_rule import RateBasedRule, ThreatRule
@@ -43,7 +44,24 @@ class BruteForceLoginRule(RateBasedRule):
         "/oauth/token",
     }
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    # Static content extensions to exclude from brute force detection
+    _STATIC_EXTENSIONS = {
+        '.css', '.js', '.jpg', '.jpeg', '.png', '.gif',
+        '.ico', '.svg', '.json', '.woff', '.woff2',
+        '.ttf', '.eot', '.map', '.webp', '.avif',
+        '.bmp', '.tiff', '.webm', '.mp4', '.mp3',
+        '.pdf', '.zip', '.tar', '.gz'
+    }
+
+    @staticmethod
+    def _is_static_content(url: Optional[str]) -> bool:
+        """Check if URL is static content that should be excluded."""
+        if not url:
+            return False
+        url_lower = url.lower()
+        return any(url_lower.endswith(ext) for ext in BruteForceLoginRule._STATIC_EXTENSIONS)
+
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         import ipaddress
 
         # --- Determine Actor/IP scope ---
@@ -74,6 +92,10 @@ class BruteForceLoginRule(RateBasedRule):
         last_event = None
 
         for ev in events:
+            # Skip static content (CSS, JS, images, etc.)
+            if self._is_static_content(ev.raw_url):
+                continue
+
             if ev.http_status and ev.http_status in (401, 403):
                 uri = (ev.raw_url or "").lower()
                 if any(p in uri for p in self._AUTH_PATHS) or ev.http_status == 401:
@@ -117,7 +139,7 @@ class CredentialStuffingRule(RateBasedRule):
     description = "Credential stuffing: many distinct login attempts from same IP"
     threshold = 20
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         login_401s = [ev for ev in events if ev.http_status == 401]
         total_401s = len(login_401s)
         if total_401s >= self.threshold:
@@ -147,7 +169,24 @@ class AuthenticationFailuresRule(RateBasedRule):
 
     _AUTH_REGEX = re.compile(r"(?i)/(login|signin|auth|session|token|password|oauth|jwt)")
 
-    def check_group(self, events: list[NormalizedEvent], group_key: str) -> ThreatMatch | None:
+    # Static content extensions to exclude
+    _STATIC_EXTENSIONS = {
+        '.css', '.js', '.jpg', '.jpeg', '.png', '.gif',
+        '.ico', '.svg', '.json', '.woff', '.woff2',
+        '.ttf', '.eot', '.map', '.webp', '.avif',
+        '.bmp', '.tiff', '.webm', '.mp4', '.mp3',
+        '.pdf', '.zip', '.tar', '.gz'
+    }
+
+    @staticmethod
+    def _is_static_content(url: Optional[str]) -> bool:
+        """Check if URL is static content that should be excluded."""
+        if not url:
+            return False
+        url_lower = url.lower()
+        return any(url_lower.endswith(ext) for ext in AuthenticationFailuresRule._STATIC_EXTENSIONS)
+
+    def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
         from collections import defaultdict
 
         # Track failures and successes per refined actor
@@ -156,6 +195,11 @@ class AuthenticationFailuresRule(RateBasedRule):
 
         for ev in events:
             uri = ev.raw_url or ""
+            
+            # Skip static content
+            if self._is_static_content(uri):
+                continue
+            
             if not self._AUTH_REGEX.search(uri):
                 continue
 

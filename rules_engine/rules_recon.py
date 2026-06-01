@@ -309,82 +309,27 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
     # ----------------------------
 
     _STACK_TRACE = re.compile(
-        r"(?is)\b("
-        r"traceback \(most recent call last\)|"
-        r"stack trace|"
-        r"exception in thread|"
-        r"unhandled exception|"
-        r"at\s+[a-zA-Z0-9_$.]+\([a-zA-Z0-9_./\\:-]+:\d+\)|"
-        r"\bjava\.lang\.[A-Za-z0-9_]+Exception\b|"
-        r"\bSystem\.[A-Za-z0-9_.]*Exception\b|"
-        r"\b[A-Za-z0-9_]+Error\b|"
-        r"\b[A-Za-z0-9_]+Exception\b"
-        r")"
+        r"(?is)\b(traceback \(most recent call last\)|stack trace|exception in thread|unhandled exception|at\s+[a-zA-Z0-9_$.]+\([a-zA-Z0-9_./\\:-]+:\d+\)|\bjava\.lang\.[A-Za-z0-9_]+Exception\b|\bSystem\.[A-Za-z0-9_.]*Exception\b|\b[A-Za-z0-9_]+Error\b|\b[A-Za-z0-9_]+Exception\b)"
     )
 
     _FRAMEWORK_ERROR_PAGES = re.compile(
-        r"(?is)\b("
-        r"whitelabel error page|"
-        r"yellow screen of death|"
-        r"whoops, looks like something went wrong|"
-        r"application error|"
-        r"server error in '/.*?' application|"
-        r"debug toolbar|"
-        r"framework error|"
-        r"fatal error:"
-        r")\b"
+        r"(?is)\b(whitelabel error page|yellow screen of death|whoops, looks like something went wrong|application error|server error in '/.*?' application|debug toolbar|framework error|fatal error:)\b"
     )
 
     _DB_ERROR = re.compile(
-        r"(?is)\b("
-        r"sql syntax|"
-        r"mysql_fetch|"
-        r"mysqli?_error|"
-        r"postgres(?:ql)?|"
-        r"sqlite3?\.OperationalError|"
-        r"ORA-\d{5}|"
-        r"ODBC SQL Server Driver|"
-        r"database error|"
-        r"deadlock found|"
-        r"constraint failed"
-        r")\b"
+        r"(?is)\b(sql syntax|mysql_fetch|mysqli?_error|postgres(?:ql)?|sqlite3?\.OperationalError|ORA-\d{5}|ODBC SQL Server Driver|database error|deadlock found|constraint failed)\b"
     )
 
     _FILE_PATH_LEAK = re.compile(
-        r"(?is)(?:"
-        r"(?:[A-Z]:\\|/)(?:[^ \r\n\t<>\"']+/)*[^ \r\n\t<>\"']+\.[A-Za-z0-9]{1,6}|"
-        r"(?:/var/www/|/usr/share/|/home/|/opt/|/srv/|C:\\inetpub\\|C:\\xampp\\|C:\\wamp\\)"
-        r")"
+        r"(?is)(?:(?:[A-Z]:\\|/)(?:[^ \r\n\t<>\"']+/)*[^ \r\n\t<>\"']+\.[A-Za-z0-9]{1,6}|(?:/var/www/|/usr/share/|/home/|/opt/|/srv/|C:\\inetpub\\|C:\\xampp\\|C:\\wamp\\))"
     )
 
     _DEBUG_HINTS = re.compile(
-        r"(?is)\b("
-        r"debug mode|"
-        r"verbose error|"
-        r"stacktrace|"
-        r"internal server error|"
-        r"application/octet-stream|"
-        r"server at .*? is not configured|"
-        r"developer exception page|"
-        r"spring boot error|"
-        r"laravel\.error|"
-        r"django\.template\.base\.templateSyntaxError|"
-        r"express\(\) error handler"
-        r")\b"
+        r"(?is)\b(debug mode|verbose error|stacktrace|internal server error|application/octet-stream|server at .*? is not configured|developer exception page|spring boot error|laravel\.error|django\.template\.base\.templateSyntaxError|express\(\) error handler)\b"
     )
 
     _LEAK_KEYS = re.compile(
-        r"(?is)\b("
-        r"line \d+|"
-        r"file \S+|"
-        r"sqlstate|"
-        r"syntax error|"
-        r"unexpected token|"
-        r"null pointer|"
-        r"index out of range|"
-        r"cannot open file|"
-        r"permission denied"
-        r")\b"
+        r"(?is)\b(line \d+|file \S+|sqlstate|syntax error|unexpected token|null pointer|index out of range|cannot open file|permission denied)\b"
     )
 
     _MIN_BODY_LEN = 600
@@ -478,9 +423,9 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
 
             return ThreatMatch(
                 event_id=event.event_id,
-                rule_name=cls.name,
-                category=cls.category,
-                family=cls.family,
+                rule_name=self.name,
+                category=self.category,
+                family=self.family,
                 severity=severity,
                 confidence=confidence,
                 evidence=(
@@ -815,8 +760,28 @@ class RFIRule(Recon2xxThreatRule):
         for ev in events:
             if not _is_2xx(ev):
                 continue
+<<<<<<< HEAD
             if cls._is_static_content(ev.raw_url):
                 continue
+=======
+
+            # --- Skip static assets ---
+            try:
+                parsed_path = urlparse((ev.raw_url or "").lower()).path
+
+                STATIC_EXTENSIONS = (
+                    ".css", ".js", ".png", ".jpg", ".jpeg",
+                    ".svg", ".gif", ".webp", ".ico",
+                    ".woff", ".woff2", ".ttf", ".eot",
+                    ".map", ".mp4", ".mp3", ".pdf"
+                )
+
+                if parsed_path.endswith(STATIC_EXTENSIONS):
+                    continue
+
+            except Exception:
+                pass
+>>>>>>> 503d3f8a08e98f5c8fa1167258b7e4c54128e0e5
             query = " ".join(filter(None, [ev.raw_url, ev.original_message]))
             if not query:
                 continue

@@ -5,6 +5,8 @@ Pydantic models for AI agent inputs and outputs.
 All agent outputs are strict JSON with confidence scores.
 """
 
+from __future__ import annotations
+
 
 from datetime import datetime
 from enum import Enum
@@ -233,6 +235,9 @@ class AgentOutput(BaseModel):
     mitre: Optional[MitreMapping] = None
     triage: Optional[TriageResult] = None
 
+    # Per-agent errors captured during graph execution
+    errors: List[AgentError] = Field(default_factory=list)
+
     # Overall assessment
     overall_confidence: float = Field(
         default=0.0,
@@ -248,6 +253,10 @@ class AgentOutput(BaseModel):
     # Metadata
     total_processing_time_ms: int = 0
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    def has_agent_result(self) -> bool:
+        """Return True when at least one agent produced a valid result."""
+        return any([self.behavioral, self.intent, self.mitre, self.triage])
 
     def compute_overall_confidence(self) -> float:
         """Compute average confidence from all agent outputs."""

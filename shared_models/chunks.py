@@ -179,6 +179,22 @@ class ChunkSummary(BaseModel):
     # Red flags (deterministically computed)
     red_flags: List[str] = Field(default_factory=list)
 
+    # Deterministic scoring and reason codes
+    anomaly_score: float = Field(default=0.0, ge=0.0, le=100.0)
+    reason_codes: List[str] = Field(default_factory=list)
+
+    # Richer context for grounded agent prompts
+    target_context: Dict[str, Any] = Field(default_factory=dict)
+    activity_ratios: Dict[str, float] = Field(default_factory=dict)
+    sample_evidence_refs: List[str] = Field(default_factory=list)
+
+    # HTTP/Web attack patterns
+    http_methods_seen: Optional[List[str]] = None
+    http_status_codes: Optional[Dict[str, int]] = None
+    suspicious_uri_patterns: Optional[List[str]] = None
+    user_agents_seen: Optional[List[str]] = None
+    http_attack_indicators: Optional[List[str]] = None
+
     @classmethod
     def from_chunk(cls, chunk: BehavioralChunk) -> "ChunkSummary":
         """
@@ -264,4 +280,11 @@ class ChunkSummary(BaseModel):
             ),
             context=chunk.context.model_dump(exclude_none=True),
             red_flags=red_flags,
+            anomaly_score=0.0,
+            reason_codes=red_flags,
+            target_context=chunk.targets.model_dump(exclude_none=True),
+            activity_ratios={
+                "failure_rate": round(chunk.activity_profile.failure_rate, 4),
+            },
+            sample_evidence_refs=[str(event_id) for event_id in chunk.source_event_ids[:5]],
         )

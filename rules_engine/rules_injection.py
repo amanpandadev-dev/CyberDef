@@ -182,7 +182,7 @@ class SQLInjectionRule(ScoredThreatRule):
         # ----------------------------------------------------
 
         "HEX_ENCODING": (
-            r"(?i)0x[0-9a-f]{6,}",
+            r"(?i)((select|union|insert|update|where|and|or)\b[^;]{0,50}\b0x[0-9a-f]{6,}|(=|\(|,)\s*0x[0-9a-f]{8,})",
             2,
         ),
 
@@ -191,7 +191,7 @@ class SQLInjectionRule(ScoredThreatRule):
         # ----------------------------------------------------
 
         "SQL_COMMENT_CONTEXTUAL": (
-            r"(?i)(?:'|%27)\s*(?:or|and|union|select|where)\b.{0,30}(?:--|#|/\*)",
+            r"(?i)\b(?:union\s+select|select\s+.+?\s+from|where\s+.+?(?:=|like)|(?:and|or)\s+(?:\d+|'[^']{0,20}')\s*(?:=|>|<)).{0,20}(?:--|#|\/\*)?",
             2,
         ),
 
@@ -323,7 +323,7 @@ class BlindSQLInjectionRule(ScoredThreatRule):
         # ----------------------------------------------------
 
         "SQL_COMMENT_CONTEXTUAL": (
-            r"(?i)(?:'|%27|union|select|where|and|or).{0,40}(?:--|#|/\*)",
+            r"(?i)\b(?:union\s+select|select\s+.+?\s+from|where\s+.+?(?:=|like)|(?:and|or)\s+(?:\d+|'[^']{0,20}')\s*(?:=|>|<)).{0,20}(?:--|#|\/\*)?",
             2,
         ),
 
@@ -405,7 +405,7 @@ class CommandInjectionRule(ThreatRule):
     check_fields = ["raw_url", "referrer"]
     patterns = [
         r"(?i)\bshell_exec\s*\(",
-        r"(?i)((;\s*|\|\||&&|\||`|\$\()\s*(whoami|id|uname|cat|ls|bash|sh|nc|curl|wget)|(powershell(\.exe)?|cmd\.exe).*(invoke-webrequest|downloadstring|iex|webclient)?)",
+        r"(?i)((;\s*|\|\||&&|\||`|\$\()\s*(whoami|id|uname|cat|ls|bash|sh|nc|curl|wget)|(powershell(\.exe)?|cmd\.exe)\s+.*?(invoke-webrequest|downloadstring|iex|webclient))",
     ]
 
 
@@ -444,7 +444,7 @@ class XPathInjectionRule(ThreatRule):
     )
     SAFE_XML_TERMS = ("xmlns", "soap", "wsdl", "rss", "sitemap")
 
-    XPATH_REGEX = re.compile(r'''(?ix)(['\"`%27%22]\s*(or|and)\s+['\"`0-9a-z]|(contains|starts-with|substring|substring-before|substring-after|normalize-space|string-length|translate|concat|count|sum|floor|ceiling|round|position|last|name|local-name|namespace-uri|text|node)\s*\(|(ancestor|ancestor-or-self|descendant|descendant-or-self|child|parent|self|following|following-sibling|preceding|preceding-sibling|attribute|namespace)\s*::|(?<!http:)(?<!https:)//|/\*|//\*|\.\./|/node\s*\(\)|/text\s*\(\)|/comment\s*\(\)|/processing-instruction\s*\(|\[[^\]]*(=|!=|<|>|<=|>=|or|and)[^\]]*\]|\*\[|\|\s*//|%2f%2f|%2e%2e|%5b|%5d|%28|%29|%2a|%27|%22|document\s*\(|collection\s*\(|id\s*\(|['\"`]\s*/)''')
+    XPATH_REGEX = re.compile(r'''(?i)(\b(?:count|substring|contains|starts-with|normalize-space|position|last|text|name|local-name)\s*\(|(?<!https:)(?<!http:)(?<!https%3a)(?<!http%3a)//[a-zA-Z_][a-zA-Z0-9_\-*]{0,30}\s*\[(?:\[[^\]]{1,40}\])?|\b(?:and|or)\b\s+(\d+\s*=\s*\d+|'[^']{1,30}'\s*=\s*'[^']{1,30}'|\"[^\"]{1,30}\"\s*=\s*\"[^\"]{1,30}\")|(?:ancestor|descendant|following-sibling|preceding-sibling|parent|self)::[a-zA-Z_*])''')
 
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:

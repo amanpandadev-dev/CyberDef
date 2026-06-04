@@ -619,6 +619,10 @@ async def analyze_file(
                         threat, file_id=parsed_uuid,
                     )
                     if incident:
+                        ai_outs = ip_to_ai_outputs.get(threat_ip, [])
+                        if ai_outs:
+                            max_conf = max((out.overall_confidence for out in ai_outs), default=0.0)
+                            incident.detection_tier = "AI Analyzed" if max_conf >= 0.7 else "AI Analyzed - needs human review"
                         all_incidents.append(incident)
 
                 # Create Tier 2 incidents only for AI-confirmed IPs

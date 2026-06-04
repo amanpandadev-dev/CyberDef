@@ -555,10 +555,8 @@ async def analyze_file(
                         continue
                     triage = ai_out.triage
                     behavioral = ai_out.behavioral
-                    is_tp = (
-                        (triage and triage.suspicious)
-                        or (behavioral and behavioral.is_suspicious)
-                    )
+                    # Use behavioral agent's TP/FP decision (triage no longer has suspicious field)
+                    is_tp = behavioral and behavioral.is_suspicious
                     if is_tp:
                         if chunk.actor.src_ip:
                             ai_confirmed_ips.add(chunk.actor.src_ip)

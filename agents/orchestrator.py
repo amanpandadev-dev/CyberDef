@@ -198,9 +198,10 @@ class AgentOrchestrator:
                 output.errors = all_errors
                 output.total_processing_time_ms = max((o.total_processing_time_ms for o in valid_outputs), default=0)
                 
-                # Pick the best supporting agent results based on overall confidence and priority
+                # Pick the best supporting agent results based on behavioral is_suspicious and overall confidence
+                # (triage no longer has suspicious field - that's in behavioral agent)
                 best_sub = max(valid_outputs, key=lambda o: (
-                    1 if (o.triage and o.triage.suspicious) else 0,
+                    1 if (o.behavioral and o.behavioral.is_suspicious) else 0,
                     o.overall_confidence
                 ))
                 output.behavioral = best_sub.behavioral

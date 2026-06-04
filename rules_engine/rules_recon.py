@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
+from urllib.parse import parse_qsl, unquote, urlparse
 from urllib.parse import unquote, urlparse
 from typing import Set, List, Dict
 
@@ -37,7 +38,8 @@ SENSITIVE_FILE_REGEX = re.compile(
 
 # Backup and archive files
 BACKUP_FILE_REGEX = re.compile(
-    r"(?i).*\.(bak|old|orig|copy|save|swp|tmp|temp|sql|dump|tar|gz|zip|rar|7z)(?:\?|$)|.*~$"
+    r"(?i)(?:.*\.(bak|old|orig|copy|save|swp|tmp|temp|sql|dump)(?:\?|$)|.*~$"
+    r"|.*(backup|dump|db|site|www|htdocs)[-_]?\d*\.(zip|tar|gz|rar|7z)(?:\?|$))",
 )
 
 # Source code repositories and IDE metadata
@@ -50,13 +52,22 @@ DEBUG_ENDPOINT_REGEX = re.compile(
     r"(?i)/((debug|_debug|trace|_trace)\b|actuator(/|$)|console(/|$)|phpinfo(\.php)?|server-(status|info)|_profiler)"
 )
 
+SAFE_STATIC_EXTENSIONS = (".css", ".js", ".jpg", ".png", ".gif", ".ico", ".svg", ".json", ".woff2", ".woff")
+
+
+def _is_safe_static_content(raw_url: str | None) -> bool:
+    if not raw_url:
+        return False
+    return urlparse(raw_url).path.lower().endswith(SAFE_STATIC_EXTENSIONS)
+
 def _check_recon_probing(
     events: List[NormalizedEvent],
     regex: re.Pattern,
     rule_name: str,
     category: str,
     family: ThreatFamily,
-    probing_rule_name: str
+    probing_rule_name: str,
+    skip_safe_static: bool = False,
 ) -> List[ThreatMatch]:
     """Helper to detect systematic probing for sensitive files/paths on 2xx responses."""
     settings = get_settings()
@@ -70,6 +81,8 @@ def _check_recon_probing(
         if not _is_2xx(ev):
             continue
         uri = (ev.raw_url or "").lower()
+        if skip_safe_static and _is_safe_static_content(uri):
+            continue
         if regex.search(uri):
             ip = ev.src_ip or "-"
             ip_stats[ip]["uris"].add(uri)
@@ -257,7 +270,7 @@ class DebugEndpointExposureRule(Recon2xxThreatRule):
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         """Detect immediate SUCCESSFUL exposure (200 OK)."""
         uri = (event.raw_url or "").lower()
-        if _is_2xx(event) and DEBUG_ENDPOINT_REGEX.search(uri):
+        if _is_2xx(event) and not _is_safe_static_content(uri) and DEBUG_ENDPOINT_REGEX.search(uri):
             return ThreatMatch(
                 event_id=event.event_id,
                 rule_name="debug_endpoint_exposed",
@@ -279,7 +292,8 @@ class DebugEndpointExposureRule(Recon2xxThreatRule):
         return _check_recon_probing(
             events, DEBUG_ENDPOINT_REGEX,
             "debug_endpoint_exposure", "sensitive_information_disclosure",
-            ThreatFamily.INFO_LEAKAGE, "debug_endpoint_probing"
+            ThreatFamily.INFO_LEAKAGE, "debug_endpoint_probing",
+            skip_safe_static=True,
         )
 
 
@@ -322,7 +336,7 @@ class ErrorDetailDisclosureRule(Recon2xxThreatRule):
     )
 
     _FILE_PATH_LEAK = re.compile(
-        r"(?is)(?:(?:[A-Z]:\\|/)(?:[^ \r\n\t<>\"']+/)*[^ \r\n\t<>\"']+\.[A-Za-z0-9]{1,6}|(?:/var/www/|/usr/share/|/home/|/opt/|/srv/|C:\\inetpub\\|C:\\xampp\\|C:\\wamp\\))"
+        r"(?is)(error|exception|warning|fatal|stack trace|on line \d+).*(?:[A-Z]:\\|\/)(?:[^ \r\n\t<>\"']+/)*[^ \r\n\t<>\"']+\.[A-Za-z0-9]{1,6}"
     )
 
     _DEBUG_HINTS = re.compile(
@@ -706,7 +720,8 @@ class RFIRule(Recon2xxThreatRule):
     confidence = 0.85
     description = "Remote file inclusion attempt (raw/triple/double/single URL-encoding)"
     check_fields = []  # Stateful — handled entirely via check_batch
-    _STATIC_EXTENSIONS = (".css", ".js", ".jpg", ".png", ".gif", ".ico", ".svg", ".json", ".woff2", ".woff")
+    _STATIC_EXTENSIONS = (".css", ".js", ".jpg", ".png", ".gif", ".ico", ".svg", ".json", ".woff2", ".woff", ".pdf")
+    _RAW_PARAM_NAMES = {"include", "require", "template", "file"}
 
     # Triple encoding:  %25253a%25252f%25252f
     _TRIPLE_ENC = re.compile(
@@ -721,9 +736,6 @@ class RFIRule(Recon2xxThreatRule):
         r"(?i)(file|page|path|include|template|raw_url)=.*(http|https|ftp)%3a%2f%2f"
     )
 
-    _RAW_PROTO = re.compile(
-    r"(?i)(file|page|path|include|template|url|raw_url)=.*(http|https|ftp)\:\/\/"
-)
     # Threshold for single-encoding hits before alerting
     _SINGLE_THRESHOLD: int = 5
 
@@ -751,6 +763,27 @@ class RFIRule(Recon2xxThreatRule):
         return urlparse(raw_url).path.lower().endswith(cls._STATIC_EXTENSIONS)
 
     @classmethod
+    def _has_raw_rfi_param(cls, raw_url: str | None) -> bool:
+        if not raw_url:
+            return False
+
+        query = urlparse(raw_url).query
+        if not query and "?" in raw_url:
+            query = raw_url.split("?", 1)[1]
+
+        for name, value in parse_qsl(query, keep_blank_values=True):
+            if name.lower() not in cls._RAW_PARAM_NAMES:
+                continue
+
+            normalized_value = unquote(value).strip().lower()
+            has_remote_protocol = "http://" in normalized_value or "https://" in normalized_value
+            is_safe_static_value = urlparse(normalized_value).path.endswith(cls._STATIC_EXTENSIONS)
+            if has_remote_protocol and not is_safe_static_value:
+                return True
+
+        return False
+
+    @classmethod
     def check_batch(cls, events: List[NormalizedEvent]) -> List[ThreatMatch]:
         """Stateful RFI detection across a batch (15-min window)."""
         matches: List[ThreatMatch] = []
@@ -761,6 +794,23 @@ class RFIRule(Recon2xxThreatRule):
         for ev in events:
             if not _is_2xx(ev):
                 continue
+
+            # --- Skip static assets ---
+            try:
+                parsed_path = urlparse((ev.raw_url or "").lower()).path
+
+                STATIC_EXTENSIONS = (
+                    ".css", ".js", ".png", ".jpg", ".jpeg",
+                    ".svg", ".gif", ".webp", ".ico",
+                    ".woff", ".woff2", ".ttf", ".eot",
+                    ".map", ".mp4", ".mp3", ".pdf"
+                )
+
+                if parsed_path.endswith(STATIC_EXTENSIONS):
+                    continue
+
+            except Exception:
+                pass
             if cls._is_static_content(ev.raw_url):
                 continue
             query = " ".join(filter(None, [ev.raw_url, ev.original_message]))
@@ -772,7 +822,7 @@ class RFIRule(Recon2xxThreatRule):
                 continue  # No identifiable actor — skip
 
             # --- RAW protocol inclusion → immediate CRITICAL alert ---
-            if cls._RAW_PROTO.search(query):
+            if cls._has_raw_rfi_param(ev.raw_url):
                 matches.append(ThreatMatch(
                     event_id=ev.event_id,
                     rule_name="rfi_raw_protocol",

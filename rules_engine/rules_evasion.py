@@ -257,6 +257,7 @@ class PathNormalizationBypassRule(Status200ThreatRule):
 
     # Threshold for structural (non-dot-encoded) bypasses per actor
     _STRUCTURAL_THRESHOLD: int = 5
+    _PLACEHOLDER_USERNAMES = {"", "-", "unknown", "none", "null", "n/a", "na"}
 
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         """Per-event match is a no-op; all logic lives in check_batch."""
@@ -269,8 +270,9 @@ class PathNormalizationBypassRule(Status200ThreatRule):
         - Authenticated : username
         - Anonymous     : src_ip + user_agent (both must be present)
         """
-        if event.username:
-            return str(event.username)
+        username = str(event.username).strip() if event.username is not None else ""
+        if username and username.lower() not in PathNormalizationBypassRule._PLACEHOLDER_USERNAMES:
+            return username
         if event.src_ip and event.user_agent:
             return f"{event.src_ip}|{event.user_agent}"
         return None  # Cannot determine actor — skip this event

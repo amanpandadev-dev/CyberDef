@@ -170,6 +170,9 @@ class TriageResult(BaseAgentOutput):
     """
     Output from Triage & Narrative Agent.
     Provides priority and actionable recommendations.
+    
+    Note: TP/FP validation is done by Behavioral Agent (is_suspicious field).
+    This agent focuses on prioritization and response planning.
     """
     agent_name: str = "triage"
 
@@ -179,16 +182,17 @@ class TriageResult(BaseAgentOutput):
     )
     risk_reason: str = Field(
         ...,
-        description="Concise explanation of the risk"
+        description="Concise explanation of threat severity and business impact"
     )
     recommended_action: str = Field(
         ...,
-        description="Recommended next step for analyst"
+        description="Specific investigation and response steps"
     )
     confidence: float = Field(
         ...,
         ge=0.0,
-        le=1.0
+        le=1.0,
+        description="Confidence in priority assessment (not TP/FP, which is upstream)"
     )
 
     # Narrative elements
@@ -219,7 +223,22 @@ class TriageResult(BaseAgentOutput):
     confidence_score: int = Field(default=1, ge=1, le=10, description="Confidence score from 1 to 10")
     mitre_tactic: Optional[str] = Field(default=None, description="MITRE ATT&CK tactic")
     mitre_technique: Optional[str] = Field(default=None, description="MITRE technique ID")
-    tp_justification: Optional[str] = Field(default=None, description="Concrete proof and reasoning of why this is a True Positive and why it was flagged")
+    tp_justification: Optional[str] = Field(default=None, description="Concrete proof and reasoning of threat")
+
+    @field_validator("raw_log", "source_ip", "destination_ip", mode="before")
+    @classmethod
+    def convert_dict_to_string(cls, v):
+        """Convert dict/object fields to strings if LLM returns them incorrectly."""
+        if v is None:
+            return None
+        if isinstance(v, dict):
+            # LLM returned a JSON object instead of string - flatten it
+            import json
+            return json.dumps(v, ensure_ascii=False)
+        if isinstance(v, str):
+            return v
+        # For other types, convert to string
+        return str(v)
 
 
 class AgentError(BaseModel):

@@ -214,6 +214,7 @@ class TriageResult(BaseAgentOutput):
     # Structured incident mapping fields requested by UI
     raw_log: Optional[str] = Field(default=None, description="Representative raw log line")
     source_ip: Optional[str] = Field(default=None, description="Source IP")
+    source_username: Optional[str] = Field(default=None, description="Source username/userid if available")
     destination_ip: Optional[str] = Field(default=None, description="Destination IP/host")
     
     # NOTE: suspicious field removed - use Behavioral Agent's is_suspicious instead
@@ -227,6 +228,8 @@ class TriageResult(BaseAgentOutput):
     mitre_tactic: Optional[str] = Field(default=None, description="MITRE ATT&CK tactic")
     mitre_technique: Optional[str] = Field(default=None, description="MITRE technique ID")
     tp_justification: Optional[str] = Field(default=None, description="Concrete proof and reasoning of threat")
+    ai_needs_human_review: Optional[bool] = Field(default=None, description="AI agent's assessment of whether human review is needed")
+    ai_review_reason: Optional[str] = Field(default=None, description="AI agent's explanation for why human review is recommended")
 
     @field_validator("raw_log", "source_ip", "destination_ip", mode="before")
     @classmethod

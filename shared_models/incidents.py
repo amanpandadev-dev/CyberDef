@@ -86,6 +86,8 @@ class Incident(BaseModel):
     # Actor information
     primary_actor_ip: Optional[str] = None
     actor_ips: List[str] = Field(default_factory=list)
+    primary_actor_username: Optional[str] = None
+    actor_usernames: List[str] = Field(default_factory=list)
     affected_hosts: List[str] = Field(default_factory=list)
 
     # MITRE mapping
@@ -104,6 +106,7 @@ class Incident(BaseModel):
     mi_id: str = Field(default="GenAI_SOC", alias="$MI_ID")
     raw_log: Optional[str] = None
     source_ip: Optional[str] = None
+    source_username: Optional[str] = None
     destination_ip: Optional[str] = None
     suspicious: bool = True
     suspicious_indicator: Optional[str] = None
@@ -113,6 +116,10 @@ class Incident(BaseModel):
     confidence_score: int = Field(default=1, ge=1, le=10)
     mitre_tactic: Optional[str] = None
     mitre_technique: Optional[str] = None
+    correlation_info: Optional[str] = Field(
+        default=None,
+        description="Correlation details showing IP and userid associations"
+    )
 
     # Timeline
     timeline: List[IncidentTimeline] = Field(default_factory=list)
@@ -167,6 +174,7 @@ class IncidentSummary(BaseModel):
     file_ids: List[UUID] = Field(default_factory=list)
     raw_log: Optional[str] = None
     source_ip: Optional[str] = None
+    source_username: Optional[str] = None
     destination_ip: Optional[str] = None
     suspicious: bool = True
     suspicious_indicator: Optional[str] = None
@@ -176,6 +184,7 @@ class IncidentSummary(BaseModel):
     confidence_score: int = 1
     mitre_tactic: Optional[str] = None
     mitre_technique: Optional[str] = None
+    correlation_info: Optional[str] = None
 
 
 

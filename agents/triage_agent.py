@@ -157,6 +157,7 @@ Respond with ONLY this JSON format:
     "enrichment_suggestions": ["<SIEM correlation queries>", "<threat intel lookups>", "<forensic data collection>"],
     "raw_log": "<representative raw event from sample_raw_logs array, or null>",
     "source_ip": "<source IP from actor.src_ip, or null>",
+    "source_username": "<source username from actor.username if available, or null>",
     "destination_ip": "<destination IP/host from target_context, or null>",
     "suspicious_indicator": "<which indicator is most suspicious: url|referer|user_agent|payload|source_ip|behavior_pattern>",
     "attack_name": "<descriptive attack label based on MITRE technique and behavior, or null>",
@@ -165,15 +166,23 @@ Respond with ONLY this JSON format:
     "confidence_score": <1 to 10 - map confidence to integer scale>,
     "mitre_tactic": "<MITRE tactic from upstream MITRE agent, or inferred from behavior, or null>",
     "mitre_technique": "<MITRE technique ID from upstream agent, or null>",
-    "tp_justification": "<concrete evidence from flagged_rules and behavioral summary explaining the threat>"
+    "tp_justification": "<concrete evidence from flagged_rules and behavioral summary explaining the threat>",
+    "ai_needs_human_review": <true|false - based on your expert judgment: does this incident need human analyst review?>,
+    "ai_review_reason": "<if ai_needs_human_review is true, explain why human review is needed: e.g., 'ambiguous evidence', 'potential false positive', 'high-impact target', 'novel attack pattern', 'requires business context', etc.>"
 }}
 
 Guidelines:
 - raw_log: Extract from 'sample_raw_logs' array if available, otherwise null
-- source_ip/destination_ip: Extract from summary
+- source_ip/source_username/destination_ip: Extract from summary
 - mitre_tactic/technique: Use values from upstream MITRE agent if available
 - tp_justification: Reference specific rules and evidence from the chunk
-- confidence: Reflects your confidence in PRIORITY assignment, not TP/FP (that's already decided)
+- confidence: Reflects your confidence in PRIORITY assessment, not TP/FP (that's already decided)
+- ai_needs_human_review: Use your expert judgment to determine if a human analyst should review this incident
+  * Consider: evidence ambiguity, attack sophistication, target criticality, potential for false positive, novel patterns
+  * Don't default to always requiring review - only flag when genuinely warranted
+  * Low-confidence assessments typically need review
+  * High-severity incidents often need review regardless of confidence
+- ai_review_reason: Required if ai_needs_human_review is true; null otherwise
 """
         return prompt
 
@@ -190,6 +199,7 @@ Guidelines:
     "enrichment_suggestions": ["array of data source suggestions for investigation"],
     "raw_log": "string|null - representative log line from sample_raw_logs",
     "source_ip": "string|null - source IP from summary",
+    "source_username": "string|null - source username/userid from summary",
     "destination_ip": "string|null - destination IP/host from summary",
     "suspicious_indicator": "string - url|referer|user_agent|payload|source_ip|behavior_pattern",
     "attack_name": "string|null - descriptive attack label",
@@ -198,5 +208,7 @@ Guidelines:
     "confidence_score": "integer 1-10 - confidence mapped to scale",
     "mitre_tactic": "string|null - MITRE ATT&CK tactic",
     "mitre_technique": "string|null - MITRE technique ID",
-    "tp_justification": "string|null - concrete evidence and reasoning"
+    "tp_justification": "string|null - concrete evidence and reasoning",
+    "ai_needs_human_review": "boolean - AI assessment of whether human review is needed",
+    "ai_review_reason": "string|null - explanation for why human review is recommended"
 }"""

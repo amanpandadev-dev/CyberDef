@@ -183,6 +183,10 @@ class DeterministicEngine:
                     src_ips = sorted({m.src_ip for m in group_matches if m.src_ip})
                     primary_ip = src_ips[0] if src_ips else None
 
+                    # Collect source usernames
+                    src_usernames = sorted({m.src_username for m in group_matches if m.src_username})
+                    primary_username = src_usernames[0] if src_usernames else None
+
                     # Time range
                     timestamps = [m.timestamp for m in group_matches if m.timestamp]
                     first_seen = min(timestamps) if timestamps else None
@@ -208,6 +212,8 @@ class DeterministicEngine:
                         affected_event_ids=[m.event_id for m in group_matches[:100]],
                         src_ip=primary_ip,
                         src_ips=src_ips,
+                        src_username=primary_username,
+                        src_usernames=src_usernames,
                         first_seen=first_seen,
                         last_seen=last_seen,
                     ))

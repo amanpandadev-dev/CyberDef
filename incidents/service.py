@@ -297,7 +297,17 @@ class IncidentService:
         triage = output.triage
         raw_log = triage.raw_log if triage and triage.raw_log else self._extract_raw_log_from_chunk(chunk)
         source_ip = triage.source_ip if triage and triage.source_ip else chunk.actor.src_ip
+        source_username = triage.source_username if triage and triage.source_username else chunk.actor.username
         destination_ip = triage.destination_ip if triage and triage.destination_ip else self._extract_destination_ip_from_chunk(chunk)
+        
+        # Build correlation info showing IP and userid associations
+        correlation_parts = []
+        if source_ip:
+            correlation_parts.append(f"IP: {source_ip}")
+        if source_username:
+            correlation_parts.append(f"User: {source_username}")
+        correlation_info = " | ".join(correlation_parts) if correlation_parts else None
+        
         attack_name = (
             triage.attack_name
             if triage and triage.attack_name
@@ -341,6 +351,8 @@ class IncidentService:
             file_ids=[chunk.file_id],
             primary_actor_ip=chunk.actor.src_ip,
             actor_ips=chunk.actor.src_ips or ([chunk.actor.src_ip] if chunk.actor.src_ip else []),
+            primary_actor_username=chunk.actor.username,
+            actor_usernames=[chunk.actor.username] if chunk.actor.username else [],
             affected_hosts=list(chunk.targets.dst_hosts)[:20],
             mitre_techniques=mitre_refs,
             primary_tactic=primary_tactic,
@@ -350,6 +362,7 @@ class IncidentService:
             recommended_actions=[output.triage.recommended_action] if output.triage else [],
             raw_log=raw_log,
             source_ip=source_ip,
+            source_username=source_username,
             destination_ip=destination_ip,
             # Use behavioral agent's is_suspicious (triage no longer has suspicious field)
             suspicious=bool(output.behavioral.is_suspicious) if output.behavioral else priority != IncidentPriority.INFORMATIONAL,
@@ -370,6 +383,7 @@ class IncidentService:
             confidence_score=triage.confidence_score if triage else self._confidence_to_score(output.overall_confidence),
             mitre_tactic=(triage.mitre_tactic if triage and triage.mitre_tactic else (output.mitre.tactic if output.mitre else primary_tactic)),
             mitre_technique=(triage.mitre_technique if triage and triage.mitre_technique else (output.mitre.technique_id if output.mitre else None)),
+            correlation_info=correlation_info,
             timeline=timeline,
         )
 
@@ -410,6 +424,18 @@ class IncidentService:
 
         evidence_str = "; ".join(threat.sample_evidence[:3])
         actor = threat.src_ip or "Unknown"
+        
+        # Build correlation info showing IP and userid associations
+        correlation_parts = []
+        if threat.src_ip:
+            correlation_parts.append(f"IP: {threat.src_ip}")
+        if threat.src_username:
+            correlation_parts.append(f"User: {threat.src_username}")
+        if len(threat.src_ips) > 1:
+            correlation_parts.append(f"Additional IPs: {', '.join(threat.src_ips[1:3])}")
+        if len(threat.src_usernames) > 1:
+            correlation_parts.append(f"Additional Users: {', '.join(threat.src_usernames[1:3])}")
+        correlation_info = " | ".join(correlation_parts) if correlation_parts else None
 
         incident = Incident(
             title=f"[{threat.category.upper()}] {threat.description[:60]} from {actor}",
@@ -427,6 +453,8 @@ class IncidentService:
             file_ids=[file_id] if file_id else [],
             primary_actor_ip=threat.src_ip,
             actor_ips=threat.src_ips,
+            primary_actor_username=threat.src_username,
+            actor_usernames=threat.src_usernames,
             overall_confidence=threat.confidence,
             detection_tier="deterministic",
             detection_rule=threat.rule_name,
@@ -434,6 +462,7 @@ class IncidentService:
             recommended_actions=[f"Investigate {threat.category} from {actor}"],
             raw_log=threat.sample_evidence[0][:300] if threat.sample_evidence else None,
             source_ip=threat.src_ip,
+            source_username=threat.src_username,
             destination_ip=self._extract_destination_ip_from_text(evidence_str),
             suspicious=priority != IncidentPriority.INFORMATIONAL,
             suspicious_indicator=self._derive_indicator_from_corpus(" ".join([threat.category, threat.rule_name, evidence_str])),
@@ -441,6 +470,7 @@ class IncidentService:
             brief_description=threat.description[:260],
             recommended_action=f"Investigate {threat.category} from {actor}",
             confidence_score=self._confidence_to_score(threat.confidence),
+            correlation_info=correlation_info,
             mitre_tactic=None,
             mitre_technique=None,
             timeline=[
@@ -476,6 +506,15 @@ class IncidentService:
             "medium": IncidentPriority.MEDIUM,
         }
         priority = sev_map.get(finding.severity, IncidentPriority.MEDIUM)
+        
+        # Build correlation info
+        correlation_parts = []
+        if finding.src_ip:
+            correlation_parts.append(f"IP: {finding.src_ip}")
+        src_username = getattr(finding, "src_username", None)
+        if src_username:
+            correlation_parts.append(f"User: {src_username}")
+        correlation_info = " | ".join(correlation_parts) if correlation_parts else None
 
         incident = Incident(
             title=f"[CORRELATION] {finding.description[:80]}",
@@ -492,6 +531,8 @@ class IncidentService:
             file_ids=[file_id] if file_id else [],
             primary_actor_ip=finding.src_ip,
             actor_ips=[finding.src_ip] if finding.src_ip else [],
+            primary_actor_username=src_username,
+            actor_usernames=[src_username] if src_username else [],
             overall_confidence=finding.confidence,
             detection_tier="correlation",
             detection_rule=finding.correlation_rule,
@@ -499,6 +540,7 @@ class IncidentService:
             recommended_actions=[f"Investigate correlated activity from {finding.src_ip}"],
             raw_log=str(getattr(finding, "evidence", ""))[:300],
             source_ip=finding.src_ip,
+            source_username=src_username,
             destination_ip=self._extract_destination_ip_from_text(str(getattr(finding, "evidence", ""))),
             suspicious=priority != IncidentPriority.INFORMATIONAL,
             suspicious_indicator=self._derive_indicator_from_corpus(
@@ -508,6 +550,7 @@ class IncidentService:
             brief_description=finding.description[:260] if finding.description else None,
             recommended_action=f"Investigate correlated activity from {finding.src_ip}",
             confidence_score=self._confidence_to_score(finding.confidence),
+            correlation_info=correlation_info,
             mitre_tactic=None,
             mitre_technique=None,
             timeline=[

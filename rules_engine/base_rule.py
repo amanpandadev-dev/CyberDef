@@ -82,6 +82,7 @@ class ThreatRule(ABC):
                         raw_url=event.raw_url,
                         timestamp=event.timestamp,
                         src_ip=event.src_ip,
+                        src_username=event.username,
                     )
 
         return None

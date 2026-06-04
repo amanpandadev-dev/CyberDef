@@ -227,7 +227,12 @@ class AgentOrchestrator:
                     output.triage = best_sub.triage
 
                 output.compute_overall_confidence()
-                output.requires_human_review = self._needs_human_review(output)
+                # Let AI decide if human review is needed (from triage agent)
+                if output.triage and output.triage.ai_needs_human_review is not None:
+                    output.requires_human_review = output.triage.ai_needs_human_review
+                else:
+                    # Fallback to old logic if AI didn't provide a decision
+                    output.requires_human_review = self._needs_human_review(output)
 
         if output.has_agent_result():
             self.analyses_completed += 1
@@ -347,7 +352,12 @@ class AgentOrchestrator:
         if state.get("stop_reason") == "behavioral_confident_benign":
             output.requires_human_review = False
         elif output.has_agent_result():
-            output.requires_human_review = self._needs_human_review(output)
+            # Let AI decide if human review is needed (from triage agent)
+            if output.triage and output.triage.ai_needs_human_review is not None:
+                output.requires_human_review = output.triage.ai_needs_human_review
+            else:
+                # Fallback to old logic if AI didn't provide a decision
+                output.requires_human_review = self._needs_human_review(output)
         else:
             output.requires_human_review = True
         return state

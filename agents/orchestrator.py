@@ -12,6 +12,7 @@ from typing import Any, TypedDict
 from uuid import UUID
 
 try:
+    # pyrefly: ignore [missing-import]
     from langgraph.graph import END, StateGraph
 except Exception:  # pragma: no cover - fallback for incomplete local installs
     END = "__end__"
@@ -23,6 +24,7 @@ from agents.cache import AnalysisCache, get_analysis_cache
 from agents.intent_agent import ThreatIntentAgent
 from agents.mitre_agent import MitreReasoningAgent
 from agents.triage_agent import TriageNarrativeAgent
+from agents.merge_agent import MergeNarrativeAgent
 from core.config import get_settings
 from core.logging import get_logger
 from shared_models.agents import AgentError as AgentErrorModel
@@ -68,6 +70,7 @@ class AgentOrchestrator:
         self.intent_agent = ThreatIntentAgent(self.client)
         self.mitre_agent = MitreReasoningAgent(self.client)
         self.triage_agent = TriageNarrativeAgent(self.client)
+        self.merge_agent = MergeNarrativeAgent(self.client)
 
         self.analyses_completed = 0
         self.cache_hits = 0
@@ -133,17 +136,97 @@ class AgentOrchestrator:
 
         logger.info(f"Starting graph agent analysis | chunk_id={chunk_id}")
 
-        initial_state: AgentGraphState = {
-            "chunk_id": chunk_id,
-            "summary_dict": summary_dict,
-            "output": AgentOutput(chunk_id=chunk_id),
-            "errors": [],
-            "total_time_ms": 0,
-            "skip_if_not_suspicious": skip_if_not_suspicious,
-            "stop_downstream": False,
-        }
-        final_state = await self._run_graph(initial_state)
-        output = final_state["output"]
+        flagged_rules = summary.flagged_rules or []
+
+        if len(flagged_rules) <= 1:
+            initial_state: AgentGraphState = {
+                "chunk_id": chunk_id,
+                "summary_dict": summary_dict,
+                "output": AgentOutput(chunk_id=chunk_id),
+                "errors": [],
+                "total_time_ms": 0,
+                "skip_if_not_suspicious": skip_if_not_suspicious,
+                "stop_downstream": False,
+            }
+            final_state = await self._run_graph(initial_state)
+            output = final_state["output"]
+        else:
+            logger.info(f"Fanning out graph execution for {len(flagged_rules)} rules | chunk_id={chunk_id}")
+            
+            async def _run_for_rule(rule_dict: dict) -> AgentOutput:
+                sub_summary = summary.model_copy(update={"flagged_rules": [rule_dict]})
+                state: AgentGraphState = {
+                    "chunk_id": chunk_id,
+                    "summary_dict": sub_summary.model_dump(mode="json"),
+                    "output": AgentOutput(chunk_id=chunk_id),
+                    "errors": [],
+                    "total_time_ms": 0,
+                    "skip_if_not_suspicious": skip_if_not_suspicious,
+                    "stop_downstream": False,
+                }
+                final_state = await self._run_graph(state)
+                return final_state["output"]
+
+            tasks = [_run_for_rule(r) for r in flagged_rules]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            valid_outputs = [r for r in results if isinstance(r, AgentOutput) and r.has_agent_result()]
+            
+            all_errors = []
+            for r in results:
+                if isinstance(r, Exception):
+                    all_errors.append(AgentErrorModel(
+                        chunk_id=chunk_id,
+                        agent_name="orchestrator",
+                        error_type="map_reduce_error",
+                        error_message=str(r),
+                        timestamp=datetime.utcnow()
+                    ))
+                elif isinstance(r, AgentOutput):
+                    all_errors.extend(r.errors)
+
+            if not valid_outputs:
+                output = AgentOutput(chunk_id=chunk_id)
+                output.errors = all_errors
+            elif len(valid_outputs) == 1:
+                output = valid_outputs[0]
+                output.errors.extend(all_errors)
+            else:
+                # Merge multiple successful outputs
+                triage_results = [o.triage.model_dump(mode="json") for o in valid_outputs if o.triage]
+                output = AgentOutput(chunk_id=chunk_id)
+                output.errors = all_errors
+                output.total_processing_time_ms = max((o.total_processing_time_ms for o in valid_outputs), default=0)
+                
+                # Pick the best supporting agent results based on overall confidence and priority
+                best_sub = max(valid_outputs, key=lambda o: (
+                    1 if (o.triage and o.triage.suspicious) else 0,
+                    o.overall_confidence
+                ))
+                output.behavioral = best_sub.behavioral
+                output.intent = best_sub.intent
+                output.mitre = best_sub.mitre
+
+                if triage_results:
+                    try:
+                        merge_summary = {"_triage_results_to_merge": triage_results}
+                        merged_triage = await self.merge_agent.analyze(merge_summary, chunk_id)
+                        output.triage = merged_triage
+                        output.total_processing_time_ms += merged_triage.processing_time_ms
+                    except Exception as e:
+                        all_errors.append(AgentErrorModel(
+                            chunk_id=chunk_id,
+                            agent_name="merge_agent",
+                            error_type="merge_error",
+                            error_message=str(e),
+                            timestamp=datetime.utcnow()
+                        ))
+                        output.triage = best_sub.triage
+                else:
+                    output.triage = best_sub.triage
+
+                output.compute_overall_confidence()
+                output.requires_human_review = self._needs_human_review(output)
 
         if output.has_agent_result():
             self.analyses_completed += 1
@@ -200,7 +283,8 @@ class AgentOrchestrator:
                 state["stop_reason"] = "behavioral_confident_benign"
         except Exception as e:
             self._record_agent_error(state, "behavioral_interpretation", str(e))
-            state["stop_downstream"] = True
+            # DO NOT stop downstream if behavioral agent fails. Let TriageAgent try to recover it.
+            state["stop_downstream"] = False
             state["stop_reason"] = "behavioral_failed"
         return state
 
@@ -314,6 +398,7 @@ class AgentOrchestrator:
         self,
         summaries: list[ChunkSummary],
         max_concurrent: int = 3,
+        skip_if_not_suspicious: bool = False,
     ) -> list[AgentOutput]:
         """
         Analyze multiple summaries with controlled concurrency.
@@ -327,7 +412,7 @@ class AgentOrchestrator:
         async def analyze_with_semaphore(summary: ChunkSummary) -> AgentOutput:
             async with semaphore:
                 try:
-                    return await self.analyze(summary)
+                    return await self.analyze(summary, skip_if_not_suspicious=skip_if_not_suspicious)
                 except Exception as e:
                     logger.error(
                         f"Batch analysis error | chunk_id={summary.chunk_id}, error={e}"

@@ -161,6 +161,8 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
             target_context=self._build_target_context(chunk),
             activity_ratios=self._build_activity_ratios(chunk),
             sample_evidence_refs=self._extract_sample_evidence_refs(chunk, http_analysis),
+            sample_raw_logs=self._extract_sample_raw_logs(chunk),
+            flagged_rules=getattr(chunk, "flagged_rules", None),
             # HTTP/Web attack patterns
             http_methods_seen=http_analysis.get("methods"),
             http_status_codes=http_analysis.get("status_codes"),
@@ -402,6 +404,22 @@ class BehaviorSummaryService(BehaviorSummaryHelpers, ExtendedThreatAnalysisMixin
         for indicator in (http_analysis.get("attack_indicators") or [])[:5]:
             refs.append(f"indicator:{indicator}")
         return refs[:12]
+
+    def _extract_sample_raw_logs(self, chunk: BehavioralChunk) -> list[str]:
+        """Extract up to 3 actual raw log lines so the AI can see the payload."""
+        logs = []
+        for event in chunk.events[:3]:
+            if isinstance(event, dict):
+                raw = event.get("raw_data") or event.get("raw_message") or str(event)
+            else:
+                raw = getattr(event, "raw_data", None) or getattr(event, "raw_message", None) or str(event)
+            
+            raw_str = str(raw).strip()
+            # truncate to 500 chars to save context window tokens
+            if len(raw_str) > 500:
+                raw_str = raw_str[:497] + "..."
+            logs.append(raw_str)
+        return logs
 
     def get_stats(self) -> dict[str, Any]:
         """Get summarization statistics."""

@@ -88,7 +88,7 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-surface rounded-lg p-4">
                         <p className="text-xs text-gray-500 uppercase tracking-wider">Engine</p>
-                        <p className="text-lg font-semibold text-white mt-1">CyberDef 1.0</p>
+                        <p className="text-lg font-semibold text-white mt-1">mPulse 1.0</p>
                     </div>
                     <div className="bg-surface rounded-lg p-4">
                         <p className="text-xs text-gray-500 uppercase tracking-wider">Detection Rules</p>

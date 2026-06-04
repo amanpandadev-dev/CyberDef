@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from urllib.parse import unquote, urlparse
+from typing import Set, List, Dict
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -760,28 +761,8 @@ class RFIRule(Recon2xxThreatRule):
         for ev in events:
             if not _is_2xx(ev):
                 continue
-<<<<<<< HEAD
             if cls._is_static_content(ev.raw_url):
                 continue
-=======
-
-            # --- Skip static assets ---
-            try:
-                parsed_path = urlparse((ev.raw_url or "").lower()).path
-
-                STATIC_EXTENSIONS = (
-                    ".css", ".js", ".png", ".jpg", ".jpeg",
-                    ".svg", ".gif", ".webp", ".ico",
-                    ".woff", ".woff2", ".ttf", ".eot",
-                    ".map", ".mp4", ".mp3", ".pdf"
-                )
-
-                if parsed_path.endswith(STATIC_EXTENSIONS):
-                    continue
-
-            except Exception:
-                pass
->>>>>>> 503d3f8a08e98f5c8fa1167258b7e4c54128e0e5
             query = " ".join(filter(None, [ev.raw_url, ev.original_message]))
             if not query:
                 continue

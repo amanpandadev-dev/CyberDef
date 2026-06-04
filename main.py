@@ -7,18 +7,19 @@ Main FastAPI application entry point.
 
 from __future__ import annotations
 
+import asyncio
 import csv
+import functools
 from datetime import date
 import io
 import shutil
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Dict, List, Set
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from ast import Dict, Set, List
 # pyrefly: ignore [missing-import]
 import httpx
 # pyrefly: ignore [missing-import]
@@ -295,85 +296,65 @@ async def analyze_file(
             for i, row in enumerate(rows)
         ]
 
-        parsed_events = parser.parse_batch(raw_rows)
+        loop = asyncio.get_event_loop()
+
+        parsed_events = await loop.run_in_executor(
+            None, parser.parse_batch, raw_rows
+        )
 
         # Normalize (CPU-parallel for large batches, auto-fallback for small)
         normalizer = NormalizationService()
-        event_batch = normalizer.normalize_batch_parallel(parsed_events)
+        event_batch = await loop.run_in_executor(
+            None, normalizer.normalize_batch_parallel, parsed_events
+        )
 
         # Post-normalization deduplication
         deduplicator = Deduplicator()
-        deduped_events = deduplicator.deduplicate(event_batch.events)
-        dedupe_path = deduplicator.write_jsonl(deduped_events, settings.processed_dir, file_id) 
-        enriched_events = deduplicator.deduplicate(event_batch.events)
+        deduped_events = await loop.run_in_executor(
+            None, deduplicator.deduplicate, event_batch.events
+        )
+        dedupe_path = await loop.run_in_executor(
+            None, deduplicator.write_jsonl, deduped_events, settings.processed_dir, file_id
+        )
+        enriched_events = await loop.run_in_executor(
+            None, deduplicator.deduplicate, event_batch.events
+        )
 
         logger.info(f"Parse, normalize & deduplicate complete | file_id={file_id}, events={len(enriched_events)}")
 
         # — TIER 1: Deterministic Rules Engine ————————————————————————————————
         engine = DeterministicEngine()
-        tier1_result = engine.scan_parallel(enriched_events)
+        tier1_result = await loop.run_in_executor(
+            None, engine.scan_parallel, enriched_events
+        )
 
         logger.info(f"Tier 1 complete | threats={len(tier1_result.threats)}, matches={len(tier1_result.matches)}, time_ms={tier1_result.processing_time_ms}")
 
         # — Update Threat State Store ——————————————————————————————————————————
         state_store = get_threat_state_store(date.today())
-        state_store.update_from_batch(enriched_events, tier1_result)
+        await loop.run_in_executor(
+            None, state_store.update_from_batch, enriched_events, tier1_result
+        )
 
         # — TIER 2: Day-Level Correlator ——————————————————————————————————————
         if settings.enable_correlation_tier:
             correlator = DayLevelCorrelator(state_store)
-            tier2_result = correlator.correlate(events=enriched_events)
+            tier2_result = await loop.run_in_executor(
+                None, correlator.correlate, enriched_events
+            )
             logger.info(f"Tier 2 complete | total_findings={len(tier2_result.findings)}, new_patterns={len(tier2_result.new_patterns)}")
         else:
             logger.info("Tier 2 (Correlation) disabled by configuration")
             tier2_result = CorrelationResult(findings=[], new_patterns=[])
 
-        # — Create incidents from Tier 1 & Tier 2 —————————————————————————————
+        # — Collect IPs from Tier 1 & Tier 2 findings ——————————————————————————
+        # All findings (Tier 1 + Tier 2) go to AI for TP/FP validation.
+        # Incidents are ONLY created after AI confirms a finding is a True Positive.
         incident_service = IncidentService()
         all_incidents = []
         parsed_uuid = UUID(file_id)
 
-        # Tier 1 incidents (high-confidence deterministic matches)
-        for threat in tier1_result.high_confidence_threats:
-            incident = incident_service.create_from_deterministic_threat(
-                threat, file_id=parsed_uuid,
-            )
-            if incident:  # Only add if not excluded
-                all_incidents.append(incident)
-
-        # Tier 2 incidents (new cross-batch correlations)
-        if settings.enable_correlation_tier:
-            for pattern in tier2_result.new_patterns:
-                incident = incident_service.create_from_correlation(
-                    pattern, file_id=parsed_uuid,
-                )
-                if incident:  # Only add if not excluded
-                    all_incidents.append(incident)
-
-        # — Incremental Commit: Tier 1 & 2 —————————————————————————————————————
-        # This ensures findings are visible even if AI phase fails
-        await file_service.update_analysis_stats(
-            file_id=file_id,
-            events_normalized=len(enriched_events),
-            chunks_created=0,
-            suspicious_chunks=0,
-            ai_analyses=0,
-            incidents_created=len(all_incidents),
-        )
-
-        # — Chunking & TIER 3: AI Agent Pipeline (if needed) ———————————————————
-        chunking_svc = ChunkingService()
-        chunks = await chunking_svc.chunk_events(enriched_events, file_id=parsed_uuid)
-
-        # Balanced filtering — catches low-volume targeted attacks too
-        suspicious_chunks = chunking_svc.filter_suspicious_chunks(
-            chunks,
-            min_events=10,           # catch targeted attacks (≥10 events)
-            min_failure_rate=0.3,    # original threshold — good balance
-            min_unique_targets=3,    # original threshold
-        )
-
-        # Collect IPs that triggered Tier 1 or Tier 2 threats/findings
+        # Collect source IPs from Tier 1 threats
         incident_ips: set[str] = set()
         for threat in tier1_result.threats:
             if threat.src_ip:
@@ -381,53 +362,108 @@ async def analyze_file(
             for ip in threat.src_ips:
                 if ip:
                     incident_ips.add(ip)
+        # Collect source IPs from Tier 2 correlation findings
         if settings.enable_correlation_tier:
             for pattern in tier2_result.findings:
                 if pattern.src_ip:
                     incident_ips.add(pattern.src_ip)
 
-        # Ensure chunks associated with Tier 1/2 incidents are included in suspicious_chunks
-        suspicious_chunk_ids = {c.chunk_id for c in suspicious_chunks}
-        for chunk in chunks:
-            if chunk.chunk_id not in suspicious_chunk_ids:
-                ip = chunk.actor.src_ip if chunk.actor else None
-                ips = chunk.actor.src_ips if chunk.actor else []
-                if (ip and ip in incident_ips) or any(i in incident_ips for i in ips if i):
-                    suspicious_chunks.append(chunk)
-                    suspicious_chunk_ids.add(chunk.chunk_id)
+        # Map IP -> Tier1 threats and IP -> Tier2 patterns for post-AI incident creation
+        ip_to_tier1_threats: Dict[str, list] = {}
+        for threat in tier1_result.high_confidence_threats:
+            ip = threat.src_ip or ""
+            ip_to_tier1_threats.setdefault(ip, []).append(threat)
+            for extra_ip in threat.src_ips:
+                if extra_ip:
+                    ip_to_tier1_threats.setdefault(extra_ip, []).append(threat)
 
-        # Filter out chunks originating from private/internal or Zscaler IPs before AI escalation
-        filtered_chunks = []
-        for chunk in suspicious_chunks:
+        ip_to_tier2_patterns: Dict[str, list] = {}
+        if settings.enable_correlation_tier:
+            for pattern in tier2_result.new_patterns:
+                if pattern.src_ip:
+                    ip_to_tier2_patterns.setdefault(pattern.src_ip, []).append(pattern)
+
+        # — Incremental Commit: placeholder before AI ——————————————————————————
+        # Provides a progress update in the UI even before AI completes.
+        await file_service.update_analysis_stats(
+            file_id=file_id,
+            events_normalized=len(enriched_events),
+            chunks_created=0,
+            suspicious_chunks=0,
+            ai_analyses=0,
+            incidents_created=0,
+        )
+
+        # — Chunking ———————————————————————————————————————————————————————————
+        chunking_svc = ChunkingService()
+        chunks = await chunking_svc.chunk_events(enriched_events, file_id=parsed_uuid)
+
+        # Only send chunks to AI if they belong to Tier 1 or Tier 2 finding IPs
+        suspicious_chunks = []
+        for chunk in chunks:
             ip = chunk.actor.src_ip if chunk.actor else None
             ips = chunk.actor.src_ips if chunk.actor else []
-            
-            # Check if primary IP or any of secondary IPs are private/Zscaler
-            is_internal_or_zscaler = False
-            if ip and (is_ip_excluded(ip) or is_zscaler_ip(ip)):
-                is_internal_or_zscaler = True
-            elif any(is_ip_excluded(i) or is_zscaler_ip(i) for i in ips if i):
-                is_internal_or_zscaler = True
-                
-            if not is_internal_or_zscaler:
-                filtered_chunks.append(chunk)
-        
-        suspicious_chunks = filtered_chunks
+            if (ip and ip in incident_ips) or any(i in incident_ips for i in ips if i):
+                suspicious_chunks.append(chunk)
+
+        # Initialise dropped_threats here so it is always defined regardless
+        # of which execution path (AI / fallback / skipped) is taken below.
+        dropped_threats: list = []
+
+
+        # ——— Build rule-specific context for Chunks ————————————
+        # Build ip → list-of-rule-dicts from Tier 1 and Tier 2 findings.
+        ip_to_flagged_rules: Dict[str, list] = {}
+        for threat in tier1_result.high_confidence_threats:
+            rule_entry = {
+                "tier": "Tier 1 (Deterministic)",
+                "rule": threat.rule_name,
+                "category": threat.category,
+                "severity": threat.severity.value if hasattr(threat.severity, "value") else str(threat.severity),
+                "description": getattr(threat, "description", threat.rule_name),
+                "evidence": getattr(threat, "sample_evidence", []),
+            }
+            for ip in ([threat.src_ip] if threat.src_ip else []) + list(threat.src_ips or []):
+                if ip:
+                    ip_to_flagged_rules.setdefault(ip, []).append(rule_entry)
+
+        if settings.enable_correlation_tier:
+            for pattern in tier2_result.new_patterns:
+                if pattern.src_ip:
+                    rule_entry = {
+                        "tier": "Tier 2 (Correlation)",
+                        "rule": pattern.correlation_rule,
+                        "category": getattr(pattern, "category", "correlation"),
+                        "severity": getattr(pattern, "severity", "medium"),
+                        "description": getattr(pattern, "description", pattern.correlation_rule),
+                        "evidence": getattr(pattern, "evidence", {}),
+                    }
+                    ip_to_flagged_rules.setdefault(pattern.src_ip, []).append(rule_entry)
 
         # Store chunks for rollup via Async Flush Buffer
         flush_worker = get_flush_worker()
-        for chunk in chunks:
+        for i, chunk in enumerate(chunks):
+            # Stamp BehavioralChunk with flagged rules
+            chunk_ip = chunk.actor.src_ip if chunk.actor else None
+            chunk_ips = (chunk.actor.src_ips if chunk.actor else []) or []
+            rules: list = []
+            seen_rules: set = set()
+            for ip in ([chunk_ip] if chunk_ip else []) + list(chunk_ips):
+                for r in ip_to_flagged_rules.get(ip, []):
+                    key = (r["tier"], r["rule"])
+                    if key not in seen_rules:
+                        rules.append(r)
+                        seen_rules.add(key)
+            if rules:
+                chunk.flagged_rules = rules
+            
             await flush_worker.submit_chunk(chunk)
 
         ai_outputs = []
-        needs_ai = settings.enable_ai_tier and (
-            tier1_result.needs_ai_review 
-            or tier2_result.needs_ai_review 
-            or bool(incident_ips)
-        )
+        needs_ai = settings.enable_ai_tier and bool(incident_ips)
 
         # — Scale optimization: risk-score, deprioritize, and cap for AI ———————
-        MAX_AI_CHUNKS = 20          # Generous cap — ~4 min with 5 concurrent
+        MAX_AI_CHUNKS = 1000        # Generous cap — ~4 min with 5 concurrent
         MAX_AI_CONCURRENT = 2       # Reduce to 2 to prevent Ollama HTTP timeouts during heavy load
 
         if needs_ai and suspicious_chunks:
@@ -476,35 +512,171 @@ async def analyze_file(
 
             if ai_chunks:
                 summarizer = BehaviorSummaryService()
-                summaries = summarizer.summarize_batch(ai_chunks)
+                summaries = await loop.run_in_executor(
+                    None, summarizer.summarize_batch, ai_chunks
+                )
 
                 orchestrator = AgentOrchestrator()
                 ai_outputs = await orchestrator.analyze_batch(
                     summaries, max_concurrent=MAX_AI_CONCURRENT,
                 )
 
-                # Store agent outputs
+                # Build chunk lookup once — used by both the IP-stamping loop
+                # below AND the TP/FP validation loop that follows.
+                chunk_id_to_chunk = {c.chunk_id: c for c in ai_chunks}
+
+                # Stamp each AgentOutput with the chunk's source IP so the report
+                # writer can group AI analyses by IP without relying on the AI to
+                # extract it from its own analysis (which is often null/unreliable).
+                # Using model_copy(update=...) is the correct Pydantic v2 pattern —
+                # direct attribute mutation raises a validation error on strict models.
+                stamped: list = []
+                for ai_out in ai_outputs:
+                    src_chunk = chunk_id_to_chunk.get(ai_out.chunk_id)
+                    if src_chunk and src_chunk.actor:
+                        ai_out = ai_out.model_copy(update={
+                            "src_ip": src_chunk.actor.src_ip,
+                            "src_ips": list(src_chunk.actor.src_ips or []),
+                        })
+                    stamped.append(ai_out)
+                ai_outputs = stamped
+
+                # Store agent outputs (used for validation in UI)
                 outputs_storage = get_agent_outputs_storage()
                 outputs_storage.store_outputs(file_id, ai_outputs)
 
-                # Create incidents from AI
-                chunks_by_id = {chunk.chunk_id: chunk for chunk in ai_chunks}
-                for output in ai_outputs:
-                    chunk = chunks_by_id.get(output.chunk_id)
+                # — AI-gated incident creation ——————————————————————————————————
+                # Build a set of IPs that AI confirmed as True Positives
+                # (i.e., at least one chunk for that IP was flagged as suspicious).
+                ai_confirmed_ips: Set[str] = set()
+                for ai_out in ai_outputs:
+                    chunk = chunk_id_to_chunk.get(ai_out.chunk_id)
                     if not chunk:
-                        logger.warning(
-                            f"Skipping AI incident creation - chunk not found | chunk_id={output.chunk_id}"
-                        )
                         continue
-                    if output.has_agent_result() and output.requires_human_review:
-                        incident = incident_service.create_from_agent_output(output, chunk)
+                    triage = ai_out.triage
+                    behavioral = ai_out.behavioral
+                    is_tp = (
+                        (triage and triage.suspicious)
+                        or (behavioral and behavioral.is_suspicious)
+                    )
+                    if is_tp:
+                        if chunk.actor.src_ip:
+                            ai_confirmed_ips.add(chunk.actor.src_ip)
+                        for extra_ip in (chunk.actor.src_ips or []):
+                            if extra_ip:
+                                ai_confirmed_ips.add(extra_ip)
+
+                logger.info(
+                    f"AI validation complete | confirmed_ips={len(ai_confirmed_ips)}, "
+                    f"total_finding_ips={len(incident_ips)}, "
+                    f"dropped_ips={len(incident_ips - ai_confirmed_ips)}"
+                )
+
+                # Build a quick lookup: IP -> list of AI outputs (for drop-reason extraction)
+                ip_to_ai_outputs: Dict[str, list] = {}
+                for ai_out in ai_outputs:
+                    _out_ip = getattr(ai_out, "src_ip", None)
+                    if _out_ip:
+                        ip_to_ai_outputs.setdefault(_out_ip, []).append(ai_out)
+
+                def _extract_fp_remark(ip: str) -> str:
+                    """Pull the best LLM explanation for why this IP's threat was dropped."""
+                    remarks = []
+                    for _out in ip_to_ai_outputs.get(ip, []):
+                        b = getattr(_out, "behavioral", None)
+                        tr = getattr(_out, "triage", None)
+                        if b and getattr(b, "reasoning", None):
+                            remarks.append(b.reasoning)
+                        if tr and getattr(tr, "risk_reason", None):
+                            remarks.append(tr.risk_reason)
+                    return " | ".join(dict.fromkeys(r for r in remarks if r)) or "LLM assessed as false positive (no detailed reasoning captured)"
+
+                # Collect dropped threats with LLM remarks for the report
+                # (dropped_threats was already initialised above; we append to it here)
+
+                # Create Tier 1 incidents only for AI-confirmed IPs
+                for threat in tier1_result.high_confidence_threats:
+                    threat_ip = threat.src_ip or ""
+                    confirmed = (
+                        threat_ip in ai_confirmed_ips
+                        or any(ip in ai_confirmed_ips for ip in threat.src_ips if ip)
+                    )
+                    if not confirmed:
+                        fp_remark = _extract_fp_remark(threat_ip)
+                        logger.info(
+                            f"Tier 1 finding dropped by AI (FP) | rule={threat.rule_name}, ip={threat.src_ip} | remark={fp_remark}"
+                        )
+                        dropped_threats.append({
+                            "tier": "Tier 1 (Deterministic)",
+                            "rule": threat.rule_name,
+                            "source_ip": threat.src_ip,
+                            "severity": threat.severity.value,
+                            "confidence": threat.confidence,
+                            "llm_drop_remark": fp_remark,
+                        })
+                        continue
+                    incident = incident_service.create_from_deterministic_threat(
+                        threat, file_id=parsed_uuid,
+                    )
+                    if incident:
                         all_incidents.append(incident)
+
+                # Create Tier 2 incidents only for AI-confirmed IPs
+                if settings.enable_correlation_tier:
+                    for pattern in tier2_result.new_patterns:
+                        if pattern.src_ip not in ai_confirmed_ips:
+                            fp_remark = _extract_fp_remark(pattern.src_ip or "")
+                            logger.info(
+                                f"Tier 2 finding dropped by AI (FP) | rule={pattern.correlation_rule}, ip={pattern.src_ip} | remark={fp_remark}"
+                            )
+                            dropped_threats.append({
+                                "tier": "Tier 2 (Correlation)",
+                                "rule": pattern.correlation_rule,
+                                "source_ip": pattern.src_ip,
+                                "severity": pattern.severity,
+                                "confidence": pattern.confidence,
+                                "llm_drop_remark": fp_remark,
+                            })
+                            continue
+                        incident = incident_service.create_from_correlation(
+                            pattern, file_id=parsed_uuid,
+                        )
+                        if incident:
+                            all_incidents.append(incident)
 
                 await orchestrator.close()
             else:
-                logger.info("No chunks qualified for AI review")
+                logger.info("No chunks qualified for AI review — falling back to direct incident creation")
+                # Fallback: no chunks to review, create incidents directly
+                for threat in tier1_result.high_confidence_threats:
+                    incident = incident_service.create_from_deterministic_threat(
+                        threat, file_id=parsed_uuid,
+                    )
+                    if incident:
+                        all_incidents.append(incident)
+                if settings.enable_correlation_tier:
+                    for pattern in tier2_result.new_patterns:
+                        incident = incident_service.create_from_correlation(
+                            pattern, file_id=parsed_uuid,
+                        )
+                        if incident:
+                            all_incidents.append(incident)
         else:
-            logger.info("Tier 3 AI skipped — deterministic analysis sufficient")
+            logger.info("Tier 3 AI skipped — creating incidents directly from deterministic findings")
+            # AI tier disabled or no findings: create incidents directly from Tier 1 & Tier 2
+            for threat in tier1_result.high_confidence_threats:
+                incident = incident_service.create_from_deterministic_threat(
+                    threat, file_id=parsed_uuid,
+                )
+                if incident:
+                    all_incidents.append(incident)
+            if settings.enable_correlation_tier:
+                for pattern in tier2_result.new_patterns:
+                    incident = incident_service.create_from_correlation(
+                        pattern, file_id=parsed_uuid,
+                    )
+                    if incident:
+                        all_incidents.append(incident)
 
         def _incident_id_value(incident: Any) -> Any:
             if hasattr(incident, "incident_id"):
@@ -538,16 +710,20 @@ async def analyze_file(
 
         # — Generate human-readable report —————————————————————————————————————
         report_writer = ReportWriter()
-        report_path = report_writer.generate_report(
-            file_id=file_id,
-            filename=file_metadata.original_filename,
-            events_parsed=len(parsed_events),
-            events_normalized=len(event_batch.events),
-            tier1_result=tier1_result,
-            tier2_result=tier2_result,
-            ai_outputs=ai_outputs,
-            incidents=all_incidents,
-            events=enriched_events,
+        report_path = await loop.run_in_executor(
+            None,
+            functools.partial(
+                report_writer.generate_report,
+                file_id=file_id,
+                filename=file_metadata.original_filename,
+                events_parsed=len(parsed_events),
+                events_normalized=len(event_batch.events),
+                tier1_result=tier1_result,
+                tier2_result=tier2_result,
+                ai_outputs=ai_outputs,
+                incidents=all_incidents,
+                events=enriched_events,
+            ),
         )
         logger.info(f"Report saved | path={report_path}")
 
@@ -555,11 +731,16 @@ async def analyze_file(
         user_identity = resolve_user_identity(current_user)
         emp_id = user_identity.get("emp_id")
 
-        incidents_json_path = report_writer.generate_incident_json_report(
-            file_id=file_id,
-            filename=file_metadata.original_filename,
-            incidents=all_incidents,
-            emp_id=emp_id,
+        incidents_json_path = await loop.run_in_executor(
+            None,
+            functools.partial(
+                report_writer.generate_incident_json_report,
+                file_id=file_id,
+                filename=file_metadata.original_filename,
+                incidents=all_incidents,
+                emp_id=emp_id,
+                dropped_threats=dropped_threats,
+            ),
         )
         logger.info(f"Incident JSON report saved | path={incidents_json_path}, emp_id={emp_id}")
 

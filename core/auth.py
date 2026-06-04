@@ -165,6 +165,8 @@ def resolve_user_identity(username: str) -> dict[str, str | None]:
     - emp_id: extracted employee id when username matches prefix format
     - name: mapped display name (or a safe fallback)
     """
+    if not isinstance(username, str):
+        username = "backend_test_user"
     settings = get_settings()
     emp_id = _extract_emp_id(username)
     name_map = _parse_emp_name_map(settings.auth_emp_name_map)

@@ -287,16 +287,6 @@ class DeterministicEngine:
         try:
             reasons = []
 
-            # If no threats found but suspicious signals exist
-            if not threats:
-                # High 4xx rate without specific rule matches
-                status_4xx = sum(
-                    1 for ev in events
-                    if ev.http_status and 400 <= ev.http_status < 500
-                )
-                if len(events) > 0 and status_4xx / len(events) > 0.3:
-                    reasons.append(f"High 4xx rate ({status_4xx}/{len(events)}) without specific rule match")
-
             # Low-confidence threat — AI can provide context
             low_conf = [t for t in threats if t.confidence < 0.6]
             if low_conf:

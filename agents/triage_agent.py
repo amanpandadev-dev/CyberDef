@@ -28,84 +28,99 @@ class TriageNarrativeAgent(BaseAgent[TriageResult]):
     description = "Provides priority assessment and analyst-ready narratives"
     output_schema = TriageResult
 
-    agent_system_prompt = """You are a senior SOC analyst with expertise in incident triage.
+    agent_system_prompt = """You are a senior SOC analyst with expertise in incident triage and TP/FP adjudication.
 
-Your task is to:
-1. Assign an appropriate priority level
-2. Explain the risk in clear terms
-3. Recommend specific next actions
-4. Generate summaries for different audiences
+Your task is to make the FINAL decision on whether a pre-flagged security finding is a True Positive (TP) or a False Positive (FP).
 
-Priority levels:
+You do NOT discover new threats. You only evaluate whether the already-flagged finding — and the behavioral evidence in the chunk — justifies creating an incident.
+
+If it is a True Positive:
+- Set suspicious=true
+- Assign the appropriate priority (Critical/High/Medium)
+- Provide a clear technical justification
+
+If it is a False Positive:
+- Set suspicious=false
+- Set priority=Informational
+- Set confidence >= 0.9
+- Explain concisely why the evidence does NOT support the flag
+
+Priority levels (for True Positives only):
 - Critical: Active threat, immediate response required
-- High: Likely malicious, investigate within hours
+- High: Likely malicious, investigate within hours  
 - Medium: Suspicious pattern, investigate within 24 hours
-- Low: Unusual but likely benign, review when time permits
-- Informational: Context only, no action needed
+- Low: Marginal evidence, review when time permits
+- Informational: False Positive — no action needed
 
-FALSE POSITIVE AND SUPPRESSION RULE:
-- Carefully inspect if the behavior matches benign operational patterns, such as internal health monitoring checks, automated load balancer probes, search engine indexers, or legitimate administrative scripting.
-- If the behavioral interpretation deems the activity not suspicious, or if you classify it as a False Positive / benign noise, you MUST:
-  1. Assign a priority of `Low` or `Informational`.
-  2. Set the `"suspicious"` flag to `false`.
-  3. Assign a high `"confidence"` score (e.g., `0.9` or `1.0`) and matching `"confidence_score"` (e.g., `9` or `10`) to confirm this decision.
-
-Be actionable and specific in your recommendations.
-Write summaries appropriate for their audience:
-- Executive: Non-technical, business impact focused
-- Technical: Detailed, actionable for SOC analysts"""
+Be specific, actionable, and conservative: only use Critical/High for clear evidence of malicious activity."""
 
     def build_prompt(self, summary: dict[str, Any]) -> str:
-        """Build prompt for triage and narrative."""
+        """Build prompt for TP/FP triage and incident decision."""
         agent_context = summary.get("_agent_context", {})
         prior_outputs = agent_context.get("prior_outputs", {})
         agent_errors = agent_context.get("agent_errors", [])
-        prompt = f"""Triage this behavioral summary and generate analyst-ready narratives.
 
-BEHAVIORAL SUMMARY:
+        # Extract the specific rules that flagged this IP — injected by main.py
+        flagged_rules = summary.get("flagged_rules") or []
+        if flagged_rules:
+            rules_block = json.dumps(flagged_rules, indent=2)
+            rules_section = f"""RULES THAT FLAGGED THIS IP (evaluate each one specifically):
+{rules_block}
+
+For EACH rule above you MUST address:
+- Does the behavioral evidence in this chunk actually support that specific rule's detection logic?
+- If NOT, explain concisely WHY the rule fired as a false positive (e.g. "blind_sql_injection: 2xx responses observed but all URIs contain only pagination parameters, not time-delay payloads").
+- Your risk_reason must name the specific rule(s) and explain the FP rationale, NOT generic behavioral commentary.
+
+"""
+        else:
+            rules_section = "RULES THAT FLAGGED THIS IP: Not available — use behavioral evidence only.\n\n"
+
+        prompt = f"""A security finding was raised by upstream rules. You are the final judge. Let the given data decide whether it satisfies the flagged threat.
+
+{rules_section}FLAGGED BEHAVIORAL SUMMARY:
 {json.dumps(summary, indent=2)}
 
-PRIOR AGENT OUTPUTS:
-{json.dumps(prior_outputs, indent=2)}
-
-AGENT ERRORS OR MISSING CONTEXT:
-{json.dumps(agent_errors, indent=2)}
+You must:
+1. Decide whether all the given data satisfies the flagged threat.
+2. Provide concrete evidence for your decision.
+3. If it is a False Positive (FP), explain exactly why it dropped (why the evidence does not support the rule). Set suspicious=false and priority=Informational.
+4. If it is a True Positive (TP), explain exactly why it is a TP with concrete evidence. Set suspicious=true and assign an appropriate priority.
 
 Respond with ONLY this JSON format:
 {{
     "priority": "<Critical|High|Medium|Low|Informational>",
-    "risk_reason": "<one sentence explaining the risk>",
-    "recommended_action": "<specific next step for the analyst>",
+    "risk_reason": "<one sentence explaining why it is a TP or FP>",
+    "recommended_action": "<specific next step>",
     "confidence": <0.0 to 1.0>,
-    "executive_summary": "<one sentence for executives - no technical jargon>",
-    "technical_summary": "<2-3 sentences for SOC analysts with specifics>",
-    "enrichment_suggestions": ["<data source 1>", "<data source 2>"],
-    "raw_log": "<representative raw event or null>",
+    "executive_summary": "<non-technical summary>",
+    "technical_summary": "<SOC analyst summary>",
+    "enrichment_suggestions": ["<data source>"],
+    "raw_log": "<representative raw event from sample_raw_logs or null>",
     "source_ip": "<source IP or null>",
     "destination_ip": "<destination IP/host or null>",
-    "suspicious": <true or false>,
+    "suspicious": <true if TP, false if FP>,
     "suspicious_indicator": "<url|referer|user_agent|payload|source ip|null>",
-    "attack_name": "<attack/pattern label>",
-    "brief_description": "<one-line analyst summary>",
-    "recommended_action_short": "<short action phrase>",
+    "attack_name": "<attack label or null if FP>",
+    "brief_description": "<one-line summary>",
+    "recommended_action_short": "<short action>",
     "confidence_score": <1 to 10>,
     "mitre_tactic": "<MITRE tactic or null>",
-    "mitre_technique": "<MITRE technique ID or null>"
+    "mitre_technique": "<MITRE technique ID or null>",
+    "tp_justification": "<concrete evidence explaining why it is a TP or exactly why it dropped as an FP>"
 }}
 
 Guidelines:
-- Be conservative with priority - only use Critical for clear active threats
-- Recommended action should be specific and actionable
-- Executive summary should focus on business impact
-- Technical summary should include relevant technical details
-- If an upstream agent failed or is missing, mention the uncertainty in risk_reason or technical_summary
-- Suggest data sources that would help confirm/deny the threat
-- If an extracted field is not available, use null or "null"
-- confidence_score must align with confidence (0.0-1.0 mapped to 1-10)
-- If the behavior is classified as a False Positive or benign noise (such as health check probes, standard crawlers, or internal administrative scripting), set `"suspicious": false`, `"priority": "Informational"`, `"confidence": 0.9` (or above), and `"confidence_score": 9` (or above).
+- suspicious=true ONLY if upstream agents confirm concrete malicious evidence.
+- suspicious=false if evidence is ambiguous, benign, or a known false positive pattern.
+- confidence_score must align with confidence (0.0-1.0 mapped to 1-10).
+- For False Positives: priority must be Informational, confidence >= 0.9.
+- Do NOT add MITRE techniques or attack names for False Positives.
+- tp_justification must cite specific evidence from the chunk AND the specific rule name; set to null for FPs.
+- raw_log MUST be extracted from the 'sample_raw_logs' array in the chunk summary, if available.
 """
-
         return prompt
+
 
     def get_output_schema_description(self) -> str:
         return """
@@ -127,5 +142,6 @@ Guidelines:
     "recommended_action_short": "string|null",
     "confidence_score": "integer 1-10",
     "mitre_tactic": "string|null",
-    "mitre_technique": "string|null"
+    "mitre_technique": "string|null",
+    "tp_justification": "string|null - concrete proof of TP"
 }"""

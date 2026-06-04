@@ -219,6 +219,17 @@ class TriageResult(BaseAgentOutput):
     confidence_score: int = Field(default=1, ge=1, le=10, description="Confidence score from 1 to 10")
     mitre_tactic: Optional[str] = Field(default=None, description="MITRE ATT&CK tactic")
     mitre_technique: Optional[str] = Field(default=None, description="MITRE technique ID")
+    tp_justification: Optional[str] = Field(default=None, description="Concrete proof and reasoning of why this is a True Positive and why it was flagged")
+
+
+class AgentError(BaseModel):
+    """Error from agent processing."""
+    chunk_id: UUID
+    agent_name: str
+    error_type: str
+    error_message: str
+    raw_output: Optional[str] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
 class AgentOutput(BaseModel):
@@ -228,6 +239,11 @@ class AgentOutput(BaseModel):
     """
     analysis_id: UUID = Field(default_factory=uuid4)
     chunk_id: UUID
+
+    # Source actor IPs (populated from the chunk, not from AI output)
+    # These ensure the report can group by IP without relying on AI to extract it.
+    src_ip: Optional[str] = Field(default=None, description="Primary source IP from the chunk")
+    src_ips: List[str] = Field(default_factory=list, description="All source IPs from the chunk")
 
     # Individual agent outputs
     behavioral: Optional[BehavioralInterpretation] = None
@@ -277,11 +293,5 @@ class AgentOutput(BaseModel):
         return self.overall_confidence
 
 
-class AgentError(BaseModel):
-    """Error from agent processing."""
-    chunk_id: UUID
-    agent_name: str
-    error_type: str
-    error_message: str
-    raw_output: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+# Rebuild AgentOutput so Pydantic resolves all forward references (AgentError, etc.)
+AgentOutput.model_rebuild()

@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     ollama_embed_model: str = "nomic-embed-text:latest"
     ollama_timeout: int = 120
     ollama_temperature: float = 0.1
+    ollama_num_ctx: int = 65536   # Context window size (tokens) — 64K default
+    ollama_num_predict: int = 2048  # Max output tokens per response
 
     @field_validator("ollama_host", mode="before")
     @classmethod

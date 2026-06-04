@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 from uuid import UUID
 
+# pyrefly: ignore [missing-import]
 import httpx
 from pydantic import BaseModel, ValidationError
 
@@ -43,6 +44,8 @@ class OllamaClient:
         self.model = model or settings.ollama_model
         self.timeout = timeout or settings.ollama_timeout
         self.temperature = settings.ollama_temperature
+        self.num_ctx = settings.ollama_num_ctx
+        self.num_predict = settings.ollama_num_predict
 
         self._client = httpx.AsyncClient(timeout=self.timeout)
 
@@ -77,7 +80,8 @@ class OllamaClient:
             "format": "json",
             "options": {
                 "temperature": temp,
-                "num_predict": 2048,
+                "num_ctx": self.num_ctx,
+                "num_predict": self.num_predict,
             },
         }
 
@@ -136,6 +140,8 @@ class OllamaClient:
             "stream": False,
             "options": {
                 "temperature": temp,
+                "num_ctx": self.num_ctx,
+                "num_predict": self.num_predict,
             },
         }
 
@@ -247,10 +253,13 @@ Analyze it and respond with the specified JSON format."""
         self.invocations += 1
 
         # Build prompts
-        system_prompt = f"{self.BASE_SYSTEM_PROMPT}\n\n{self.agent_system_prompt}"
+        schema_desc = self.get_output_schema_description()
+        system_prompt = f"{self.BASE_SYSTEM_PROMPT}\n\n{self.agent_system_prompt}\n\nEXPECTED JSON SCHEMA:\n{schema_desc}"
         user_prompt = self.build_prompt(summary)
 
         logger.debug(f"Agent invocation | agent={self.name}, chunk_id={chunk_id}")
+        logger.info(f"--- [AGENT: {self.name}] SYSTEM PROMPT ---\n{system_prompt}\n-----------------------------------------")
+        logger.info(f"--- [AGENT: {self.name}] USER PROMPT ---\n{user_prompt}\n---------------------------------------")
 
         try:
             # Call Ollama
@@ -258,6 +267,8 @@ Analyze it and respond with the specified JSON format."""
                 prompt=user_prompt,
                 system_prompt=system_prompt,
             )
+            
+            logger.info(f"--- [AGENT: {self.name}] RAW LLM RESPONSE ---\n{response}\n--------------------------------------------")
 
             # Parse JSON response
             parsed = self._parse_json_response(response)
@@ -294,39 +305,89 @@ Analyze it and respond with the specified JSON format."""
             )
 
     def _parse_json_response(self, response: str) -> dict[str, Any]:
-        """Parse JSON from agent response."""
-        # Clean up response
+        """
+        Parse JSON from agent response with robust fallback handling.
+
+        Handles common LLM output quirks:
+        - Markdown code fences (```json ... ```)
+        - Preamble/postamble text around the JSON object
+        - Nested braces (correct brace-depth scanning)
+        - Trailing commas before } or ]
+        - Bare null / true / false tokens outside strings
+        - Truncated responses
+        """
+        import re
+
         text = response.strip()
 
-        # Try to extract JSON from markdown code blocks
-        if "```json" in text:
-            start = text.find("```json") + 7
-            end = text.find("```", start)
-            if end > start:
-                text = text[start:end].strip()
-        elif "```" in text:
-            start = text.find("```") + 3
-            end = text.find("```", start)
-            if end > start:
-                text = text[start:end].strip()
+        # ── 1. Strip markdown code fences ────────────────────────────────────
+        fence_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
+        if fence_match:
+            text = fence_match.group(1).strip()
 
-        # Try to parse as JSON
+        # ── 2. First attempt: parse the cleaned text directly ─────────────────
         try:
             return json.loads(text)
         except json.JSONDecodeError:
-            # Try to find JSON object in text
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            if start >= 0 and end > start:
-                try:
-                    return json.loads(text[start:end])
-                except json.JSONDecodeError:
-                    pass
+            pass
 
+        # ── 3. Find the outermost JSON object using brace-depth scanning ──────
+        #    This correctly handles nested objects/arrays.
+        extracted: str | None = None
+        brace_start = text.find("{")
+        if brace_start >= 0:
+            depth = 0
+            in_string = False
+            escape_next = False
+            for i, ch in enumerate(text[brace_start:], start=brace_start):
+                if escape_next:
+                    escape_next = False
+                    continue
+                if ch == "\\" and in_string:
+                    escape_next = True
+                    continue
+                if ch == '"':
+                    in_string = not in_string
+                    continue
+                if in_string:
+                    continue
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        extracted = text[brace_start : i + 1]
+                        break
+
+        if extracted:
+            try:
+                return json.loads(extracted)
+            except json.JSONDecodeError:
+                pass
+
+            # ── 4. Auto-fix common LLM formatting errors and retry ────────────
+            fixed = extracted
+            # Remove trailing commas before } or ]
+            fixed = re.sub(r",\s*([}\]])", r"\1", fixed)
+            # Replace bare None / True / False (Python-style) with JSON equivalents
+            fixed = re.sub(r"\bNone\b", "null", fixed)
+            fixed = re.sub(r"\bTrue\b", "true", fixed)
+            fixed = re.sub(r"\bFalse\b", "false", fixed)
+            try:
+                return json.loads(fixed)
+            except json.JSONDecodeError:
+                pass
+
+        # ── 5. Give up — log the raw response to aid debugging ────────────────
+        preview = (text[:600] + "…") if len(text) > 600 else text
+        logger.error(
+            f"JSON parse failed after all fallbacks | agent={self.name} | "
+            f"raw_response_preview={preview!r}"
+        )
         raise AgentError(
             "Failed to parse JSON from agent response",
             agent_name=self.name,
-            raw_output=text[:500],
+            raw_output=text[:600],
         )
 
     def get_stats(self) -> dict[str, Any]:

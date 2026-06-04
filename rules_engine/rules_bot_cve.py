@@ -30,12 +30,7 @@ class KnownScannerUARule(ThreatRule):
     description = "Known vulnerability scanner user agent"
     check_fields = ["user_agent"]
     patterns = [
-<<<<<<< HEAD
-        r"(?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|python-requests|libwww-perl|scrapy|aiohttp|mechanize|httpclient|curl|wget|okhttp|powershell(?:/[0-9.]+)?|windowspowershell(?:/[0-9.]+)?|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)\b",
-=======
-        r"(?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|python-requests|libwww-perl|scrapy|aiohttp|mechanize|httpclient|curl|wget|okhttp|powershell(?:/[0-9.]+)?|windowspowershell(?:/[0-9.]+)?|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)\b"
- 
->>>>>>> 503d3f8a08e98f5c8fa1167258b7e4c54128e0e5
+        r" (?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|scrapy|mechanize|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)"
     ]
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:

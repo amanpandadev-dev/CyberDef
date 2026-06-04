@@ -98,7 +98,7 @@ class BruteForceLoginRule(RateBasedRule):
 
             if ev.http_status and ev.http_status in (401, 403):
                 uri = (ev.raw_url or "").lower()
-                if any(p in uri for p in self._AUTH_PATHS) or ev.http_status == 401:
+                if any(p in uri for p in self._AUTH_PATHS) and ev.http_status == 401:
                     auth_failures += 1
                     last_event = ev
             elif ev.http_status == 200:

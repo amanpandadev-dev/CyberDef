@@ -96,3 +96,64 @@
 {"timestamp": "2026-05-27 15:37:51,811", "level": "INFO", "logger": "file_watcher.handler", "message": "Auto-analysis complete | file=Masked_log1_100.csv, incidents=2, report=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\reports\\20260527_100751_a83e5641-094b-4f96-8c47-ecae396c21f1_Masked_log1_100_report.md"}
 {"timestamp": "2026-05-27 15:37:53,796", "level": "INFO", "logger": "rollups.chunk_storage", "message": "Stored 3 chunks to Parquet | partition=hour=10 file_id=batch_1779876473770"}
 {"timestamp": "2026-05-27 15:37:53,805", "level": "INFO", "logger": "core.flush_buffer", "message": "Micro-batch flush complete | items_flushed=3 batch_id=batch_1779876473770"}
+{"timestamp": "2026-06-01 15:49:54,513", "level": "INFO", "logger": "main", "message": "AegisNet starting | version=0.1.0, debug=False"}
+{"timestamp": "2026-06-01 15:49:54,564", "level": "INFO", "logger": "database.session", "message": "Created database engine: sqlite:///./data/aegisnet.db"}
+{"timestamp": "2026-06-01 15:49:54,567", "level": "INFO", "logger": "database.session", "message": "Database schema initialized"}
+{"timestamp": "2026-06-01 15:49:54,973", "level": "INFO", "logger": "httpx", "message": "HTTP Request: GET http://localhost:11434/api/tags \"HTTP/1.1 200 OK\""}
+{"timestamp": "2026-06-01 15:49:54,977", "level": "INFO", "logger": "main", "message": "--- PRE-FLIGHT READINESS REPORT ---"}
+{"timestamp": "2026-06-01 15:49:54,978", "level": "INFO", "logger": "main", "message": "Database: \u2705 OK"}
+{"timestamp": "2026-06-01 15:49:54,978", "level": "INFO", "logger": "main", "message": "Ollama API: \u2705 OK"}
+{"timestamp": "2026-06-01 15:49:54,978", "level": "INFO", "logger": "main", "message": "LLM Model: \u274c MISSING"}
+{"timestamp": "2026-06-01 15:49:54,978", "level": "INFO", "logger": "main", "message": "Embed Model: \u274c MISSING"}
+{"timestamp": "2026-06-01 15:49:54,978", "level": "INFO", "logger": "main", "message": "-----------------------------------"}
+{"timestamp": "2026-06-01 15:49:55,017", "level": "INFO", "logger": "file_watcher", "message": "File watcher started | watch_dir=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\data, existing_files=13"}
+{"timestamp": "2026-06-01 15:49:55,185", "level": "INFO", "logger": "core.flush_buffer", "message": "FlushBuffer worker started | limits: 10000 items / 60s"}
+{"timestamp": "2026-06-01 15:51:07,773", "level": "INFO", "logger": "file_watcher", "message": "New CSV detected by file watcher | file=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\data\\all_threats.csv, size_bytes=4895"}
+{"timestamp": "2026-06-01 15:51:07,774", "level": "INFO", "logger": "file_watcher.handler", "message": "Auto-processing detected CSV | file=all_threats.csv"}
+{"timestamp": "2026-06-01 15:51:07,783", "level": "INFO", "logger": "file_watcher.handler", "message": "Auto-upload starting | file=all_threats.csv"}
+{"timestamp": "2026-06-01 15:51:07,793", "level": "INFO", "logger": "file_intake.service", "message": "Starting file upload | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50, filename=all_threats.csv, size_bytes=4895"}
+{"timestamp": "2026-06-01 15:51:07,794", "level": "INFO", "logger": "file_intake.validator", "message": "File validation complete | filename=all_threats.csv, row_count=14, column_count=1, encoding=utf-8, delimiter=';', has_header=False, errors=0, warnings=0"}
+{"timestamp": "2026-06-01 15:51:07,826", "level": "INFO", "logger": "file_intake.service", "message": "File upload complete | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50, checksum=b794811ff9f5d20c, row_count=14"}
+{"timestamp": "2026-06-01 15:51:07,831", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://127.0.0.1:8000/api/v1/files/upload \"HTTP/1.1 201 Created\""}
+{"timestamp": "2026-06-01 15:51:07,838", "level": "INFO", "logger": "file_watcher.handler", "message": "Auto-upload complete | file=all_threats.csv, file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50"}
+{"timestamp": "2026-06-01 15:51:07,838", "level": "INFO", "logger": "file_watcher.handler", "message": "Auto-analysis starting | file=all_threats.csv, file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50"}
+{"timestamp": "2026-06-01 15:51:08,014", "level": "INFO", "logger": "main", "message": "Starting three-tier analysis pipeline | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50 | correlation_enabled=False | ai_enabled=False"}
+{"timestamp": "2026-06-01 15:51:08,044", "level": "INFO", "logger": "file_intake.service", "message": "Marked file as PROCESSING | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50"}
+{"timestamp": "2026-06-01 15:51:08,048", "level": "INFO", "logger": "main", "message": "Detected headerless raw log format; using single-column fallback parser path"}
+{"timestamp": "2026-06-01 15:51:08,048", "level": "INFO", "logger": "log_parser.base", "message": "Selected parser | parser=syslog_apache, confidence=0.95"}
+{"timestamp": "2026-06-01 15:51:08,058", "level": "INFO", "logger": "normalization.service", "message": "Batch normalization started | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50, total_events=15"}
+{"timestamp": "2026-06-01 15:51:08,059", "level": "INFO", "logger": "normalization.service", "message": "Batch normalization complete | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50, total=15, normalized=8, discarded_no_src_ip=7, errors=0"}
+{"timestamp": "2026-06-01 15:51:08,064", "level": "INFO", "logger": "normalization.deduplication", "message": "Deduplication complete | input=8, output=6, reduction=25.0%"}
+{"timestamp": "2026-06-01 15:51:08,067", "level": "INFO", "logger": "normalization.deduplication", "message": "Deduplicated normalized file written | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\data\\processed\\normalized\\f695ac51-04d4-48f7-ac20-d0844bdafb50_normalized_dedup.jsonl, events=6"}
+{"timestamp": "2026-06-01 15:51:08,068", "level": "INFO", "logger": "normalization.deduplication", "message": "Deduplication complete | input=8, output=6, reduction=25.0%"}
+{"timestamp": "2026-06-01 15:51:08,068", "level": "INFO", "logger": "main", "message": "Parse, normalize & deduplicate complete | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50, events=6"}
+{"timestamp": "2026-06-01 15:51:08,069", "level": "INFO", "logger": "rules_engine.engine", "message": "Deterministic engine initialized | pattern_rules=53, rate_rules=10, total_rules=63"}
+{"timestamp": "2026-06-01 15:51:08,080", "level": "INFO", "logger": "rules_engine.engine", "message": "Deterministic scan complete | events=6, matches=8, threats=3, elapsed_ms=9, needs_ai=False"}
+{"timestamp": "2026-06-01 15:51:08,080", "level": "INFO", "logger": "main", "message": "Tier 1 complete | threats=3, matches=8, time_ms=9"}
+{"timestamp": "2026-06-01 15:51:08,085", "level": "INFO", "logger": "threat_state.store", "message": "Loaded threat state for 2026-06-01: 4 actors, 9 batches"}
+{"timestamp": "2026-06-01 15:51:08,088", "level": "INFO", "logger": "threat_state.store", "message": "Threat state updated | batch=10, events=6, actors_tracked=4"}
+{"timestamp": "2026-06-01 15:51:08,089", "level": "INFO", "logger": "main", "message": "Tier 2 (Correlation) disabled by configuration"}
+{"timestamp": "2026-06-01 15:51:08,095", "level": "INFO", "logger": "incidents.service", "message": "Loaded 156 incidents from file | file=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\data\\processed\\incidents_data.json"}
+{"timestamp": "2026-06-01 15:51:08,116", "level": "INFO", "logger": "incidents.service", "message": "Deterministic incident created | incident_id=98d10587-32d8-48ad-969a-095ff7927e9f, rule=blind_sql_injection, priority=critical"}
+{"timestamp": "2026-06-01 15:51:08,134", "level": "INFO", "logger": "incidents.service", "message": "Deterministic incident created | incident_id=88db1061-7e4e-4578-a58a-757e37f76493, rule=sql_injection, priority=critical"}
+{"timestamp": "2026-06-01 15:51:08,156", "level": "INFO", "logger": "incidents.service", "message": "Deterministic incident created | incident_id=3f621171-b058-4e66-8abc-96041455c902, rule=os_command_injection, priority=critical"}
+{"timestamp": "2026-06-01 15:51:08,160", "level": "INFO", "logger": "database.repository", "message": "Updated analysis stats and marked PROCESSED: f695ac51-04d4-48f7-ac20-d0844bdafb50"}
+{"timestamp": "2026-06-01 15:51:08,176", "level": "INFO", "logger": "file_intake.service", "message": "Updated analysis stats | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50"}
+{"timestamp": "2026-06-01 15:51:08,176", "level": "INFO", "logger": "chunking.service", "message": "Starting chunking | events=6, strategy=multi_index"}
+{"timestamp": "2026-06-01 15:51:08,176", "level": "INFO", "logger": "chunking.multi_index", "message": "Chunking started | total_events=6, axis=src_ip"}
+{"timestamp": "2026-06-01 15:51:08,178", "level": "INFO", "logger": "chunking.multi_index", "message": "Grouping complete | unique_src_ips=2"}
+{"timestamp": "2026-06-01 15:51:08,181", "level": "INFO", "logger": "chunking.multi_index", "message": "Chunking complete | total_chunks=5, unique_src_ips=2"}
+{"timestamp": "2026-06-01 15:51:08,182", "level": "INFO", "logger": "chunking.service", "message": "Chunking complete | total_events=6, total_chunks=5"}
+{"timestamp": "2026-06-01 15:51:08,182", "level": "INFO", "logger": "chunking.service", "message": "Suspicious chunk filtering | total_chunks=5, suspicious_chunks=0"}
+{"timestamp": "2026-06-01 15:51:08,183", "level": "INFO", "logger": "main", "message": "Tier 3 AI skipped \u00e2\u20ac\u201d deterministic analysis sufficient"}
+{"timestamp": "2026-06-01 15:51:08,183", "level": "INFO", "logger": "main", "message": "Three-tier analysis complete | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50, events=6, tier1_threats=3, tier2_correlations=0, ai_analyses=0, total_incidents=3"}
+{"timestamp": "2026-06-01 15:51:08,203", "level": "INFO", "logger": "reports.writer", "message": "Threat report generated | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\reports\\20260601_102108_f695ac51-04d4-48f7-ac20-d0844bdafb50_all_threats_report.md, lines=262"}
+{"timestamp": "2026-06-01 15:51:08,204", "level": "INFO", "logger": "main", "message": "Report saved | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\reports\\20260601_102108_f695ac51-04d4-48f7-ac20-d0844bdafb50_all_threats_report.md"}
+{"timestamp": "2026-06-01 15:51:08,208", "level": "INFO", "logger": "reports.writer", "message": "Incident JSON report generated | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\reports\\20260601_102108_f695ac51-04d4-48f7-ac20-d0844bdafb50_all_threats_incidents.json, incidents=3, emp_id=None"}
+{"timestamp": "2026-06-01 15:51:08,210", "level": "INFO", "logger": "main", "message": "Incident JSON report saved | path=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\reports\\20260601_102108_f695ac51-04d4-48f7-ac20-d0844bdafb50_all_threats_incidents.json, emp_id=None"}
+{"timestamp": "2026-06-01 15:51:08,214", "level": "INFO", "logger": "database.repository", "message": "Updated analysis stats and marked PROCESSED: f695ac51-04d4-48f7-ac20-d0844bdafb50"}
+{"timestamp": "2026-06-01 15:51:08,228", "level": "INFO", "logger": "file_intake.service", "message": "Updated analysis stats | file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50"}
+{"timestamp": "2026-06-01 15:51:08,231", "level": "INFO", "logger": "httpx", "message": "HTTP Request: POST http://127.0.0.1:8000/api/v1/analyze?file_id=f695ac51-04d4-48f7-ac20-d0844bdafb50 \"HTTP/1.1 200 OK\""}
+{"timestamp": "2026-06-01 15:51:08,233", "level": "INFO", "logger": "file_watcher.handler", "message": "Auto-analysis complete | file=all_threats.csv, incidents=3, report=C:\\Users\\MrAnikethVarmaMudunu\\Desktop\\test\\CyberDef\\reports\\20260601_102108_f695ac51-04d4-48f7-ac20-d0844bdafb50_all_threats_report.md"}
+{"timestamp": "2026-06-01 15:51:10,444", "level": "INFO", "logger": "rollups.chunk_storage", "message": "Stored 5 chunks to Parquet | partition=hour=10 file_id=batch_1780309270377"}
+{"timestamp": "2026-06-01 15:51:10,473", "level": "INFO", "logger": "core.flush_buffer", "message": "Micro-batch flush complete | items_flushed=5 batch_id=batch_1780309270377"}

@@ -13,7 +13,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# pyrefly: ignore [missing-import]
 import pyarrow as pa
+# pyrefly: ignore [missing-import]
 import pyarrow.parquet as pq
 
 from core.config import get_settings
@@ -51,10 +53,14 @@ class ChunkStorage:
         chunk_data = []
         for chunk in chunks:
             data = chunk.model_dump(mode='json')
-            # Parquet strictly rejects empty dictionaries without a defined struct schema
             data["port_traffic"] = json.dumps(data.get("port_traffic", {}))
             data["protocol_distribution"] = json.dumps(data.get("protocol_distribution", {}))
             data["action_distribution"] = json.dumps(data.get("action_distribution", {}))
+            
+            # Serialize highly dynamic lists to avoid PyArrow schema inference errors
+            data["events"] = json.dumps(data.get("events", []))
+            data["flagged_rules"] = json.dumps(data.get("flagged_rules") or [])
+            
             chunk_data.append(data)
 
         if not chunk_data:
@@ -124,13 +130,17 @@ class ChunkStorage:
 
                 for chunk_dict in chunks_data:
                     try:
-                        # Reparse Parquet JSON strings back to dicts
+                        # Reparse Parquet JSON strings back to dicts/lists
                         if isinstance(chunk_dict.get("port_traffic"), str):
                             chunk_dict["port_traffic"] = json.loads(chunk_dict["port_traffic"])
                         if isinstance(chunk_dict.get("protocol_distribution"), str):
                             chunk_dict["protocol_distribution"] = json.loads(chunk_dict["protocol_distribution"])
                         if isinstance(chunk_dict.get("action_distribution"), str):
                             chunk_dict["action_distribution"] = json.loads(chunk_dict["action_distribution"])
+                        if isinstance(chunk_dict.get("events"), str):
+                            chunk_dict["events"] = json.loads(chunk_dict["events"])
+                        if isinstance(chunk_dict.get("flagged_rules"), str):
+                            chunk_dict["flagged_rules"] = json.loads(chunk_dict["flagged_rules"])
 
                         yield BehavioralChunk.model_validate(chunk_dict)
                     except Exception as e:

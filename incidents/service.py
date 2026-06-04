@@ -385,6 +385,7 @@ class IncidentService:
             mitre_technique=(triage.mitre_technique if triage and triage.mitre_technique else (output.mitre.technique_id if output.mitre else None)),
             correlation_info=correlation_info,
             timeline=timeline,
+            detection_tier="AI Analyzed" if output.overall_confidence >= 0.7 else "AI Analyzed - needs human review",
         )
 
         self._incidents[str(incident.incident_id)] = incident
@@ -534,7 +535,7 @@ class IncidentService:
             primary_actor_username=src_username,
             actor_usernames=[src_username] if src_username else [],
             overall_confidence=finding.confidence,
-            detection_tier="correlation",
+            detection_tier="Correlation",
             detection_rule=finding.correlation_rule,
             executive_summary=finding.description,
             recommended_actions=[f"Investigate correlated activity from {finding.src_ip}"],
@@ -680,6 +681,7 @@ class IncidentService:
             mitre_tactic=first_output.mitre.tactic if first_output.mitre else (list(tactics)[0] if len(tactics) == 1 else None),
             mitre_technique=first_output.mitre.technique_id if first_output.mitre else None,
             timeline=timeline,
+            detection_tier="Correlation",
         )
 
         self._incidents[str(incident.incident_id)] = incident

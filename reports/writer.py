@@ -84,14 +84,6 @@ def _activity_window(first_seen: Any, last_seen: Any) -> str | None:
 def _group_threats_by_ip(threats: List[Any]) -> Dict[str, List[Any]]:
     """
     Group Tier 1 threat objects by their CANONICAL source IP.
-
-    Each threat is placed under exactly ONE IP key to prevent multi-IP
-    threats (e.g. Slowloris across 5 IPs) from repeating N times in the
-    Tier 1 detail section.  The canonical IP is resolved as:
-      1. threat.src_ip  (single primary IP set by the rule engine)
-      2. first entry of threat.src_ips
-      3. "Unknown"
-    The full list of participating IPs is still shown in the metadata table.
     """
     grouped: Dict[str, List[Any]] = defaultdict(list)
     for threat in threats:
@@ -99,6 +91,7 @@ def _group_threats_by_ip(threats: List[Any]) -> Dict[str, List[Any]]:
         if not primary:
             ips = getattr(threat, "src_ips", []) or []
             primary = ips[0] if ips else "Unknown"
+        
         grouped[primary].append(threat)
     return grouped
 
@@ -511,7 +504,6 @@ class ReportWriter:
                 _a("")
 
             for ip in tier1_detail_ips:
-
                 ip_threats = t1_by_ip.get(ip, [])
 
                 if not ip_threats:
@@ -545,7 +537,16 @@ class ReportWriter:
                         attack_labels.append(label)
                         seen_labels.add(label)
 
-                _a(f"### 🖥️ Source IP: `{ip}`")
+                # Get all unique usernames across all threats for this IP
+                all_usernames = set()
+                for t in ip_threats:
+                    all_usernames.update(getattr(t, "usernames", []) or [])
+                usernames_str = ", ".join(sorted(all_usernames)) if all_usernames else ""
+
+                if usernames_str:
+                    _a(f"### 🖥️ Source IP: `{ip}` | User IDs: `{usernames_str}`")
+                else:
+                    _a(f"### 🖥️ Source IP: `{ip}`")
                 _a("")
                 _a(f"**Attacks detected:** {' | '.join(attack_labels)}")
                 _a("")
@@ -583,6 +584,9 @@ class ReportWriter:
                     _a(f"| **Family** | {threat.family} |")
                     _a(f"| **Match Count** | {threat.match_count} |")
                     _a(f"| **Source IP** | {ip} |")
+                    
+                    if getattr(threat, "usernames", None):
+                        _a(f"| **User IDs** | {', '.join(threat.usernames)} |")
 
 
 
@@ -929,8 +933,8 @@ class ReportWriter:
         _a("## 🚨 Incidents Created")
         _a("")
         if incidents:
-            _a("| # | ID | Title | Priority | Status | Source |")
-            _a("|---|-----|-------|----------|--------|--------|")
+            _a("| # | ID | Title | Priority | Status | Tier |")
+            _a("|---|-----|-------|----------|--------|------|")
             incident_rows_to_render = incidents[:MAX_INCIDENT_ROWS]
             omitted_incidents = len(incidents) - len(incident_rows_to_render)
             if omitted_incidents > 0:
@@ -939,9 +943,12 @@ class ReportWriter:
                 title          = getattr(inc, "title", "Unknown")
                 priority       = getattr(inc, "priority", "unknown")
                 incident_status = getattr(inc, "status", "open")
-                source         = getattr(inc, "source", "unknown")
+                tier           = getattr(inc, "detection_tier", None)
+                if not tier:
+                    source_enum = getattr(inc, "source", "unknown")
+                    tier = str(source_enum).replace("IncidentSource.", "").title()
                 inc_id         = str(getattr(inc, "incident_id", ""))[:8]
-                _a(f"| {i} | `{inc_id}…` | {title} | **{priority}** | {incident_status} | {source} |")
+                _a(f"| {i} | `{inc_id}…` | {title} | **{priority}** | {incident_status} | {tier} |")
             _a("")
         else:
             _a("No incidents created from this analysis.")
@@ -1071,6 +1078,7 @@ class ReportWriter:
 
         return {
             "incident_id": data.get("incident_id"),
+            "tier": data.get("detection_tier") or str(data.get("source", "")).replace("IncidentSource.", "").title(),
             "title": data.get("title"),
             "status": data.get("status"),
             "priority": data.get("priority"),

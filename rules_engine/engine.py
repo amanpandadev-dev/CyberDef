@@ -120,7 +120,7 @@ class DeterministicEngine:
             all_matches = self._filter_zscaler_excluded_matches(all_matches)
 
             # Phase 3: Group matches into threats
-            threats = self._group_matches(all_matches)
+            threats = self._group_matches(all_matches, events)
 
             # Build result
             elapsed_ms = int((time.perf_counter_ns() - start) / 1_000_000)
@@ -161,17 +161,22 @@ class DeterministicEngine:
             logger.error(f"Critical failure in DeterministicEngine.scan: {e}", exc_info=True)
             raise
 
-    def _group_matches(self, matches: List[ThreatMatch]) -> List[DeterministicThreat]:
-        """Group individual matches into actionable threats by (src_ip, rule_name)."""
+    def _group_matches(self, matches: List[ThreatMatch], events: Optional[List[NormalizedEvent]] = None) -> List[DeterministicThreat]:
+        """Group individual matches into actionable threats by (src_ip, username, rule_name)."""
         try:
+            if events:
+                event_id_to_user = {e.event_id: e.username for e in events if e.username and e.username not in ("-", "null", "None", "unknown")}
+                for m in matches:
+                    if not m.username and m.event_id in event_id_to_user:
+                        m.username = event_id_to_user[m.event_id]
+
             groups: Dict[str, List[ThreatMatch]] = defaultdict(list)
             for m in matches:
-                # Group by rule_name only — do NOT include src_ip.
-                # Rate-based identity-aware rules (e.g. USER_ENDPOINT_FLOODING) group
-                # events by actor (username), so src_ip can differ across matches for
-                # the same threat. Grouping by src_ip would collapse unrelated actors
-                # (same IP, different users) OR split the same actor (same user, diff IPs).
-                key = m.aggregation_key or m.rule_name
+                key_parts = [
+                    m.src_ip or "unknown_ip",
+                    m.aggregation_key or m.rule_name
+                ]
+                key = "|".join(key_parts)
                 groups[key].append(m)
 
             threats = []
@@ -200,6 +205,9 @@ class DeterministicEngine:
                             sample_evidence.append(m.evidence)
                             seen_evidence.add(m.evidence)
 
+                    # Determine usernames for the group
+                    usernames = sorted(list(set([m.username for m in group_matches if m.username])))
+
                     threats.append(DeterministicThreat(
                         category=first.category,
                         family=first.family,
@@ -211,6 +219,7 @@ class DeterministicEngine:
                         sample_evidence=sample_evidence,
                         affected_event_ids=[m.event_id for m in group_matches[:100]],
                         src_ip=primary_ip,
+                        usernames=usernames,
                         src_ips=src_ips,
                         src_username=primary_username,
                         src_usernames=src_usernames,
@@ -398,7 +407,7 @@ class DeterministicEngine:
             all_matches = self._filter_zscaler_excluded_matches(all_matches)
 
             # Phase 3: Group matches into threats (reuse existing logic)
-            threats = self._group_matches(all_matches)
+            threats = self._group_matches(all_matches, events)
 
             elapsed_ms = int((time.perf_counter_ns() - start) / 1_000_000)
 

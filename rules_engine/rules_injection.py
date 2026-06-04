@@ -3,6 +3,7 @@
 from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Dict, List, Set, Optional
 
 from rules_engine.base_rule import ThreatRule, ScoredThreatRule
 from rules_engine.models import ThreatFamily, ThreatSeverity, ThreatMatch

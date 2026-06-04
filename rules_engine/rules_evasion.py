@@ -5,6 +5,8 @@ from __future__ import annotations
 import ipaddress
 import re
 from collections import defaultdict
+from typing import Set, List, Dict
+
 from urllib.parse import unquote, urlsplit
 
 from rules_engine.base_rule import ThreatRule

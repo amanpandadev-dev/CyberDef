@@ -30,10 +30,14 @@ class KnownScannerUARule(ThreatRule):
     description = "Known vulnerability scanner user agent"
     check_fields = ["user_agent"]
     patterns = [
-        r" (?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|scrapy|mechanize|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)"
+        r"(?i)\b(sqlmap|acunetix|nikto|nessus|openvas|qualys|burpsuite|nmap|masscan|zgrab|gobuster|ffuf|wfuzz|feroxbuster|wpscan|joomscan|whatweb|python-requests|libwww-perl|scrapy|aiohttp|mechanize|httpclient|curl|wget|okhttp|powershell(?:/[0-9.]+)?|windowspowershell(?:/[0-9.]+)?|pwsh(?:/[0-9.]+)?|microsoft\s*winrm\s*client|metasploit|cobaltstrike|nuclei|jaeles|commix|xsser)\b",
     ]
     def match(self, event: NormalizedEvent) -> ThreatMatch | None:
         try:
+            # Only match successful status codes in the 2xx range
+            if event.http_status is None or not (200 <= event.http_status < 300):
+                return None
+
             # Exclude private/reserved IP ranges
             src_ip = (event.src_ip or "").strip()
 

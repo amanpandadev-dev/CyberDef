@@ -139,8 +139,24 @@ class CredentialStuffingRule(RateBasedRule):
     description = "Credential stuffing: many distinct login attempts from same IP"
     threshold = 20
 
+    _AUTH_PATHS = {
+        "/login",
+        "/signin",
+        "/auth",
+        "/api/auth",
+        "/wp-login",
+        "/admin/login",
+        "/j_security_check",
+        "/Account/Login",
+        "/oauth/token",
+    }
+
     def check_group(self, events: List[NormalizedEvent], group_key: str) -> ThreatMatch | None:
-        login_401s = [ev for ev in events if ev.http_status == 401]
+        login_401s = [
+            ev for ev in events
+            if ev.http_status == 401
+            and any(p in (ev.raw_url or "").lower() for p in self._AUTH_PATHS)
+        ]
         total_401s = len(login_401s)
         if total_401s >= self.threshold:
             return ThreatMatch(
@@ -156,6 +172,7 @@ class CredentialStuffingRule(RateBasedRule):
                 src_ip=login_401s[-1].src_ip,
             )
         return None
+
 
 
 class AuthenticationFailuresRule(RateBasedRule):

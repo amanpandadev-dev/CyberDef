@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
+# pyrefly: ignore [missing-import]
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -52,11 +54,23 @@ class Settings(BaseSettings):
     db_echo: bool = False  # Log all SQL queries (set True for debugging)
 
     # Ollama Configuration
-    ollama_host: str = "http://localhost:11434"
-    ollama_model: str = "llama3.1:latest"
+    ollama_host: str = "http://127.0.0.1:11434"
+    ollama_model: str = "gemma4:e2b"
     ollama_embed_model: str = "nomic-embed-text:latest"
     ollama_timeout: int = 120
     ollama_temperature: float = 0.1
+    ollama_num_ctx: int = 65536   # Context window size (tokens) — 64K default
+    ollama_num_predict: int = 2048  # Max output tokens per response
+
+    @field_validator("ollama_host", mode="before")
+    @classmethod
+    def ensure_url_protocol(cls, v: Any) -> str:
+        if isinstance(v, str):
+            v_str = v.strip()
+            if not (v_str.startswith("http://") or v_str.startswith("https://")):
+                return f"http://{v_str}"
+            return v_str
+        return v
 
     # Processing
     max_file_size_mb: int = 500

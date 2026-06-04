@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from urllib.parse import parse_qsl, unquote, urlparse
+from urllib.parse import unquote, urlparse
+from typing import Set, List, Dict
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -809,6 +811,8 @@ class RFIRule(Recon2xxThreatRule):
 
             except Exception:
                 pass
+            if cls._is_static_content(ev.raw_url):
+                continue
             query = " ".join(filter(None, [ev.raw_url, ev.original_message]))
             if not query:
                 continue

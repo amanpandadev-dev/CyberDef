@@ -8,6 +8,7 @@ from core.logging import get_logger
 logger = get_logger(__name__)
 
 async def handle_new_csv(csv_path: Path) -> None:
+    # pyrefly: ignore [missing-import]
     import httpx
     filename = csv_path.name
     logger.info(f"Auto-processing detected CSV | file={filename}")

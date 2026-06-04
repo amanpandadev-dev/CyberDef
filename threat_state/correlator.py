@@ -59,7 +59,22 @@ class DayLevelCorrelator:
 
         all_findings: List[CorrelationFinding] = []
 
+        # Build the set of IPs present in the current file's events so we only
+        # run correlation rules against actors that were actually observed in
+        # this upload.  Without this filter the correlator would fire on every
+        # actor ever accumulated in the store (from previous files / batches),
+        # producing findings for IPs that are not present in the uploaded file.
+        current_file_ips: Set[str] = set()
+        if events:
+            for ev in events:
+                if ev.src_ip:
+                    current_file_ips.add(ev.src_ip)
+
         for actor in self.store.actors.values():
+            # Skip actors whose IP was NOT seen in this file's events
+            if current_file_ips and actor.ip not in current_file_ips:
+                continue
+
             # Run each correlation rule
             all_findings.extend(self._check_low_slow_brute_force(actor))
 

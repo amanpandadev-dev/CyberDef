@@ -63,15 +63,10 @@ Only map to techniques that clearly match the observed behavior."""
 
     def build_prompt(self, summary: dict[str, Any]) -> str:
         """Build prompt for MITRE mapping."""
-        agent_context = summary.get("_agent_context", {})
-        prior_outputs = agent_context.get("prior_outputs", {})
         prompt = f"""Map this behavioral summary to a MITRE ATT&CK technique.
 
 BEHAVIORAL SUMMARY:
 {json.dumps(summary, indent=2)}
-
-PRIOR AGENT OUTPUTS:
-{json.dumps(prior_outputs, indent=2)}
 
 Respond with ONLY this JSON format:
 {{
@@ -88,11 +83,7 @@ Respond with ONLY this JSON format:
 Guidelines:
 - Use EXACT MITRE technique IDs (e.g., T1110, T1110.001)
 - Provide specific justification referencing the summary data
-- Use prior agent outputs to narrow the mapping, but cite summary evidence
-- Include related techniques that might also apply
-- Lower confidence if the mapping is ambiguous
-- Choose the MOST specific technique that fits"""
-
+- Choose the MOST specific technique that fits the concrete evidence"""
         return prompt
 
     def get_output_schema_description(self) -> str:

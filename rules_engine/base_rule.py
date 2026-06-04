@@ -3,12 +3,14 @@ Threat Rule Base Class
 
 Abstract base for all deterministic threat detection rules.
 """
+
 from __future__ import annotations
 
 import re
 import unicodedata
 from abc import ABC, abstractmethod
 from urllib.parse import unquote_plus, urlsplit
+from typing import Tuple, List, Dict
 
 from core.logging import get_logger
 from rules_engine.models import ThreatFamily, ThreatMatch, ThreatSeverity

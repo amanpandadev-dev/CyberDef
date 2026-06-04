@@ -142,6 +142,10 @@ class BehavioralChunk(BaseModel):
     # Traceability - list of event IDs that compose this chunk
     source_event_ids: List[UUID] = Field(default_factory=list)
 
+    # Specific Tier 1/2 rules that flagged this chunk's actor.
+    # Stored here so it persists in Parquet rollups.
+    flagged_rules: Optional[List[Dict[str, Any]]] = Field(default=None)
+
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -187,6 +191,7 @@ class ChunkSummary(BaseModel):
     target_context: Dict[str, Any] = Field(default_factory=dict)
     activity_ratios: Dict[str, float] = Field(default_factory=dict)
     sample_evidence_refs: List[str] = Field(default_factory=list)
+    sample_raw_logs: List[str] = Field(default_factory=list)
 
     # HTTP/Web attack patterns
     http_methods_seen: Optional[List[str]] = None
@@ -194,6 +199,17 @@ class ChunkSummary(BaseModel):
     suspicious_uri_patterns: Optional[List[str]] = None
     user_agents_seen: Optional[List[str]] = None
     http_attack_indicators: Optional[List[str]] = None
+
+    # Deterministic rules that flagged this chunk's source IP.
+    # Populated in main.py from Tier 1 threats and Tier 2 correlation patterns
+    # BEFORE the summary is sent to AI agents so that triage can reason
+    # specifically about each rule rather than giving generic behavioral remarks.
+    # Each entry: {"rule": str, "category": str, "severity": str,
+    #              "description": str, "tier": str}
+    flagged_rules: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Specific Tier 1/2 rules that flagged this IP — injected for rule-specific AI triage",
+    )
 
     @classmethod
     def from_chunk(cls, chunk: BehavioralChunk) -> "ChunkSummary":

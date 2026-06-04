@@ -3,6 +3,7 @@
 from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Dict, List, Set, Optional
 
 from rules_engine.base_rule import ThreatRule, ScoredThreatRule
 from rules_engine.models import ThreatFamily, ThreatSeverity, ThreatMatch
@@ -401,11 +402,7 @@ class CommandInjectionRule(ThreatRule):
     severity = ThreatSeverity.CRITICAL
     confidence = 0.85
     description = "OS command injection attempt"
-<<<<<<< HEAD
-    check_fields = ["raw_url", "httpreferer"]
-=======
     check_fields = ["raw_url", "referrer"]
->>>>>>> 503d3f8a08e98f5c8fa1167258b7e4c54128e0e5
     patterns = [
         r"(?i)\bshell_exec\s*\(",
         r"(?i)((;\s*|\|\||&&|\||`|\$\()\s*(whoami|id|uname|cat|ls|bash|sh|nc|curl|wget)|(powershell(\.exe)?|cmd\.exe).*(invoke-webrequest|downloadstring|iex|webclient)?)",

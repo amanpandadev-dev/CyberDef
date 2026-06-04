@@ -45,6 +45,7 @@ class ThreatMatch(BaseModel):
     raw_url: Optional[str] = None
     timestamp: Optional[datetime] = None
     src_ip: Optional[str] = None
+    username: Optional[str] = None
     aggregation_key: Optional[str] = None
 
 
@@ -61,6 +62,7 @@ class DeterministicThreat(BaseModel):
     sample_evidence: List[str] = Field(default_factory=list)
     affected_event_ids: List[UUID] = Field(default_factory=list)
     src_ip: Optional[str] = None
+    usernames: List[str] = Field(default_factory=list)
     src_ips: List[str] = Field(default_factory=list)
     first_seen: Optional[datetime] = None
     last_seen: Optional[datetime] = None

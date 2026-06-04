@@ -215,11 +215,8 @@ class TriageResult(BaseAgentOutput):
     raw_log: Optional[str] = Field(default=None, description="Representative raw log line")
     source_ip: Optional[str] = Field(default=None, description="Source IP")
     destination_ip: Optional[str] = Field(default=None, description="Destination IP/host")
-    
-    # NOTE: suspicious field removed - use Behavioral Agent's is_suspicious instead
-    # To check if incident is suspicious, reference: AgentOutput.behavioral.is_suspicious
-    
-    suspicious_indicator: str = Field(default="null", description="url|referer|user_agent|payload|source_ip|behavior_pattern")
+    suspicious: bool = Field(default=True, description="Whether behavior is suspicious")
+    suspicious_indicator: Optional[str] = Field(default="null", description="url|referer|user_agent|payload|source ip|null")
     attack_name: Optional[str] = Field(default=None, description="Attack or pattern name")
     brief_description: Optional[str] = Field(default=None, description="Short analyst-readable description")
     recommended_action_short: Optional[str] = Field(default=None, description="Primary response action")

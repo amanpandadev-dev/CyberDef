@@ -30,11 +30,14 @@ You are being provided with multiple independent security evaluations (TriageRes
 Your task is to MERGE these individual evaluations into ONE final, consolidated TriageResult.
 
 Rules for merging:
-1. Priority: Take the highest priority across all True Positive (suspicious=true) findings. (Critical > High > Medium > Low).
-2. Suspicious: If ANY of the input findings are suspicious=true, the final output MUST be suspicious=true.
-3. Risk Reason: Concisely combine the risk reasons of all the True Positive findings. Drop False Positive reasoning unless ALL findings are False Positives.
-4. Executive/Technical Summaries: Synthesize a cohesive narrative that describes ALL the True Positive threats that were found.
+1. Priority: Take the HIGHEST priority across all findings (Critical > High > Medium > Low).
+2. Risk Reason: Concisely combine the risk reasons of all significant findings into one coherent explanation.
+3. Executive/Technical Summaries: Synthesize a cohesive narrative that describes ALL threats that were found.
+4. Recommended Actions: Combine and prioritize the most critical response steps.
 5. Do NOT hallucinate new threats. Only combine what was provided.
+
+Note: TP/FP validation is handled by the Behavioral Agent (not Triage). 
+Your job is to merge PRIORITY and RESPONSE information from multiple triage outputs.
 """
 
     def build_prompt(self, summary: dict[str, Any]) -> str:

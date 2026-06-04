@@ -351,7 +351,8 @@ class IncidentService:
             raw_log=raw_log,
             source_ip=source_ip,
             destination_ip=destination_ip,
-            suspicious=triage.suspicious if triage else (bool(output.behavioral.is_suspicious) if output.behavioral else priority != IncidentPriority.INFORMATIONAL),
+            # Use behavioral agent's is_suspicious (triage no longer has suspicious field)
+            suspicious=bool(output.behavioral.is_suspicious) if output.behavioral else priority != IncidentPriority.INFORMATIONAL,
             suspicious_indicator=(triage.suspicious_indicator if triage and triage.suspicious_indicator else self._derive_indicator_from_corpus(
                 " ".join(
                     [

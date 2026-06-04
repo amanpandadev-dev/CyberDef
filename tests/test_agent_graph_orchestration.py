@@ -123,7 +123,7 @@ class FakeTriageAgent:
             executive_summary="Suspicious web probing was detected.",
             technical_summary="Review the summarized indicators and upstream agent context.",
             enrichment_suggestions=["WAF logs", "GeoIP"],
-            suspicious=True,
+            # Note: suspicious field removed - use behavioral.is_suspicious instead
             confidence_score=7,
         )
 

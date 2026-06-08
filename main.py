@@ -354,6 +354,54 @@ async def analyze_file(
         all_incidents = []
         parsed_uuid = UUID(file_id)
 
+        def _process_correlation_patterns(patterns, ai_confirmed_ips_set=None):
+            if not settings.enable_correlation_tier:
+                return
+            from collections import defaultdict
+            from threat_state.correlator import CorrelationFinding
+            patterns_by_ip = defaultdict(list)
+            for pattern in patterns:
+                patterns_by_ip[pattern.src_ip].append(pattern)
+            
+            for ip, ip_patterns in patterns_by_ip.items():
+                if len(ip_patterns) == 1:
+                    pattern_to_log = ip_patterns[0]
+                else:
+                    categories = list(set(p.category for p in ip_patterns))
+                    severities = [p.severity for p in ip_patterns]
+                    sev_rank = {"critical": 3, "high": 2, "medium": 1, "low": 0}
+                    highest_sev = max(severities, key=lambda s: sev_rank.get(s, 0))
+                    desc = f"Multi-vector correlation incident encompassing {len(ip_patterns)} findings: " + " | ".join(p.description for p in ip_patterns)
+                    combined_evidence = {}
+                    for p in ip_patterns:
+                        combined_evidence[p.correlation_rule] = p.evidence
+                        
+                    pattern_to_log = CorrelationFinding(
+                        correlation_rule="composite_multi_vector",
+                        category=", ".join(categories),
+                        severity=highest_sev,
+                        confidence=max(p.confidence for p in ip_patterns),
+                        description=desc,
+                        src_ip=ip,
+                        evidence=combined_evidence,
+                        detection_tier="correlation"
+                    )
+
+                incident = incident_service.create_from_correlation(
+                    pattern_to_log, file_id=parsed_uuid,
+                )
+                if incident:
+                    if ai_confirmed_ips_set is not None:
+                        if pattern_to_log.src_ip not in ai_confirmed_ips_set:
+                            fp_remark = _extract_fp_remark(pattern_to_log.src_ip or "")
+                            logger.info(
+                                f"Tier 2 finding dropped by AI (FP), lodging as human review | rule={pattern_to_log.correlation_rule}, ip={pattern_to_log.src_ip} | remark={fp_remark}"
+                            )
+                            incident.detection_tier = "AI Analyzed - needs human review"
+                        else:
+                            incident.detection_tier = "Correlation"
+                    all_incidents.append(incident)
+
         # Collect source IPs from Tier 1 threats
         incident_ips: set[str] = set()
         for threat in tier1_result.threats:
@@ -615,21 +663,7 @@ async def analyze_file(
                         all_incidents.append(incident)
 
                 # Create Tier 2 incidents
-                if settings.enable_correlation_tier:
-                    for pattern in tier2_result.new_patterns:
-                        incident = incident_service.create_from_correlation(
-                            pattern, file_id=parsed_uuid,
-                        )
-                        if incident:
-                            if pattern.src_ip not in ai_confirmed_ips:
-                                fp_remark = _extract_fp_remark(pattern.src_ip or "")
-                                logger.info(
-                                    f"Tier 2 finding dropped by AI (FP), lodging as human review | rule={pattern.correlation_rule}, ip={pattern.src_ip} | remark={fp_remark}"
-                                )
-                                incident.detection_tier = "AI Analyzed - needs human review"
-                            else:
-                                incident.detection_tier = "Correlation"
-                            all_incidents.append(incident)
+                _process_correlation_patterns(tier2_result.new_patterns, ai_confirmed_ips)
 
                 await orchestrator.close()
             else:
@@ -641,13 +675,7 @@ async def analyze_file(
                     )
                     if incident:
                         all_incidents.append(incident)
-                if settings.enable_correlation_tier:
-                    for pattern in tier2_result.new_patterns:
-                        incident = incident_service.create_from_correlation(
-                            pattern, file_id=parsed_uuid,
-                        )
-                        if incident:
-                            all_incidents.append(incident)
+                _process_correlation_patterns(tier2_result.new_patterns, None)
         else:
             logger.info("Tier 3 AI skipped — creating incidents directly from deterministic findings")
             # AI tier disabled or no findings: create incidents directly from Tier 1 & Tier 2
@@ -657,13 +685,7 @@ async def analyze_file(
                 )
                 if incident:
                     all_incidents.append(incident)
-            if settings.enable_correlation_tier:
-                for pattern in tier2_result.new_patterns:
-                    incident = incident_service.create_from_correlation(
-                        pattern, file_id=parsed_uuid,
-                    )
-                    if incident:
-                        all_incidents.append(incident)
+            _process_correlation_patterns(tier2_result.new_patterns, None)
 
         def _incident_id_value(incident: Any) -> Any:
             if hasattr(incident, "incident_id"):
